@@ -181,6 +181,11 @@ test_that("Test item", {
                "Invalid item parameters")
   expect_error(item(model = "2PL", parameters = list(b = 1)),
                "Invalid item parameters")
+
+  # Ambiguous parameters should raise error:
+  expect_error(item(a = c(1, 2), b = c(-1, .2)), "Invalid parameters.")
+  expect_error(item(a = c(1, 2, 3), b = c(-1, .2, 2)), "Invalid parameters.")
+  expect_error(item(a = c(1, 2), b = c(-1, .2, 2)), "Invalid parameters.")
 })
 
 
@@ -320,9 +325,7 @@ test_that("Test item (legacy from as.Item)", {
 
   # Test the IDs are "Item-xx"
   ip <- item(b = rnorm(10))
-  expect_true(all(ip$id == paste0("Item-", 1:10)))
-  ip <- item(a = runif(10, 1, 2), b = rnorm(10))
-  expect_true(all(ip$id == paste0("Item-", 1:10)))
+  expect_null(ip$id)
 
   # -------------------------------------------------------------------------- #
   # Create Items for Graded Response Model

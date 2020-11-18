@@ -9,7 +9,26 @@
 \arguments{
 \item{x}{An \code{\link{Item-class}} object.}
 
-\item{name}{Name of the parameter.}
+\item{name}{Name of the parameter.
+
+  Available values:
+  \describe{
+    \item{\strong{\code{'id'}}}{Extract \code{'id'} of an
+      \code{\link{Item-class}} object.}
+    \item{\strong{\code{'model'}}}{Extract the \code{'model'} of an
+      \code{\link{Item-class}} object.}
+    \item{\strong{\code{'parameters'}}}{Extract the \code{'parameters'} of an
+      \code{\link{Item-class}} object.}
+    \item{\strong{\code{'se_parameters'}}}{Extract the standard error of
+      parameters of an \code{\link{Item-class}} object.}
+    \item{\strong{\code{'content'}}}{Extract the \code{'content'} slot of an
+      \code{\link{Item-class}} object.}
+    \item{\strong{\code{'misc'}}}{Extract the \code{'misc'} slot of an
+      \code{\link{Item-class}} object.}
+    \item{\strong{\code{'max_score'}}}{Extract the maximum possible score
+      of an \code{\link{Item-class}} object. Minimum score is assumed to be
+      0.}
+  }}
 }
 \value{
 This operation will return the desired slot.
@@ -35,6 +54,8 @@ item1$id
 item1$content
 # Get misc values
 item1$misc
+# Get misc values
+item1$max_score
 }
 \author{
 Emre Gonulates

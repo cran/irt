@@ -374,13 +374,15 @@ test_that("prob - Itempool", {
 
   # ---------------------------------------------------------------------------#
   # Polytomous items with different number of categories GPCM2
+  for (i in 1:100) {
   n_items <- sample(10:20, 1)
-  n_categories <- sample(3:7, n_items, T)
+  n_categories <- c(sample(3:7, n_items-3, T), rep(2, 3))
   theta <- rnorm(1)
   ip <- generate_ip(model = c(rep("GPCM", n_items-3), rep("2PL", 3)),
                     n_categories = n_categories)
   p <- prob(ip, theta = theta)
   expect_equal(ncol(p), max(n_categories))
+  }
 
   ip <- generate_ip(model = c(rep("GPCM2", n_items-3), rep("2PL", 3)),
                     n_categories = n_categories)

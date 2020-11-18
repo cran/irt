@@ -137,9 +137,9 @@ double resp_loglik_bare_item_cpp(double resp, double theta, Rcpp::S4 item,
         double lambda2 = 0;
         for(unsigned int i = 0; i < no_choices; i++) {
           lambda1 = lambda1 + i * P[i];
-          lambda2 = lambda2 + pow(i, 2) * P[i];
+          lambda2 = lambda2 + i*i * P[i];
         }
-        return pow(D, 2) * pow(a, 2) * (pow(lambda1, 2) - lambda2);
+        return D*D * a*a * (lambda1*lambda1 - lambda2);
       } else if (model == "Rasch" || model == "1PL" || model == "2PL" ||
                  model == "3PL" || model == "4PL") {
         // This function calculates the second derivative of the log likelihood of
@@ -147,8 +147,10 @@ double resp_loglik_bare_item_cpp(double resp, double theta, Rcpp::S4 item,
         double P = prob_4pm_bare_cpp(theta, item, 0);
         double dP = prob_4pm_bare_cpp(theta, item, 1);
         double d2P = prob_4pm_bare_cpp(theta, item, 2);
-        return  pow(P * (1 - P), -1) * (d2P * (resp - P) - pow(dP, 2) *
+        return  (1 / (P * (1 - P))) * (d2P * (resp - P) - dP * dP *
           (1+(resp - P) * (1- 2*P) / (P * (1-P)) ) );
+        // return  pow(P * (1 - P), -1) * (d2P * (resp - P) - pow(dP, 2) *
+        //   (1+(resp - P) * (1- 2*P) / (P * (1-P)) ) );
       }
       return NA_REAL;
   } else

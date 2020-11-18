@@ -22,11 +22,7 @@ return an Itempool object.}
 An \code{\link{Itempool-class}} object.
 }
 \description{
-If there are no names, function autofill the names with default names.
-}
-\details{
-I got the idea of this function from:
-https://www.r-bloggers.com/vectors-of-s4-classes-with-non-trivial-slots/
+If the elements do not have id fields, function will assign default names.
 }
 \examples{
 item1 <- item(a = 1.12, b = -2.1, c = 0.28)

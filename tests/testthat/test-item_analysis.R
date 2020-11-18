@@ -104,7 +104,7 @@ test_that("Test biserial function", {
   expect_equal(biserial(score = score, total_score = total_score), 0.703,
                tol = 0.01)
   expect_equal(biserial(score = score, total_score = total_score,
-                        type = "point-biserial"), 0.557, tol = 0.001)
+                        method = "point-biserial"), 0.557, tol = 0.001)
 
   # -------------------------------------------------------------------------- #
   # Check biserial and point-biserial correlation, biserial_brogden
@@ -120,20 +120,20 @@ test_that("Test biserial function", {
   expect_equal(biserial(score = score, total_score = total_score), 0.45369,
                tol = 0.0001)
   expect_equal(biserial(score = score, total_score = total_score,
-                        type = "point-biserial"), 0.36149, tol = 0.0001)
+                        method = "point-biserial"), 0.36149, tol = 0.0001)
   expect_equal(biserial(score = score, total_score = total_score,
-                        type = "brogden"), 0.50, tol = 0.01)
+                        method = "brogden"), 0.50, tol = 0.01)
   expect_equal(biserial(score = score, total_score = total_score,
-                        type = "rank"), 0.4359, tol = 0.0001)
+                        method = "rank"), 0.4359, tol = 0.0001)
 
   # biserial_cpp(score = score, total_score = total_score,
-  #              type = "clemans-lord")
+  #              method = "clemans-lord")
   # biserial_cpp(score = score, total_score = total_score,
-  #              type = "brogden")
+  #              method = "brogden")
   # biserial_cpp(score = score, total_score = total_score,
-  #              type = "rank")
+  #              method = "rank")
   # biserial_cpp(score = score, total_score = total_score,
-  #              type = "default")
+  #              method = "default")
   # n <- 1e6
   # score = sample(0:1, n, replace = TRUE)
   # total_score = sample(10:31, n, replace = TRUE)

@@ -1,5 +1,6 @@
 #include <Rcpp.h>
 #include <chrono>
+#include <ctime> // put_time
 #include "cat_select_next_item.h"
 #include "cat_sim_functions.h"
 
@@ -108,8 +109,10 @@ Rcpp::List cat_sim_single_cpp(Rcpp::List true_ability, Rcpp::List cd) {
  
 void print_cat_progress(int i, int n_sim) {
   auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  Rcout << "cat_sim - " << i << "/" << n_sim << " - " <<
-    std::put_time(localtime(&now), "%H:%M:%S") <<  std::endl;
+  std::string s(20, '\0');
+  std::strftime(&s[0], s.size(), "%H:%M:%S", std::localtime(&now));
+  Rcout << "cat_sim - " << i << "/" << n_sim << " - " << s <<  std::endl;
+    //std::put_time(localtime(&now), "%H:%M:%S") <<  std::endl;
 }
 
 //#############################################################################@

@@ -457,6 +457,37 @@ test_that("Test select_next_item_cpp Function", {
   selected_item <- selected_item[[length(selected_item)]]
   expect_true(selected_item$item$id %in% ip[-c(1:3)]$id)
 
+  # -------------------------------------------------------------------------- #
+  # Random Test Item Selection with Simpson-Hetter Exposure control
+  # When there is an item with very low Simpson hetter value, that item will
+  # not be administered:
+  n_items <- 2000
+  test_length <- 3
+  ip <- generate_ip(n = n_items, misc = lapply(
+    c(rep(1, test_length), rep(0, n_items - test_length)),
+    function(x) list(sympson_hetter_k = x)))
+  cd <- create_cat_design(ip = ip,
+                          next_item_rule = "random",
+                          exposure_control_rule = "sympson-hetter",
+                          termination_rule = 'max_item',
+                          termination_par = list('max_item' = test_length))
+  # Select a testlet as first item
+  est_history <- list(
+    list(est_before = -4, se_before = 0.3, resp = 1,
+         item = ip[[1]], testlet = NULL, est_after = 0, se_after = 1),
+    list(est_before = 0, se_before = 0.3, resp = 1,
+         item = ip[[2]], testlet = NULL, est_after = 0, se_after = 1),
+    list(est_before = 0, se_before = 0.3, resp = NA,
+         item = NULL, testlet = NULL, est_after = NA, se_after = NA)
+  )
+  for (i in 1:5) {
+    selected_item <- irt:::select_next_item_cpp(
+      cd = cd, est_history = est_history, additional_args = list())
+    expect_true("set_aside_item_list" %in% names(selected_item$additional_args))
+    # Even though there are hundreds of items, due to exposure control only
+    # the one eligible item selected.
+    expect_equal(selected_item$est_history[[3]]$item, ip[[3]])
+  }
 
   # -------------------------------------------------------------------------- #
   # Fixed test

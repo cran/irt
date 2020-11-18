@@ -40,9 +40,11 @@ double prob_4pm_bare_cpp(double theta, Rcpp::S4 item, int derivative = 0)
     return ((d-c) * D * a) / (exp(D * a * (theta - b)) + 2 +
                               exp(-D * a * (theta - b)));
   } else if (derivative == 2) { // Second Derivative
-    return -(d-c) * pow(D, 2) * pow(a, 2) *
+    return -(d-c) * D * D * a * a *
       (exp(D * a * (theta - b)) - exp(-D * a * (theta - b))) /
-      pow((exp(D * a * (theta - b)) + 2 + exp(-D * a * (theta - b))), 2);
+      ((exp(D * a * (theta - b)) + 2 + exp(-D * a * (theta - b))) * 
+      (exp(D * a * (theta - b)) + 2 + exp(-D * a * (theta - b))));
+      // pow((exp(D * a * (theta - b)) + 2 + exp(-D * a * (theta - b))), 2);
   } else
     stop("'derivative' value can take only values 0, 1 or 2.");
 }
@@ -176,45 +178,40 @@ Rcpp::NumericVector prob_gpcm_bare_cpp(double theta, Rcpp::S4 item,
   // Item discrimination, if PCM, set them to 1, else if GPCM get them
   double a = 1;
   double D = 1;
-  // Item difficulty
-  Rcpp::NumericVector b;
-  unsigned int no_choices;
-  if (model == "GPCM2") {
-    Rcpp::NumericVector d = as<Rcpp::NumericVector>(parList["d"]);
-    no_choices = d.size() + 1;
-    double b_loc = as<double>(parList["b"]);
-    b = clone(d);
-    for (unsigned int i = 0; i < no_choices; i++)
-      b[i] = b_loc - d[i];
-  } else { // "GPCM" or "PCM"
+  
+  Rcpp::NumericVector b; 
+
+  if (model == "GPCM2") {      
+    b = as<double>(parList["b"]) - as<Rcpp::NumericVector>(parList["d"]);
+  } else {
     b = as<Rcpp::NumericVector>(parList["b"]);
-    no_choices = b.size() + 1;
-  }
+  }      
+  
+  unsigned int no_choices = b.size() + 1; // Number of categories
   
   if (model == "GPCM" || model == "GPCM2") {
     a = as<double>(parList["a"]);
     D = as<double>(parList["D"]);
   } 
+  
   if (derivative == 0) {
     // Vector holding the probabilities of each response
     Rcpp::NumericVector probs(no_choices);
     // Vector holding the numerator of the probability function
     Rcpp::NumericVector numerator(no_choices);
     double denominator; // The denominator of the probability function
-    numerator[0] = 1; // The exponent of the first category (i.e. exp(0) = 1)
-    for (unsigned int i = 1; i < no_choices; i++)
-    {
-      for (unsigned int j = 0; j < i; j++)
-      {
+    numerator[0] = 1; // The exponent of the first category (i.e. exp(0) = 1)             
+    for (unsigned int i = 1; i < no_choices; i++) {
+      for (unsigned int j = 0; j < i; j++) {
         numerator[i] = numerator[i] + D * a * (theta - b[j]);  // cumulative sum
       }
       numerator[i] = exp(numerator[i]);
-    }
+    }    
     // Calculate the denominator
     denominator = sum(numerator);
     // Calculate the probability of each category
     probs = numerator/denominator;
-    return probs;
+    return probs;    
   } else if (derivative == 1) {
     // Vector holding probabilities of each response catergory
     Rcpp::NumericVector P = prob_gpcm_bare_cpp(theta, item);
@@ -240,13 +237,12 @@ Rcpp::NumericVector prob_gpcm_bare_cpp(double theta, Rcpp::S4 item,
     for (unsigned int i = 0; i < no_choices; i++)
     {
       lambda1 = lambda1 + i * P[i];
-      lambda2 = lambda2 + pow(i, 2) * P[i];
-
+      lambda2 = lambda2 + i*i * P[i];
     }
     for (unsigned int i = 0; i < no_choices; i++)
     {
-      sd[i] = pow(D, 2) * pow(a, 2) * P[i] * (pow(i, 2) - 2 * i * lambda1 +
-        2 * pow(lambda1, 2) - lambda2);
+      sd[i] = D * D * a * a * P[i] * (i * i - 2 * i * lambda1 +
+        2 * lambda1 * lambda1 - lambda2);
     }
     return sd;
   } else

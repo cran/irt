@@ -76,6 +76,13 @@ Available values:
     \code{misc} fields of all standalone items and items within
     the testlets. It will not return testlet \code{misc} fields.
     }
+  \item{\strong{\code{'resp_item_list'}}}{Combine items that are
+    not in a testlet and items within a testlet and return a list
+    object. This list does not contain any \code{Testlet} objects.
+    All of the elements are \code{Item} objects. If there are no
+    testlets in the item pool, then this argument will be the
+    same as \code{$item_list}.
+    }
   \item{\strong{\code{'resp_max_score'}}}{Extract the maximum score
     each standalone item can get.
     }
@@ -86,10 +93,6 @@ This operation will return a numeric object.
 }
 \description{
 Get slots of the an \code{\link{Item-class}} object.
-}
-\details{
-I wrote this method with the help of:
-https://stackoverflow.com/a/10961998/2275286
 }
 \examples{
 item1 <- methods::new("Item", model =  "3PL", id = 'item23',

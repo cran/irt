@@ -1,4 +1,5 @@
 #include <Rcpp.h>
+#include <numeric>
 #include "itempool_class_methods.h"
 #include "info.h"
 #include "resp_lik.h"
@@ -8,6 +9,42 @@
 using namespace Rcpp;
 
 
+class CompareDecr
+{
+public:
+    CompareDecr (const Rcpp::NumericVector &v) : m_v (v) {}
+    bool operator () (int i, int j) const { return m_v [i] > m_v [j]; }
+
+private:
+    const Rcpp::NumericVector &m_v;
+};
+
+class CompareIncr
+{
+public:
+    CompareIncr (const Rcpp::NumericVector &v) : m_v (v) {}
+    bool operator () (int i, int j) const { return m_v [i] < m_v [j]; }
+
+private:
+    const Rcpp::NumericVector &m_v;
+};
+
+
+Rcpp::IntegerVector order_decreasing(Rcpp::NumericVector &x) {
+    Rcpp::IntegerVector idx(x.size());
+    std::iota(idx.begin(), idx.end(), 0);
+    CompareDecr c (x);
+    std::sort(idx.begin(), idx.end(), c);
+    return idx;
+}
+
+Rcpp::IntegerVector order_increasing(Rcpp::NumericVector &x) {
+    Rcpp::IntegerVector idx(x.size());
+    std::iota(idx.begin(), idx.end(), 0);
+    CompareIncr c (x);
+    std::sort(idx.begin(), idx.end(), c);
+    return idx;
+}
 //#############################################################################@
 //########################### get_remaining_items ##############################
 //#############################################################################@
@@ -480,9 +517,11 @@ Rcpp::List select_next_item_fisher_max_info_cpp(Rcpp::List cd,
   info_values = info_itempool_bare_cpp(current_ability_est, remaining_ip, false, 
                                        false, R_NilValue);
   // Get the sorted (from lowest to the highest) indices of info_values.
-  Rcpp::IntegerVector idx = seq_along(info_values) - 1;
-  std::sort(idx.begin(), idx.end(),
-            [&](int i, int j){return info_values[i] > info_values[j];});
+  
+  // Rcpp::IntegerVector idx = seq_along(info_values) - 1;
+  // std::sort(idx.begin(), idx.end(), [&](int i, int j){return info_values[i] > info_values[j];});
+  Rcpp::IntegerVector idx = order_decreasing(info_values);
+  
   // Sort info_values and remaining_ip_list using the sort order of epv_list
   return Rcpp::List::create(Named("criteria") = info_values[idx],
                             Named("remaining_ip_list") = remaining_ip_list[idx]);
@@ -707,7 +746,7 @@ double calculate_epv_cpp(std::string var_calc_method,
   // }                                     //@@@@@@@@@@@@@@ TIMER @@@@@@@@@@@@@@@@
 
 
-  return P * pow(est_list["se"], 2);
+  return P * as<double>(est_list["se"]) * as<double>(est_list["se"]);
 }
 
 
@@ -798,7 +837,7 @@ Rcpp::List select_next_item_mepv_cpp(Rcpp::List cd, Rcpp::List est_history,
     temp_list = est_ability_owen_cpp(administered_ip, previous_resp,
                                      prior_mean, prior_var);
     prior_mean =  temp_list["est"];
-    prior_var =  pow(temp_list["se"], 2);
+    prior_var =  as<double>(temp_list["se"]) * as<double>(temp_list["se"]); // pow(as<double>(temp_list["se"]), 2)
   }
 
   // timer.step("Before loops        "); //@@@@@@@@@@@@@@ TIMER @@@@@@@@@@@@@@@@@@
@@ -868,9 +907,10 @@ Rcpp::List select_next_item_mepv_cpp(Rcpp::List cd, Rcpp::List est_history,
     // }
   }
   // Get the sorted (from lowest to the highest) indices of epv values.
-  IntegerVector idx = seq_along(epv_list) - 1;
-  std::sort(idx.begin(), idx.end(),
-            [&](int i, int j){return epv_list[i] < epv_list[j];});
+  // IntegerVector idx = seq_along(epv_list) - 1;
+  // std::sort(idx.begin(), idx.end(), [&](int i, int j){return epv_list[i] < epv_list[j];});
+  Rcpp::IntegerVector idx = order_increasing(epv_list);
+  
   // Rcout << "      mepv -- 7 -- Returning selected item!! " << std::endl;
 
   // timer.step("Finishing mepv      ");   //@@@@@@@@@@@@@@ TIMER @@@@@@@@@@@@@@@@
@@ -900,8 +940,6 @@ Rcpp::List select_next_item_mepv_cpp(Rcpp::List cd, Rcpp::List est_history,
 Rcpp::List apply_exposure_control_cpp(Rcpp::List cd, Rcpp::List est_history,
                                       Rcpp::List remaining_ip_list,
                                       Rcpp::List additional_args) {
-
-
   if (remaining_ip_list.size() == 0)
     stop("There are no items to select from for the exposure control function.");
   int item_no = est_history.size();  // The stage of the test.
@@ -1002,15 +1040,19 @@ Rcpp::List apply_exposure_control_cpp(Rcpp::List cd, Rcpp::List est_history,
 // reaches this point. So, if a testlet is selected by
 // select_next_item_mepv_cpp, it means that no item from this testlet has
 // been administered yet.
-Rcpp::List return_select_next_item_output(Rcpp::S4 element, 
-                                          Rcpp::List est_history,
-                                          Rcpp::List additional_args){
+Rcpp::List return_select_next_item_output(Rcpp::List cd, Rcpp::List est_history,
+                                          Rcpp::List remaining_ip_list,                                          
+                                          Rcpp::List additional_args) {
   Rcpp::List eh = clone(est_history);
-  Rcpp::List temp_list;  
+  Rcpp::List aa = clone(additional_args);
+  // Apply exposure control parameters
+  Rcpp::List ec_output = apply_exposure_control_cpp(cd, eh, remaining_ip_list, 
+                                                    aa);
+  Rcpp::S4 element = as<S4>(ec_output["item"]);  
   int item_no = eh.size();  // The stage of the test.
   Rcpp::List est_history_last_step = eh[item_no-1];
   if (element.inherits("Testlet")) {
-    temp_list = element.slot("item_list");
+    Rcpp::List temp_list = element.slot("item_list");
     est_history_last_step["testlet"] = element; // Set the selected testlet
     est_history_last_step["item"] = as<S4>(temp_list[0]);  // Set the selected item
   } else if (element.inherits("Item")) {
@@ -1019,7 +1061,7 @@ Rcpp::List return_select_next_item_output(Rcpp::S4 element,
   } 
   eh[item_no-1] = est_history_last_step; // Update est_history
   return List::create(Named("est_history") = eh,
-                      Named("additional_args") = additional_args);
+                      Named("additional_args") = ec_output["additional_args"]);
 }
 
 //#############################################################################@
@@ -1178,10 +1220,8 @@ Rcpp::List select_next_item_cpp(Rcpp::List cd, Rcpp::List est_history,
     ///////////////////////////////////////////////////////////////////////////
     
     temp_list = select_next_item_fisher_max_info_cpp(cd, eh, aa); 
-    temp_list = apply_exposure_control_cpp(
-      cd, eh, temp_list["remaining_ip_list"], aa);
-    return(return_select_next_item_output(as<S4>(temp_list["item"]), eh, 
-                                          temp_list["additional_args"]));    
+    return return_select_next_item_output(cd, eh,
+                                          temp_list["remaining_ip_list"], aa); 
 
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////// MEPV ////////////////////////////////////////////
@@ -1193,8 +1233,6 @@ Rcpp::List select_next_item_cpp(Rcpp::List cd, Rcpp::List est_history,
 
     // timer.step("mepv item selected  ");  //@@@@@@@@@@@@@@ TIMER @@@@@@@@@@@@@@@@@@
     // Rcout << "      (select_next_item) 2.4.2.1 - mepv -- apply_exposure_control_cpp " << std::endl;
-    temp_list = apply_exposure_control_cpp(
-      cd, eh, temp_list["remaining_ip_list"], aa);
       
     // timer.step("mepv exp control end");  //@@@@@@@@@@@@@@ TIMER @@@@@@@@@@@@@@@@@@
     // Rcout << "      (select_next_item) 2.4.2.2 - mepv" << std::endl;
@@ -1206,31 +1244,38 @@ Rcpp::List select_next_item_cpp(Rcpp::List cd, Rcpp::List est_history,
       // Rcout << res_names[i] << ": " << res[i]/1000000 << std::endl;
     // }                                    //@@@@@@@@@@@@@@ TIMER @@@@@@@@@@@@@@@@@@
 
-
-    return(return_select_next_item_output(as<S4>(temp_list["item"]), eh, 
-                                          temp_list["additional_args"]));   
-    
+    return return_select_next_item_output(cd, eh,
+                                          temp_list["remaining_ip_list"], aa); 
+                                          
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////// random //////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
   } else if (next_item_rule == "random") {
     // Create an item pool of remaining items
-    S4 remaining_ip = get_remaining_items(cd, eh, aa);
+    Rcpp::S4 remaining_ip = get_remaining_items(cd, eh, aa);
     // Rcout << "      (select_next_item) 2.4.4 - random" << std::endl;
-    // Vector that hold the id's of remaining items in the item pool:
-    Rcpp::StringVector  remaining_ip_ids;
-    remaining_ip_ids = get_slot_itempool_cpp(remaining_ip, "id");
-    // Rcout << "      (select_next_item) 2.4.2.1 - random" << std::endl;
-    temp_list = remaining_ip.slot("item_list");
-    IntegerVector int_sequence = seq_along(temp_list);
-    // Rcout << "      (select_next_item) 2.4.2.2 - random" << std::endl;
-    int i = Rcpp::as<int>(sample(int_sequence, 1)) - 1;
-    // item = as<S4>(temp_list[i]);
-    est_history_last_step["testlet"] = R_NilValue; // Set the selected testlet
-    est_history_last_step["item"] = as<S4>(temp_list[i]);  // Set the selected item
-    eh[item_no-1] = est_history_last_step; // Update est_history
-    return List::create(Named("est_history") = eh,
-                        Named("additional_args") = aa);
+    temp_list = remaining_ip.slot("item_list");; // Get the remaining item list
+    // Create a shuffled integer list
+    Rcpp::IntegerVector int_seq(temp_list.size());
+    std::iota(int_seq.begin(), int_seq.end(), 0);
+    // Feed the shuffled item list to exposure control parameter and return 
+    // result
+    return return_select_next_item_output(
+      cd, eh, temp_list[sample(int_seq, int_seq.size())], aa); 
+    // // Vector that hold the id's of remaining items in the item pool:
+    // Rcpp::StringVector  remaining_ip_ids;
+    // remaining_ip_ids = get_slot_itempool_cpp(remaining_ip, "id");
+    // // Rcout << "      (select_next_item) 2.4.2.1 - random" << std::endl;
+    // temp_list = remaining_ip.slot("item_list");
+    // IntegerVector int_sequence = seq_along(temp_list);
+    // // Rcout << "      (select_next_item) 2.4.2.2 - random" << std::endl;
+    // int i = Rcpp::as<int>(sample(int_sequence, 1)) - 1;
+    // // item = as<S4>(temp_list[i]);
+    // est_history_last_step["testlet"] = R_NilValue; // Set the selected testlet
+    // est_history_last_step["item"] = as<S4>(temp_list[i]);  // Set the selected item
+    // eh[item_no-1] = est_history_last_step; // Update est_history
+    // return List::create(Named("est_history") = eh,
+    //                     Named("additional_args") = aa);
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////// fixed ///////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////

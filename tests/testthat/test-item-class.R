@@ -66,7 +66,7 @@ test_that("Test setValidity of Item class", {
   expect_error(
     object = new(Class = "Item", model = "GPCM2",
                  parameters = list(b = c(-3, -.5, 1.5), d = 0.4, a = 1, D = 1)),
-    "the item location parameter 'b' should be a single value")
+    "Invalid parameters.")
 
 
   # -------------------------------------------------------------------------- #
@@ -146,17 +146,17 @@ test_that("Test setValidity of Item class", {
   expect_error(object = new("Item",
                             parameters = list(a = 1, b = 2, c = 3, D = 1.702),
                             model = "3PL"),
-               regexp = "Invalid 'c' parameter.")
+               regexp = "Invalid parameters.")
   expect_error(
     object = new("Item", parameters = list(a = 1, b = 2, c = -0.1, D = 1.702),
-                 model = "3PL"), regexp = "Invalid 'c' parameter.")
+                 model = "3PL"), regexp = "Invalid parameters.")
   expect_error(
     object = new("Item", parameters = list(a = 1, b = 2, c = -0.1, D = 1.702),
-                 model = "3PL"), regexp = "Invalid 'c' parameter.")
+                 model = "3PL"), regexp = "Invalid parameters.")
   expect_error(object = new(Class = "Item", model = "M3PL",
                             parameters = list(d = 1.2, a = c(1, 1.2), c = 1.1,
                                               D = 1)),
-               regexp = "Invalid 'c' parameter.")
+               regexp = "Invalid parameters.")
 
   # -------------------------------------------------------------------------- #
   # d Parameter cannot be larger than 1 or smaller than 0. Also cannot be
@@ -164,12 +164,12 @@ test_that("Test setValidity of Item class", {
   expect_error(object = new(
     "Item", parameters = list(a = 1, b = 2, c = .2, d = 3, D = 1.702),
     model = "4PL"),
-    regexp = "Invalid 'd' parameter.")
+    regexp = "Invalid parameters.")
   expect_error(object = new(
     "Item",
     parameters = list(a = 1, b = 2, c = .2, d = -0.3, D = 1.702),
     model = "4PL"),
-    regexp = "Invalid 'd' parameter.")
+    regexp = "Invalid parameters.")
 
   # -------------------------------------------------------------------------- #
   # Problematic naming of parameters
@@ -201,19 +201,32 @@ test_that("Test setValidity of Item class", {
     object = new("Item", model =  "3PL",
                  parameters = list(a = c(1, 1.2) , b = 2.11, c = .22,
                                    D = 1.702)),
-    regexp = paste0("Invalid parameters. For Unidimensional IRT ",
-                    "models, the length of all parameters should be 1."))
+    regexp = paste0("Invalid parameters."))
   expect_error(
     object = new("Item", model =  "3PL",
                  parameters = list(a = 1 , b = 2.11, c = c(.22, 1.2),
                                    D = 1.702)),
-    regexp = paste0("Invalid parameters. For Unidimensional IRT ",
-                    "models, the length of all parameters should be 1."))
+    regexp = paste0("Invalid parameters."))
   expect_error(
     object = new("Item", model =  "M3PL",
                  parameters = list(a = c(1, 1.2) , d = 2.11, c = c(.22, 1.2),
                                    D = 1.702)),
-    regexp = "Invalid parameters. The length of 'c' parameter should be 1.")
+    regexp = "Invalid parameters.")
+
+
+  # -------------------------------------------------------------------------- #
+  # Length of each parameter element should correspond to the size argument of
+  # Pmodels.
+  expect_error(
+    object = new("Item", model =  "GRM",
+                 parameters = list(a = c(1, 2.2) , b = c(-1, 0, 2.11),
+                                   D = 1.702)),
+    regexp = paste0("Invalid parameters."))
+  expect_error(
+    object = new("Item", model =  "GPCM",
+                 parameters = list(a = c(0.2, 1, 2.2) , b = c(-1, 0, 2.11, 3),
+                                   D = 1.702)),
+    regexp = paste0("Invalid parameters."))
 
 
   # -------------------------------------------------------------------------- #

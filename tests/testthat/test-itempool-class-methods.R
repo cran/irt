@@ -1612,7 +1612,7 @@ test_that("Test $ operator", {
 
   # -------------------------------------------------------------------------- #
   # -------------------------------------------------------------------------- #
-  # $resp_ip, $resp_content, $resp_model
+  # $resp_ip, $resp_content, $resp_model, $resp_item_list
   # -------------------------------------------------------------------------- #
   # -------------------------------------------------------------------------- #
   i1 <- item(b = 1, id = "i1", content = "A")
@@ -1635,6 +1635,15 @@ test_that("Test $ operator", {
   expect_equivalent(ip$model, c("Rasch", "3PL", "BTM", "GRM", "BTM"))
   expect_equivalent(ip$resp_model, c("Rasch", "3PL", "2PL", "GPCM", "GRM",
                                      "3PL", "3PL", "3PL"))
+
+  # $resp_item_list: A list of standalone items
+  expect_true("testlet1" %in% ip$id)
+  sa_ip_list <- ip$resp_item_list
+  expect_false("testlet1" %in% names(sa_ip_list))
+  expect_false("i2" %in% ip$id)
+  expect_true("i2" %in% names(sa_ip_list))
+  expect_equal(i4, sa_ip_list[[5]])
+  expect_equal(t2[[2]], sa_ip_list[[7]])
 
   # -------------------------------------------------------------------------- #
   # -------------------------------------------------------------------------- #

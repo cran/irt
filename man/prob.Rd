@@ -75,6 +75,15 @@ prob(item2, theta, derivative = 2)
 # Expected score for a subject with a given theta value
 prob(item2, theta, expected_value = TRUE)
 
+# Probability of each response category for Reparametrized Generalized
+# Partial Credit Model
+item3 <- generate_item(model = "GPCM2", n_categories = 3)
+prob(item3, theta)
+
+# Probability of each response category for Graded Response Model
+item4 <- generate_item(model = "GRM", n_categories = 5)
+prob(item4, theta)
+
 # Multiple theta values
 theta_n <- rnorm(5)
 

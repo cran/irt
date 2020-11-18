@@ -60,10 +60,10 @@ item_analysis <- function(resp, criterion = NULL, suppress_output = FALSE) {
     # the calculation of the total score.
     output$pbis_adj <- sapply(1:ncol(resp), function(i)
       biserial(score = resp[, i], total_score = rowSums(resp[, -i], na.rm = TRUE),
-               type = "point-biserial"))
+               method = "point-biserial"))
     output$bis_adj <- sapply(1:ncol(resp), function(i)
       biserial(score = resp[, i], total_score = rowSums(resp[, -i], na.rm = TRUE),
-               type = "default"))
+               method = "default"))
   }
   return(output)
 }
@@ -102,7 +102,7 @@ point_biserial <- function(score, total_score) {
 #' @param score Item scores of each examinee for which biserial correlation will
 #'   be calculated
 #' @param total_score Total score of each examinee
-#' @param type Type of the biserial correlation.
+#' @param method Type of the biserial correlation calculation method.
 #'   \describe{
 #'     \item{\strong{"default"}}{The most common way to calculate biserial
 #'     correlation. }
@@ -110,7 +110,7 @@ point_biserial <- function(score, total_score) {
 #'     \item{\strong{"clemans-lord"}}{Modified biserial correlation value based
 #'       on Clemans (1958) and Lord (1962).}
 #'     \item{\strong{"brogden"}}{Modified biserial correlation value based on:
-#'       Brogden, H. E. (1949). Psychometrika, 14, 169–182}
+#'       Brogden (1949)}
 #'     \item{\strong{"rank"}}{Rank biserial correlation value based on Cureton
 #'       (1968).}
 #'     }
@@ -149,14 +149,14 @@ point_biserial <- function(score, total_score) {
 #' # Calculate biserial correlation
 #' biserial(score, total_score)
 #' # Calculate point-biserial correlation
-#' biserial(score, total_score, type = "point-biserial")
+#' biserial(score, total_score, method = "point-biserial")
 #' # Calculate modified biserial correlation (based on Brogden (1949))
-#' biserial(score, total_score, type = "brogden")
+#' biserial(score, total_score, method = "brogden")
 #' # Calculate modified biserial correlation (Clemans-Lord)
-#' biserial(score, total_score, type = "clemans-lord")
+#' biserial(score, total_score, method = "clemans-lord")
 #'
-biserial <- function(score, total_score, type = "default") {
-  if (type == "point-biserial")
+biserial <- function(score, total_score, method = "default") {
+  if (method == "point-biserial")
     return(stats::cor(score, total_score, use = "pairwise.complete.obs"))
 
   # Only use the complete observations
@@ -167,14 +167,14 @@ biserial <- function(score, total_score, type = "default") {
   # n <- sum(!is.na(score))
   n <- as.double(length(score))
 
-  if (type == "rank") {
+  if (method == "rank") {
     # Kraemer pointed out that Cureton's (1958, 1964) rank biserial correlation
     # coefficient "essentially replaces observations with their ranks and then
     # applies Brogden's approach. " (p.280)
     total_score <- rank(total_score)
-    type <- "brogden"
+    method <- "brogden"
   }
-  if (type == "clemans-lord") {
+  if (method == "clemans-lord") {
     dev <- total_score - mean(total_score)
     num <- sum(score * dev)
     if (num < 0)
@@ -182,7 +182,7 @@ biserial <- function(score, total_score, type = "default") {
     # For positive values Lord's modification is the same as Brogden.
     return(sum(score * dev) /  sum(sort(score, decreasing = TRUE) * dev))
   }
-  if (type == "brogden") {
+  if (method == "brogden") {
     dev <- total_score - mean(total_score)
     return(sum(score * dev) /  sum(sort(score, decreasing = TRUE) * dev))
   }
@@ -194,7 +194,7 @@ biserial <- function(score, total_score, type = "default") {
   n1 <- as.double(sum(score == 1, na.rm = TRUE))
   n0 <- as.double(sum(score == 0, na.rm = TRUE))
   # # The following is also valid calculation but the above one is shorter.
-  # if (type == "brogden") {
+  # if (method == "brogden") {
   #   ranked <- sort(total_score, decreasing = TRUE)
   #   D <-  mean(ranked[1:n1]) - mean(ranked[(n1+1):(n0+n1)])
   #   return((mu1 - mu0) / D)

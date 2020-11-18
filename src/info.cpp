@@ -34,10 +34,14 @@ double info_4pm_bare_cpp(double theta, Rcpp::S4 item)
       }
     }
   }
-  return (pow(D * a, 2) * pow(d - c, 2)) /
+  return ((D * a)*(D * a) * (d - c)*(d - c)) /
        ((c + d * exp(D * a * (theta - b))) *
        (1 - c + (1-d) * exp(D*a * (theta - b))) *
-       pow(1 + exp(-D * a * (theta - b)), 2));
+       (1 + exp(-D * a * (theta - b))) * (1 + exp(-D * a * (theta - b))));
+  // return (pow(D * a, 2) * pow(d - c, 2)) /
+  //      ((c + d * exp(D * a * (theta - b))) *
+  //      (1 - c + (1-d) * exp(D*a * (theta - b))) *
+  //      pow(1 + exp(-D * a * (theta - b)), 2));
 }
 
 //##############################################################################
@@ -81,10 +85,15 @@ NumericMatrix info_4pm_matrix_cpp(NumericVector theta, NumericMatrix ip,
    {
       for(int j = 0; j < num_of_items; j++)
       {
-        output(i,j) = (pow(D[j] * a[j], 2) * pow(d[j] - c[j], 2)) /
+        output(i,j) = ((D[j] * a[j]) * (D[j] * a[j]) * (d[j] - c[j]) * (d[j] - c[j])) /
        ((c[j] + d[j] * exp(D[j] * a[j] * (theta[i] - b[j]))) *
        (1 - c[j] + (1-d[j]) * exp(D[j] * a[j] * (theta[i]-b[j]))) *
-       pow(1 + exp(-D[j] * a[j] * (theta[i] - b[j])), 2));
+       (1 + exp(-D[j] * a[j] * (theta[i] - b[j]))) * 
+       (1 + exp(-D[j] * a[j] * (theta[i] - b[j]))));
+       // output(i,j) = (pow(D[j] * a[j], 2) * pow(d[j] - c[j], 2)) /
+       // ((c[j] + d[j] * exp(D[j] * a[j] * (theta[i] - b[j]))) *
+       // (1 - c[j] + (1-d[j]) * exp(D[j] * a[j] * (theta[i]-b[j]))) *
+       // pow(1 + exp(-D[j] * a[j] * (theta[i] - b[j])), 2));
       }
    }
   if (tif == true)
@@ -127,13 +136,19 @@ double info_grm_bare_cpp(double theta, Rcpp::S4 item)
   for(int i = 0; i < no_choices - 1; i++)
   {
     prob_cdf2 = 1 / (1 + exp(-D * a * (theta - b[i])));
-    info = info + pow(D, 2) * pow(a, 2) * pow(prob_cdf1 * (1-prob_cdf1) -
-      prob_cdf2 * (1-prob_cdf2), 2) / (prob_cdf1-prob_cdf2);
+    info = info + D*D * a*a * (prob_cdf1 * 
+      (1-prob_cdf1) - prob_cdf2 * (1-prob_cdf2)) * 
+      (prob_cdf1 * (1-prob_cdf1) - prob_cdf2 * (1-prob_cdf2)) / 
+      (prob_cdf1-prob_cdf2);
+    // info = info + pow(D, 2) * pow(a, 2) * pow(prob_cdf1 * (1-prob_cdf1) -
+    //   prob_cdf2 * (1-prob_cdf2), 2) / (prob_cdf1-prob_cdf2);
     // Rprintf("%d: %f\n", i, info);
     prob_cdf1 = prob_cdf2;
   }
-  info = info + pow(D, 2) * pow(a, 2) * pow(prob_cdf1 * (1-prob_cdf1) - 0
-                                              * (1-0), 2) / (prob_cdf1-0);
+  info = info + D*D * a*a * (prob_cdf1 * (1-prob_cdf1) - 0 * (1-0)) * 
+    (prob_cdf1 * (1-prob_cdf1) - 0 * (1-0)) / (prob_cdf1-0);
+  // info = info + D*D * a*a * pow(prob_cdf1 * (1-prob_cdf1) - 0
+  //                                             * (1-0), 2) / (prob_cdf1-0);
   return info;
 }
 
@@ -155,18 +170,27 @@ double info_gpcm_bare_cpp(double theta, Rcpp::S4 item)
   double D = 1;
   // Item difficulty
   Rcpp::NumericVector b;
-  unsigned int no_choices;
+  //unsigned int no_choices;
   if (model == "GPCM2") {
-    Rcpp::NumericVector d = as<Rcpp::NumericVector>(parList["d"]);
-    no_choices = d.size() + 1;
-    double b_loc = as<double>(parList["b"]);
-    b = clone(d);
-    for (unsigned int i = 0; i < no_choices; i++)
-      b[i] = b_loc - d[i];
-  } else { // "GPCM" or "PCM"
+    b = as<Rcpp::NumericVector>(parList["d"]);
+  } else { // "GPCM" or "PCM" 
     b = as<Rcpp::NumericVector>(parList["b"]);
-    no_choices = b.size() + 1;
   }
+  unsigned int no_choices = b.size() + 1;
+  // if (model == "GPCM2") {
+  //   //Rcpp::NumericVector d = as<Rcpp::NumericVector>(parList["d"]);
+  //   //no_choices = d.size() + 1;
+  //   b = as<Rcpp::NumericVector>(parList["d"]);
+  //   no_choices = b.size() + 1;
+  //   double b_loc = as<double>(parList["b"]);
+  //   // b = clone(d);
+  //   for (unsigned int i = 0; i < no_choices; i++)
+  //     // b[i] = b_loc - d[i];
+  //     b[i] = b_loc - b[i];
+  // } else { // "GPCM" or "PCM"
+  //   b = as<Rcpp::NumericVector>(parList["b"]);
+  //   no_choices = b.size() + 1;
+  // }
   
   if (model == "GPCM" || model == "GPCM2") {
     a = as<double>(parList["a"]);
@@ -181,15 +205,15 @@ double info_gpcm_bare_cpp(double theta, Rcpp::S4 item)
   // // Set the  number of choices
   // int no_choices = b.size() + 1;
   
-  Rcpp::NumericVector P = prob_gpcm_bare_cpp(theta, item);
+  Rcpp::NumericVector P = prob_gpcm_bare_cpp(theta, item, 0);
   double lambda1 = 0;
   double lambda2 = 0;
   for(unsigned int i = 0; i < no_choices; i++)
   {
-    lambda1 = lambda1 + pow(i, 2) * P[i];
+    lambda1 = lambda1 + i * i * P[i];
     lambda2 = lambda2 + i * P[i];
   }
-  return pow(D, 2) * pow(a, 2) * (lambda1 - pow(lambda2, 2));
+  return D * D * a * a * (lambda1 - lambda2 * lambda2);
 }
 
 

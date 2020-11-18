@@ -14,7 +14,7 @@ cat_sim_fast(true_ability, cd, verbose = -1, n_cores = NULL)
 
 \item{verbose}{This is an integer that will print the stage of the test.
 For example, if the value verbose = 10, a message will be printed at
-each 10th iteration of the cat_simulation. Default value is \code{-1},
+each tenth iteration of the cat_simulation. Default value is \code{-1},
 where no message will be printed. If the value is \code{0}, only the
 start time and end time of the simulation will be printed.}
 

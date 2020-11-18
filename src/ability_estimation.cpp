@@ -96,7 +96,7 @@ double est_ability_4pm_nr_itempool_cpp(
   } else {
     init_est[0] = theta_range[0] + 2 * criterion;
     init_est[1] = 0;
-    init_est[0] = theta_range[1] - 2 * criterion;
+    init_est[2] = theta_range[1] - 2 * criterion;
     // init_est = {theta_range[0] + 2 * criterion, 0,
     //             theta_range[1] - 2 * criterion};
   }
@@ -355,7 +355,7 @@ Rcpp::List est_ability_eap_single_examinee_cpp(Rcpp::NumericVector resp,
   posterior_denominator = integrate(x, fx_denominator);
   est = posterior_numerator/posterior_denominator;
   for (int i = 0; i < no_of_quadrature; i++)
-    fx_std_error[i] = pow(x[i] - est, 2) * fx_denominator[i];
+    fx_std_error[i] = (x[i] - est) * (x[i] - est) * fx_denominator[i];
   se = sqrt(integrate(x, fx_std_error) / posterior_denominator);
   // Rprintf("r: %d; est: %.3f\n", r, est[r]);
   // Estimate standard error
@@ -422,7 +422,7 @@ Rcpp::List est_ability_owen_item_cpp(Rcpp::S4 item, int resp,
   double d = par_list.containsElementNamed("d") ? as<double>(par_list["d"]) : 1;
   // DD is the D in original owen's article. Here I rename it in case of
   // a confusion with scaling parameter D, 1.7.
-  double DD = (b - m0) / sqrt(pow(a, -2) + v0);
+  double DD = (b - m0) / sqrt((1/(a*a)) + v0);
   double dnormDD, pnormDD;
   NumericVector temp_nv;
   NumericVector DD_vector = NumericVector::create(DD);
@@ -434,11 +434,16 @@ Rcpp::List est_ability_owen_item_cpp(Rcpp::S4 item, int resp,
   temp_nv = pnorm(DD_vector);
   double pnormDD_minus = temp_nv[0];
   double A = c + (d - c) * pnormDD_minus;
-  double m1 = m0 - v0 * pow(pow(a, -2) + v0, -.5) * (dnormDD / pnormDD) * (
+  double m1 = m0 - v0 * (1/sqrt((1/(a*a)) + v0)) * (dnormDD / pnormDD) * (
     1 - resp / A);
-  double v1 = v0 - pow(v0, 2) * pow(pow(a, -2) + v0, -1) * (
+  // double m1 = m0 - v0 * pow(pow(a, -2) + v0, -.5) * (dnormDD / pnormDD) * (
+  //   1 - resp / A);
+  double v1 = v0 - v0*v0 * (1/((1/(a*a)) + v0)) * (
     dnormDD / pnormDD) * (1 - resp / A) * ((dnormDD / pnormDD) * (
         1 - resp / A) + DD);
+  // double v1 = v0 - pow(v0, 2) * pow(pow(a, -2) + v0, -1) * (
+  //   dnormDD / pnormDD) * (1 - resp / A) * ((dnormDD / pnormDD) * (
+  //       1 - resp / A) + DD);
   List output;
   output["m1"] = m1;
   output["v1"] = v1;

@@ -26,7 +26,9 @@ Available values:
     \code{se_parameters} of the testlets.}
   \item{\strong{\code{'item_list'}}}{Get the list of
     \code{\link{Item-class}} objects of the testlet. Returns a
-    list.}
+    \code{list} object.}
+  \item{\strong{\code{'max_score'}}}{Returns the maximum score
+    obtainable by all of the items within the testlet.}
 }}
 }
 \value{

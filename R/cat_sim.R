@@ -323,7 +323,7 @@
 #'                  satisfied. If the number of administered items are equal to
 #'                  or larger than this number test ends. }
 #'            \item{\code{"max_item"}}{The maximum number of items should not be
-#'                  exceeded.}. If this is missing, then the item pool (ip)
+#'                  exceeded.}. If this is missing, then the item pool
 #'                  size will be set as maximum length.
 #'            \item{\code{"min_se"}}{If the standard error exceeds \code{min_se}
 #'                  value, then the test will terminate.}
@@ -404,7 +404,7 @@
 #'                \item{\code{num_items}}{The number of items to select from.}
 #'              }
 #'            }
-#'            \item{"sympson-hetter"}{
+#'            \item{\code{"sympson-hetter"}}{
 #'              The algorithm of Sympson-Hetter exposure control is explained in
 #'              Sympson and Hetter (1985).
 #'
@@ -1477,7 +1477,7 @@ create_cat_design <- function(
 #'          \code{create_cat_design}.
 #' @param verbose This is an integer that will print the stage of the test.
 #'   For example, if the value verbose = 10, a message will be printed at
-#'   each 10th iteration of the cat_simulation. Default value is \code{-1},
+#'   each tenth iteration of the cat_simulation. Default value is \code{-1},
 #'   where no message will be printed. If the value is \code{0}, only the
 #'   start time and end time of the simulation will be printed.
 #'
@@ -1566,7 +1566,7 @@ cat_sim <- function(true_ability, cd, verbose = -1)
 #'          \code{create_cat_design}.
 #' @param verbose This is an integer that will print the stage of the test.
 #'   For example, if the value verbose = 10, a message will be printed at
-#'   each 10th iteration of the cat_simulation. Default value is \code{-1},
+#'   each tenth iteration of the cat_simulation. Default value is \code{-1},
 #'   where no message will be printed. If the value is \code{0}, only the
 #'   start time and end time of the simulation will be printed.
 #' @param n_cores an integer specifying the number of cores to be used.

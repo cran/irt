@@ -49,7 +49,7 @@ the bins are formed using them instead of sum scores.}
   \item{\strong{\code{"theta"}}}{Theta values equally divided into bins.
   the middle value of the bin is shown in the x-axis. For example, if
   \code{bins = 10}, the first tick of the x-axis will be the mean of
-  minimum theta value and 10th percentile theta value.}
+  minimum theta value and tenth percentile theta value.}
   }}
 
 \item{title}{Title of the plot}

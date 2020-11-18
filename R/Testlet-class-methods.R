@@ -141,7 +141,9 @@ setMethod(f = "length", signature = "Testlet",
 #'              \code{se_parameters} of the testlets.}
 #'            \item{\strong{\code{'item_list'}}}{Get the list of
 #'              \code{\link{Item-class}} objects of the testlet. Returns a
-#'              list.}
+#'              \code{list} object.}
+#'            \item{\strong{\code{'max_score'}}}{Returns the maximum score
+#'              obtainable by all of the items within the testlet.}
 #'          }
 #'
 #' @return This operation will return the desired slot.
@@ -165,6 +167,7 @@ setMethod("$", "Testlet",
                    'item_models'= return(x@item_list$model),
                    'parameters'= return(x@parameters),
                    'se_parameters'= return(x@se_parameters),
+                   'max_score'= return(x@item_list$max_score),
                    x@parameters[[name]]
                    )
           })

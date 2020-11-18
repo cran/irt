@@ -28,8 +28,8 @@ itempool(a = c(1, 1.4), b = c(-2, 1), id = c("i1", "i2"))
 itempool(a = c(1, 1.4), b = c(-2, 1), content = c("Algebra", "Geometry"))
 
 # Create GRM (Graded Response Model) items
-itempool(data.frame(a = rlnorm(10, 0, .3), b1 = rnorm(10), b2 = rnorm(10)),
-          model = "GRM")
+# itempool(data.frame(a = rlnorm(10, 0, .3), b1 = rnorm(10), b2 = rnorm(10)),
+#          model = "GRM")
 
 # Create a Rasch model item pool
 itempool(b = c(-1, 0.2, 1.1), model = "Rasch")

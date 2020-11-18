@@ -173,10 +173,7 @@ setMethod(f = "info", signature = c(ip = "Testlet"), .info_itempool)
 setMethod(
   f = "info", signature = c(ip = "numMatDfListChar"),
   function(ip, theta, tif = FALSE, observed = FALSE, resp = NULL){
-
-    if (inherits(ip, "numeric")) {
-      return(info(ip = itempool(ip), theta = theta, tif = tif))
-    } else if (inherits(ip, c("data.frame", "matrix", "list"))) {
+    if (inherits(ip, c("numeric", "data.frame", "matrix", "list"))) {
       return(info(ip = itempool(ip), theta = theta, tif = tif))
     } else {
       stop("Cannot convert object to an 'Item' or an 'Itempool' object. ",
@@ -260,7 +257,7 @@ setGeneric("info_kl", function(ip, trueTheta, theta)
 setMethod(
   f = "info_kl", signature = c(ip = "Item"),
   function(ip, trueTheta, theta){
-  
+
     # Examples:
     # ip <- item(a = 3, b = 0, c = .1)
     # info_kl(ip = ip, trueTheta = 0, theta = 0)
@@ -274,7 +271,7 @@ setMethod(
     #       zlab = "Kullback-Leibler Information",
     #       phi = 45, theta = -45, ticktype = "detailed")
     #
-  
+
     # If the Model is one of the following: "irt1PM" "irt2PM" "irt3PM" "irt4PM"
     if (ip$model %in%
           names(Pmodels)[sapply(Pmodels, function(x) x$model_family == 'UIRT')])

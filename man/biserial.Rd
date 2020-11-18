@@ -4,7 +4,7 @@
 \alias{biserial}
 \title{Calculate biserial correlation}
 \usage{
-biserial(score, total_score, type = "default")
+biserial(score, total_score, method = "default")
 }
 \arguments{
 \item{score}{Item scores of each examinee for which biserial correlation will
@@ -12,7 +12,7 @@ be calculated}
 
 \item{total_score}{Total score of each examinee}
 
-\item{type}{Type of the biserial correlation.
+\item{method}{Type of the biserial correlation calculation method.
 \describe{
   \item{\strong{"default"}}{The most common way to calculate biserial
   correlation. }
@@ -20,7 +20,7 @@ be calculated}
   \item{\strong{"clemans-lord"}}{Modified biserial correlation value based
     on Clemans (1958) and Lord (1962).}
   \item{\strong{"brogden"}}{Modified biserial correlation value based on:
-    Brogden, H. E. (1949). Psychometrika, 14, 169–182}
+    Brogden (1949)}
   \item{\strong{"rank"}}{Rank biserial correlation value based on Cureton
     (1968).}
   }}
@@ -42,11 +42,11 @@ total_score <- c(87, 90, 94, 94, 97, 103, 103, 104, 106, 108, 109, 109, 109,
 # Calculate biserial correlation
 biserial(score, total_score)
 # Calculate point-biserial correlation
-biserial(score, total_score, type = "point-biserial")
+biserial(score, total_score, method = "point-biserial")
 # Calculate modified biserial correlation (based on Brogden (1949))
-biserial(score, total_score, type = "brogden")
+biserial(score, total_score, method = "brogden")
 # Calculate modified biserial correlation (Clemans-Lord)
-biserial(score, total_score, type = "clemans-lord")
+biserial(score, total_score, method = "clemans-lord")
 
 }
 \references{

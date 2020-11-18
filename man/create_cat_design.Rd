@@ -347,7 +347,7 @@ create_cat_design(
                  satisfied. If the number of administered items are equal to
                  or larger than this number test ends. }
            \item{\code{"max_item"}}{The maximum number of items should not be
-                 exceeded.}. If this is missing, then the item pool (ip)
+                 exceeded.}. If this is missing, then the item pool
                  size will be set as maximum length.
            \item{\code{"min_se"}}{If the standard error exceeds \code{min_se}
                  value, then the test will terminate.}
@@ -430,7 +430,7 @@ create_cat_design(
                \item{\code{num_items}}{The number of items to select from.}
              }
            }
-           \item{"sympson-hetter"}{
+           \item{\code{"sympson-hetter"}}{
              The algorithm of Sympson-Hetter exposure control is explained in
              Sympson and Hetter (1985).
 

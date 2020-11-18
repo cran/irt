@@ -128,11 +128,7 @@ setMethod(
 #' sim_resp(ip = ip, theta = rnorm(8))
 #'
 #' # Create Graded Response Model Parameters
-#' n_item <- 10
-#' ip_df <- data.frame(a = rlnorm(n_item, 0, 0.3), b1 = rnorm(n_item, -1, .5))
-#' ip_df$b2 <- ip_df$b1 + runif(n_item)
-#' ip_df$b3 <- ip_df$b2 + runif(n_item)
-#' ip <- itempool(ip_df, model = "GRM", id = paste0("itm-", 1:n_item))
+#' ip <- generate_ip(n = 5, model = "GRM", n_categories = c(3, 4, 8, 5, 4))
 #' # Simulate responses for one theta:
 #' sim_resp(ip = ip, theta = rnorm(1))
 #' # Simulate responses for 5 thetas:

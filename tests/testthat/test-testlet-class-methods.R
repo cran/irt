@@ -57,6 +57,13 @@ test_that("$ method (Testlet)", {
   expect_is(t1$item_list, "list")
   expect_true(all(sapply(t1$item_list, is.Item)))
   expect_equivalent(t1$item_models, c("3PL", "3PL", "2PL"))
+
+  # $max_score
+  t1 <- testlet(generate_ip(model = c("2PL", "GRM", "3PL", "GRM"),
+                            n_categories = c(2, 3, 2, 6)),
+                id = "testlet--1", content = "Alg")
+  expect_equal(t1$max_score, 9)
+
 })
 
 ###############################################################################@

@@ -39,7 +39,9 @@ double resp_lik_bare_item_cpp(double resp, double theta, Rcpp::S4 item) {
   } else if (model == "Rasch" || model == "1PL" || model == "2PL" ||
     model == "3PL" || model == "4PL") {
     double P = prob_4pm_bare_cpp(theta, item);
-    return pow(P, resp) * pow(1-P, 1-resp);
+    // The following line is important (instead of second line) because 
+    // it accounts for resp values that are not 0 or 1. 
+    return pow(P, resp) * pow(1.0-P, 1.0-resp);
     return resp * P + (1 - resp) * (1 - P);
   }
   return NA_REAL;

@@ -33,8 +33,8 @@
 #' itempool(a = c(1, 1.4), b = c(-2, 1), content = c("Algebra", "Geometry"))
 #'
 #' # Create GRM (Graded Response Model) items
-#' itempool(data.frame(a = rlnorm(10, 0, .3), b1 = rnorm(10), b2 = rnorm(10)),
-#'           model = "GRM")
+#' # itempool(data.frame(a = rlnorm(10, 0, .3), b1 = rnorm(10), b2 = rnorm(10)),
+#' #          model = "GRM")
 #'
 #' # Create a Rasch model item pool
 #' itempool(b = c(-1, 0.2, 1.1), model = "Rasch")
@@ -582,10 +582,7 @@ name_items <- function(item_list)
 #' Concatenate \code{Item}, \code{Itempool} or \code{Testlet} objects and
 #' return an Itempool object.
 #'
-#' If there are no names, function autofill the names with default names.
-#'
-#' I got the idea of this function from:
-#' https://www.r-bloggers.com/vectors-of-s4-classes-with-non-trivial-slots/
+#' If the elements do not have id fields, function will assign default names.
 #'
 #' @param x A list consist of \code{\link{Item-class}} objects.
 #' @param ... Additional arguments
@@ -1304,6 +1301,13 @@ setMethod(f = "length", signature = "Itempool",
 #'              \code{misc} fields of all standalone items and items within
 #'              the testlets. It will not return testlet \code{misc} fields.
 #'              }
+#'            \item{\strong{\code{'resp_item_list'}}}{Combine items that are
+#'              not in a testlet and items within a testlet and return a list
+#'              object. This list does not contain any \code{Testlet} objects.
+#'              All of the elements are \code{Item} objects. If there are no
+#'              testlets in the item pool, then this argument will be the
+#'              same as \code{$item_list}.
+#'              }
 #'            \item{\strong{\code{'resp_max_score'}}}{Extract the maximum score
 #'              each standalone item can get.
 #'              }
@@ -1316,10 +1320,6 @@ setMethod(f = "length", signature = "Itempool",
 #' @author Emre Gonulates
 #'
 #' @include Item-class.R
-#'
-#' @details
-#' I wrote this method with the help of:
-#' https://stackoverflow.com/a/10961998/2275286
 #'
 #' @examples
 #' item1 <- methods::new("Item", model =  "3PL", id = 'item23',
@@ -1464,6 +1464,9 @@ setMethod(
         }
         if (all(sapply(misc, is.null))) return(NULL)
         return(misc)
+        },
+      'resp_item_list'= {
+        return(flatten_itempool_cpp(x))
         },
       'resp_max_score'= {
         return(get_max_possible_score_itempool_cpp(x))

@@ -4,39 +4,44 @@
 \alias{distractor_analysis}
 \title{Distractor Analysis Function}
 \usage{
-distractor_analysis(
-  raw_resp,
-  key,
-  criterion = NULL,
-  adjusted = FALSE,
-  suppress_output = FALSE
-)
+distractor_analysis(resp, key = NULL, ip = NULL, criterion = NULL)
 }
 \arguments{
-\item{raw_resp}{A \code{matrix} or \code{data.frame} containing the item
-responses.}
+\item{resp}{It can be either a \code{\link{Response_set-class}} object with
+valid raw responses; or, a \code{matrix} or \code{data.frame} containing
+the raw item responses.}
 
-\item{key}{The answer key for the responses}
+\item{key}{The answer key for the responses. Keys can also be provided via
+\code{ip} argument.}
+
+\item{ip}{An \code{\link{Itempool-class}} object that contains the keys of
+the items. The program will look check whether a \code{ip$misc$key} is
+specified for all items. Valid keys should be provided via \code{ip} if
+\code{key} argument is \code{NULL}.}
 
 \item{criterion}{Provide a continuous criterion variable such as a total
 raw score, or theta score that will be used in the calculation of
 correlation calculations. If this value is \code{NULL}, the total score
 will be used.}
-
-\item{adjusted}{If \code{TRUE}, the biserial will be calculated using the
-total score that is calculated using all of the items except the item
-that biserial is calculated for.}
-
-\item{suppress_output}{If \code{TRUE}, the function will suppress
-console output. Default value is \code{FALSE}}
 }
 \value{
-A list of
+A data.frame with following columns
   \describe{
-    \item{'prop'}{Observed proportions of each choice.}
-    \item{'biserial'}{Biserial correlation between the examinees selected
+    \item{'item_id'}{Item identifier}
+    \item{'key'}{Answer key}
+    \item{'option'}{The selected option}
+    \item{'n'}{Number of subjects/examinees answered this item}
+    \item{'prop'}{Observed proportions of the choice.}
+    \item{'bis'}{Biserial correlation between the examinees selected
           the choice and the total scores.}
-    \item{'score'}{Scored response matrix.}
+    \item{'pbis'}{Point-biserial correlation between the
+          examinees selected the choice and the total scores.}
+    \item{'bis_adj'}{Biserial correlation between item and total score
+      without this item. Sum scores will be used in the calculation of
+      'bis_adj' even 'criterion' is provided. }
+    \item{'pbis_adj'}{Point-biserial correlation between item and total score
+      without this item. Sum scores will be used in the calculation of
+      'bis_adj' even 'criterion' is provided.}
   }
 }
 \description{
@@ -55,7 +60,8 @@ raw_resp[sample(1:length(raw_resp), round(length(raw_resp)*.1))] <- NA
 key <- sample(LETTERS[1:4], n_item, replace = TRUE)
 
 # Run distractor analysis:
-da <- distractor_analysis(raw_resp = raw_resp, key = key)
+da <- distractor_analysis(resp = raw_resp, key = key)
+
 
 }
 \author{

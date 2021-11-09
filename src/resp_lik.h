@@ -8,4 +8,5 @@ double resp_lik_bare_testlet_cpp(Rcpp::NumericVector resp, double theta,
                                  Rcpp::S4 testlet);
 double resp_lik_bare_itempool_cpp(Rcpp::NumericVector resp, double theta,
                                    Rcpp::S4 ip);
+double resp_lik_response_cpp(double theta, Rcpp::S4 resp, Rcpp::S4 ip);
 #endif

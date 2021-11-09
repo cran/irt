@@ -1,6 +1,6 @@
 
 ###############################################################################@
-############################# print.cat_design ##################################
+############################# print.cat_design #################################
 ###############################################################################@
 #' Prints cat_design objects.
 #'
@@ -82,8 +82,8 @@ print.cat_design <- function(x, ..., verbose = FALSE) {
           print(temp)
         }
       } else {
-        # If all of them are printable classes add them to the steps_df otherwise
-        # add them to steps_list
+        # If all of them are printable classes add them to the steps_df
+        # otherwise add them to steps_list
         if (all(sapply(temp, class) %in% printable_classes)) {
           steps_df[, paste0(preamble_for_df, "_", pp_name)] <- unlist(temp)
         } else {
@@ -158,7 +158,8 @@ print.cat_design <- function(x, ..., verbose = FALSE) {
 
   ## Final Ability Estimation Parameters ##
   if (!is.null(x$final_ability_est_rule)) {
-    cat(sprintf("Final Ability Estimation Rule: '%s'\n", x$final_ability_est_rule))
+    cat(sprintf("Final Ability Estimation Rule: '%s'\n",
+                x$final_ability_est_rule))
     cat("Final Ability Estimation Parameters: \n")
     for (i in seq_len(length(x$final_ability_est_par)))
       if (class(x$final_ability_est_par[[i]]) %in% printable_classes) {
@@ -360,9 +361,9 @@ summary.cat_output <- function(
     est_before = sapply(est_history, `[[`, "est_before"),
     se_before = sapply(est_history, `[[`, "se_before"),
     testlet_id = sapply(est_history, function(i)
-      ifelse(is.null(i$testlet), NA, i$testlet$id)),
+      ifelse(is.null(i$testlet), NA, i$testlet$testlet_id)),
     item_id = sapply(est_history, function(i)
-      ifelse(is.null(i$item), NA, i$item$id)),
+      ifelse(is.null(i$item), NA, i$item$item_id)),
     resp = sapply(est_history, `[[`, "resp"),
     est_after = sapply(est_history, `[[`, "est_after"),
     se_after = sapply(est_history, `[[`, "se_after"),
@@ -505,7 +506,7 @@ get_cat_response_data <- function(cat_sim_output, cd = NULL,
       col_names <- cd$ip$id
     } else {
       eh <- lapply(cat_sim_output, "[[", "est_history") # list of est_history
-      col_names <- sort(unique(sapply(do.call("c", eh), function(x) x$item$id)))
+      col_names <- sort(unique(sapply(do.call("c", eh), function(x) x$item$item_id)))
     }
     resp <- data.frame(matrix(NA, ncol = length(col_names),
                               nrow = length(cat_sim_output)))
@@ -593,7 +594,8 @@ get_cat_administered_items <- function(cat_sim_output) {
 #' cat_data <- cat_sim(true_ability = rnorm(10), cd = cd)
 #' calculate_exposure_rates(cat_data, cd = cd)
 #'
-calculate_exposure_rates <- function(cat_sim_output, cd = NULL, item_ids = NULL) {
+calculate_exposure_rates <- function(cat_sim_output, cd = NULL,
+                                     item_ids = NULL) {
   # Check whether it is one or multiple CAT outputs
   if (is(cat_sim_output, "cat_output")) { # There is a single cat_output element
     cat_sim_output <- list(cat_sim_output)
@@ -631,7 +633,7 @@ calculate_exposure_rates <- function(cat_sim_output, cd = NULL, item_ids = NULL)
 #'          \code{create_cat_design}.
 #' @param item_ids A vector of item (or Testlet) ids in the item pool.
 #' @return This function returns a numeric vector of each item's overlap rate
-#'   where the names of each overlap rate value is the item's id.
+#'   where the names of each overlap rate value is the item's ID.
 #'
 #' @export
 #'
@@ -646,7 +648,8 @@ calculate_exposure_rates <- function(cat_sim_output, cd = NULL, item_ids = NULL)
 #' cat_data <- cat_sim(true_ability = rnorm(10), cd = cd)
 #' calculate_overlap_rates(cat_data, cd = cd)
 #'
-calculate_overlap_rates <- function(cat_sim_output, cd = NULL, item_ids = NULL) {
+calculate_overlap_rates <- function(cat_sim_output, cd = NULL,
+                                    item_ids = NULL) {
   # Check whether it is one or multiple CAT outputs
   if (is(cat_sim_output, "cat_output")) { # There is a single cat_output element
     cat_sim_output <- list(cat_sim_output)
@@ -666,3 +669,139 @@ calculate_overlap_rates <- function(cat_sim_output, cd = NULL, item_ids = NULL) 
   }
   return(calculate_overlap_rates_cpp(item_ids, cat_sim_output))
 }
+
+
+
+###############################################################################@
+############################# score_info #######################################
+###############################################################################@
+#' Calculate Score Information Function
+#'
+#' @description This function calculates the score information function of a
+#' given CAT test. Ideally, a large number of simulees (say 1,000) will be
+#' simulated at each theta level equally spaced along a large theta range (like
+#' [-4, 4]). The score information function at each theta will be calculated
+#' using the formulas 11-2 and 11-3 presented in Sands,  Waters and McBride
+#' (1997, pages 127-128). Also see Lord (1980), Eqn. 10-7.
+#'
+#' For example if 1000 examinees simulated at each of the following theta
+#' values (-3, -2, -1, 0, 1, 2, 3), the function will not calculate score
+#' information values at theta = -3 and theta = 3. Score information values
+#' at second values to the edges (i.e. theta = -2 and theta = 2) will be
+#' calculated using Equation 11-2 of Sands et.al (1997). The rest of the
+#' score information values (at theta = -1, 0, 1) will be calculated using
+#' equation 11-3 (page 128).
+#'
+#' @param true_theta A vector of true theta values.
+#' @param est_theta A vector of estimated theta values.
+#' @param bins The number of bins true theta values should be grouped into.
+#'   Ideally, this value is \code{NULL} and equal number of simulees are
+#'   already in bins, and within each bin \code{true_theta} values are equal
+#'   to each other. If these conditions are not satisfied, a bin value can be
+#'   supplied.
+#' @return A data frame of true theta values and score information value at
+#'   each theta value will be returned.
+#'
+#'
+#' @author Emre Gonulates
+#'
+#' @export
+#'
+#' @references
+#' Lord, F. M. (1980). Applications of item response theory to practical
+#' testing problems. Routledge.
+#'
+#' Sands, W. A., Waters, B. K., & McBride, J. R. (1997). Computerized adaptive
+#' testing: From inquiry to operation. American Psychological Association.
+#'
+#' @examples
+#' ip <- generate_ip(n = 30)
+#' cd <- create_cat_design(ip = ip, next_item_rule = 'mfi',
+#'                         termination_rule = 'max_item',
+#'                         termination_par = list(max_item = 10))
+#' # The following true_theta example is not ideal. For more informative score
+#' # score information functions you can use more bins and more simulees like:
+#' # rep(seq(-4, 4, .1), each = 1000)
+#' true_theta <- rep(seq(-3, 3, 1), each = 10)
+#' cat_data <- cat_sim(true_ability = true_theta, cd = cd)
+#' dtf <- summary(cat_data)
+#'
+#' s_info <- score_info(true_theta = dtf$true_ability,
+#'                      est_theta = dtf$est_ability)
+#' s_info
+#'
+score_info <- function(true_theta, est_theta, bins = NULL) {
+  if (length(true_theta) != length(est_theta))
+    stop("The length of 'true_theta' should be equal to the length of ",
+         "'est_theta'. ")
+
+  # Sort both true_theta and est_theta in ascending order
+  dtf <- data.frame(true_theta, est_theta)[order(true_theta), ]
+  # Find the number of groups
+  if (is.null(bins)) {
+    temp <- table(true_theta)
+    if (all(temp > 1)) {
+      if (all(temp == temp[1])) {
+        bins <- length(temp)
+      } else {
+        warning("Please provide a better bin number. By default, bin number ",
+                "will be used as 20.")
+        bins <- 20
+      }
+    } else {
+      stop("Please provide a valid 'bins' value.")
+    }
+  }
+  # For the formula to work there should be at least 5 bins
+  if (bins < 5) stop("Please provide a bin number that is larger than 5.")
+  dtf$group <- cut(dtf$true_theta, breaks = bins, labels = 1:bins)
+
+  s_info <- data.frame(true_theta = rep(NA, bins - 2), score_info = NA)
+
+  # Function uses the formula (11-2) for the edges (2 and bins-1) and for the
+  # bins in the middle it uses formula (11-3) of Sands, Waters & McBride (1997)
+  for (i in 2:(bins - 1)) {
+    i_n2 <- i - 2 # n2: negative 2
+    i_n1 <- i - 1
+    i_p1 <- i + 1 # p1: positive 1
+    i_p2 <- i + 2
+    theta_n1 <- mean(dtf$true_theta[dtf$group == i_n1], na.rm = TRUE)
+    theta <- mean(dtf$true_theta[dtf$group == i], na.rm = TRUE)
+    theta_p1 <- mean(dtf$true_theta[dtf$group == i_p1], na.rm = TRUE)
+    if (!i %in% c(2, bins - 1)) {
+      theta_n2 <- mean(dtf$true_theta[dtf$group == i_n2], na.rm = TRUE)
+      theta_p2 <- mean(dtf$true_theta[dtf$group == i_p2], na.rm = TRUE)
+    }
+
+    mean_theta_n1 <- mean(dtf$est_theta[dtf$group == i_n1], na.rm = TRUE)
+    mean_theta_p1 <- mean(dtf$est_theta[dtf$group == i_p1], na.rm = TRUE)
+    if (!i %in% c(2, bins - 1)) {
+      mean_theta_n2 <- mean(dtf$est_theta[dtf$group == i_n2], na.rm = TRUE)
+      mean_theta_p2 <- mean(dtf$est_theta[dtf$group == i_p2], na.rm = TRUE)
+    }
+
+    sd_theta_n1 <- sd(dtf$est_theta[dtf$group == i_n1], na.rm = TRUE)
+    sd_theta <-    sd(dtf$est_theta[dtf$group == i], na.rm = TRUE)
+    sd_theta_p1 <- sd(dtf$est_theta[dtf$group == i_p1], na.rm = TRUE)
+    if (!i %in% c(2, bins - 1)) {
+      sd_theta_n2 <- sd(dtf$est_theta[dtf$group == i_n2], na.rm = TRUE)
+      sd_theta_p2 <- sd(dtf$est_theta[dtf$group == i_p2], na.rm = TRUE)
+    }
+
+    s_info$true_theta[i - 1] <- theta
+
+    if (i %in% c(2, bins - 1)) {
+      s_info$score_info[i - 1] <- (mean_theta_p1 - mean_theta_n1)^2 /
+        ((theta_p1 - theta_n1)^2 * sd_theta^2)
+    } else {
+      s_info$score_info[i - 1] <- (
+        25 * (mean_theta_p2 +  mean_theta_p1 - mean_theta_n1 -
+                mean_theta_n2)^2) /
+        ((theta_p2 + theta_p1 - theta_n1 - theta_n2)^2 *
+           (sd_theta_n2 + sd_theta_n1 + sd_theta + sd_theta_p1 + sd_theta_p2)^2)
+    }
+  }
+  return(s_info)
+}
+
+

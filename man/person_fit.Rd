@@ -2,24 +2,24 @@
 % Please edit documentation in R/person_fit.R
 \name{person_fit}
 \alias{person_fit}
-\alias{person_fit,Item-method}
-\alias{person_fit,Itempool-method}
-\alias{person_fit,Testlet-method}
+\alias{person_fit,Response_set,Itempool-method}
+\alias{person_fit,ANY,Itempool-method}
+\alias{person_fit,ANY,Testlet-method}
 \title{Calculate person-fit indices}
 \usage{
-person_fit(ip, resp, theta, type = "lz")
+person_fit(resp, ip, theta, type = "lz")
 
-\S4method{person_fit}{Item}(ip, resp, theta, type = "lz")
+\S4method{person_fit}{Response_set,Itempool}(resp, ip, theta, type = "lz")
 
-\S4method{person_fit}{Itempool}(ip, resp, theta, type = "lz")
+\S4method{person_fit}{ANY,Itempool}(resp, ip, theta, type = "lz")
 
-\S4method{person_fit}{Testlet}(ip, resp, theta, type = "lz")
+\S4method{person_fit}{ANY,Testlet}(resp, ip, theta, type = "lz")
 }
 \arguments{
+\item{resp}{A vector of item responses.}
+
 \item{ip}{An \code{\link{Item-class}}, \code{\link{Itempool-class}} or a
 \code{\link{Testlet-class}} object.}
-
-\item{resp}{A vector of item responses.}
 
 \item{theta}{An vector containing ability parameters.}
 

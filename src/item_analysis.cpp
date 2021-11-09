@@ -54,12 +54,12 @@ Rcpp::NumericVector avg_rank(Rcpp::NumericVector x)
 //#############################################################################@
 // [[Rcpp::export]]
 double biserial_cpp(Rcpp::NumericVector score,
-                                 Rcpp::NumericVector total_score,
+                                 Rcpp::NumericVector criterion,
                                  std::string type = "default") {
-  
+
   // Remove the NAs from the vectors
-  // It is assumed that if score is NA total_score is automatically NA
-  total_score = total_score[!is_na(score)];
+  // It is assumed that if score is NA criterion is automatically NA
+  criterion = criterion[!is_na(score)];
   score = score[!is_na(score)];
 
   double n = score.size();
@@ -69,12 +69,12 @@ double biserial_cpp(Rcpp::NumericVector score,
     // Kraemer pointed out that Cureton's (1958, 1964) rank biserial correlation
     // coefficient "essentially replaces observations with their ranks and then
     // applies Brogden's approach. " (p.280)
-    total_score = avg_rank(total_score);
+    criterion = avg_rank(criterion);
     type = "brogden";
   }
   if ((type == "clemans-lord") | (type == "brogden")) {
     // Calculate deviation
-    dev = total_score - mean(total_score);
+    dev = criterion - mean(criterion);
     NumericVector sorted_score = clone(score);
     std::sort(sorted_score.begin(), sorted_score.end(), std::greater<int>());
     double num = sum(score * dev);
@@ -85,13 +85,13 @@ double biserial_cpp(Rcpp::NumericVector score,
   }
 
   // Mean of total scores of  examinees who correctly answered the item
-  NumericVector ts1 = total_score[score == 1];
-  NumericVector ts0 = total_score[score == 0];
+  NumericVector ts1 = criterion[score == 1];
+  NumericVector ts0 = criterion[score == 0];
   double mu0 = mean(ts0);
   double mu1 = mean(ts1);
   double n0 = ts0.size();
   double n1 = ts1.size();
-  double sigma = sd(total_score);
+  double sigma = sd(criterion);
   double u = R::dnorm(R::qnorm(n1/n, 0, 1.0, 1, 0),  0, 1.0, 0);
 
   // Rcout << "rnorm " << R::qnorm(.75, 0, 1.0, 1, 0) << std::endl;

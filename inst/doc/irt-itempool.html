@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+<title>Creating an <code>Itempool</code> Object</title>
+
+<script type="text/javascript">
+window.onload = function() {
+  var imgs = document.getElementsByTagName('img'), i, img;
+  for (i = 0; i < imgs.length; i++) {
+    img = imgs[i];
+    // center an image if it is the only element of its parent
+    if (img.parentElement.childElementCount === 1)
+      img.parentElement.style.textAlign = 'center';
+  }
+};
+</script>
+
+<!-- Styles for R syntax highlighter -->
+<style type="text/css">
+   pre .operator,
+   pre .paren {
+     color: rgb(104, 118, 135)
+   }
+
+   pre .literal {
+     color: #990073
+   }
+
+   pre .number {
+     color: #099;
+   }
+
+   pre .comment {
+     color: #998;
+     font-style: italic
+   }
+
+   pre .keyword {
+     color: #900;
+     font-weight: bold
+   }
+
+   pre .identifier {
+     color: rgb(0, 0, 0);
+   }
+
+   pre .string {
+     color: #d14;
+   }
+</style>
+
+<!-- R syntax highlighter -->
+<script type="text/javascript">
+var hljs=new function(){function m(p){return p.replace(/&/gm,"&amp;").replace(/</gm,"&lt;")}function f(r,q,p){return RegExp(q,"m"+(r.cI?"i":"")+(p?"g":""))}function b(r){for(var p=0;p<r.childNodes.length;p++){var q=r.childNodes[p];if(q.nodeName=="CODE"){return q}if(!(q.nodeType==3&&q.nodeValue.match(/\s+/))){break}}}function h(t,s){var p="";for(var r=0;r<t.childNodes.length;r++){if(t.childNodes[r].nodeType==3){var q=t.childNodes[r].nodeValue;if(s){q=q.replace(/\n/g,"")}p+=q}else{if(t.childNodes[r].nodeName=="BR"){p+="\n"}else{p+=h(t.childNodes[r])}}}if(/MSIE [678]/.test(navigator.userAgent)){p=p.replace(/\r/g,"\n")}return p}function a(s){var r=s.className.split(/\s+/);r=r.concat(s.parentNode.className.split(/\s+/));for(var q=0;q<r.length;q++){var p=r[q].replace(/^language-/,"");if(e[p]){return p}}}function c(q){var p=[];(function(s,t){for(var r=0;r<s.childNodes.length;r++){if(s.childNodes[r].nodeType==3){t+=s.childNodes[r].nodeValue.length}else{if(s.childNodes[r].nodeName=="BR"){t+=1}else{if(s.childNodes[r].nodeType==1){p.push({event:"start",offset:t,node:s.childNodes[r]});t=arguments.callee(s.childNodes[r],t);p.push({event:"stop",offset:t,node:s.childNodes[r]})}}}}return t})(q,0);return p}function k(y,w,x){var q=0;var z="";var s=[];function u(){if(y.length&&w.length){if(y[0].offset!=w[0].offset){return(y[0].offset<w[0].offset)?y:w}else{return w[0].event=="start"?y:w}}else{return y.length?y:w}}function t(D){var A="<"+D.nodeName.toLowerCase();for(var B=0;B<D.attributes.length;B++){var C=D.attributes[B];A+=" "+C.nodeName.toLowerCase();if(C.value!==undefined&&C.value!==false&&C.value!==null){A+='="'+m(C.value)+'"'}}return A+">"}while(y.length||w.length){var v=u().splice(0,1)[0];z+=m(x.substr(q,v.offset-q));q=v.offset;if(v.event=="start"){z+=t(v.node);s.push(v.node)}else{if(v.event=="stop"){var p,r=s.length;do{r--;p=s[r];z+=("</"+p.nodeName.toLowerCase()+">")}while(p!=v.node);s.splice(r,1);while(r<s.length){z+=t(s[r]);r++}}}}return z+m(x.substr(q))}function j(){function q(x,y,v){if(x.compiled){return}var u;var s=[];if(x.k){x.lR=f(y,x.l||hljs.IR,true);for(var w in x.k){if(!x.k.hasOwnProperty(w)){continue}if(x.k[w] instanceof Object){u=x.k[w]}else{u=x.k;w="keyword"}for(var r in u){if(!u.hasOwnProperty(r)){continue}x.k[r]=[w,u[r]];s.push(r)}}}if(!v){if(x.bWK){x.b="\\b("+s.join("|")+")\\s"}x.bR=f(y,x.b?x.b:"\\B|\\b");if(!x.e&&!x.eW){x.e="\\B|\\b"}if(x.e){x.eR=f(y,x.e)}}if(x.i){x.iR=f(y,x.i)}if(x.r===undefined){x.r=1}if(!x.c){x.c=[]}x.compiled=true;for(var t=0;t<x.c.length;t++){if(x.c[t]=="self"){x.c[t]=x}q(x.c[t],y,false)}if(x.starts){q(x.starts,y,false)}}for(var p in e){if(!e.hasOwnProperty(p)){continue}q(e[p].dM,e[p],true)}}function d(B,C){if(!j.called){j();j.called=true}function q(r,M){for(var L=0;L<M.c.length;L++){if((M.c[L].bR.exec(r)||[null])[0]==r){return M.c[L]}}}function v(L,r){if(D[L].e&&D[L].eR.test(r)){return 1}if(D[L].eW){var M=v(L-1,r);return M?M+1:0}return 0}function w(r,L){return L.i&&L.iR.test(r)}function K(N,O){var M=[];for(var L=0;L<N.c.length;L++){M.push(N.c[L].b)}var r=D.length-1;do{if(D[r].e){M.push(D[r].e)}r--}while(D[r+1].eW);if(N.i){M.push(N.i)}return f(O,M.join("|"),true)}function p(M,L){var N=D[D.length-1];if(!N.t){N.t=K(N,E)}N.t.lastIndex=L;var r=N.t.exec(M);return r?[M.substr(L,r.index-L),r[0],false]:[M.substr(L),"",true]}function z(N,r){var L=E.cI?r[0].toLowerCase():r[0];var M=N.k[L];if(M&&M instanceof Array){return M}return false}function F(L,P){L=m(L);if(!P.k){return L}var r="";var O=0;P.lR.lastIndex=0;var M=P.lR.exec(L);while(M){r+=L.substr(O,M.index-O);var N=z(P,M);if(N){x+=N[1];r+='<span class="'+N[0]+'">'+M[0]+"</span>"}else{r+=M[0]}O=P.lR.lastIndex;M=P.lR.exec(L)}return r+L.substr(O,L.length-O)}function J(L,M){if(M.sL&&e[M.sL]){var r=d(M.sL,L);x+=r.keyword_count;return r.value}else{return F(L,M)}}function I(M,r){var L=M.cN?'<span class="'+M.cN+'">':"";if(M.rB){y+=L;M.buffer=""}else{if(M.eB){y+=m(r)+L;M.buffer=""}else{y+=L;M.buffer=r}}D.push(M);A+=M.r}function G(N,M,Q){var R=D[D.length-1];if(Q){y+=J(R.buffer+N,R);return false}var P=q(M,R);if(P){y+=J(R.buffer+N,R);I(P,M);return P.rB}var L=v(D.length-1,M);if(L){var O=R.cN?"</span>":"";if(R.rE){y+=J(R.buffer+N,R)+O}else{if(R.eE){y+=J(R.buffer+N,R)+O+m(M)}else{y+=J(R.buffer+N+M,R)+O}}while(L>1){O=D[D.length-2].cN?"</span>":"";y+=O;L--;D.length--}var r=D[D.length-1];D.length--;D[D.length-1].buffer="";if(r.starts){I(r.starts,"")}return R.rE}if(w(M,R)){throw"Illegal"}}var E=e[B];var D=[E.dM];var A=0;var x=0;var y="";try{var s,u=0;E.dM.buffer="";do{s=p(C,u);var t=G(s[0],s[1],s[2]);u+=s[0].length;if(!t){u+=s[1].length}}while(!s[2]);if(D.length>1){throw"Illegal"}return{r:A,keyword_count:x,value:y}}catch(H){if(H=="Illegal"){return{r:0,keyword_count:0,value:m(C)}}else{throw H}}}function g(t){var p={keyword_count:0,r:0,value:m(t)};var r=p;for(var q in e){if(!e.hasOwnProperty(q)){continue}var s=d(q,t);s.language=q;if(s.keyword_count+s.r>r.keyword_count+r.r){r=s}if(s.keyword_count+s.r>p.keyword_count+p.r){r=p;p=s}}if(r.language){p.second_best=r}return p}function i(r,q,p){if(q){r=r.replace(/^((<[^>]+>|\t)+)/gm,function(t,w,v,u){return w.replace(/\t/g,q)})}if(p){r=r.replace(/\n/g,"<br>")}return r}function n(t,w,r){var x=h(t,r);var v=a(t);var y,s;if(v){y=d(v,x)}else{return}var q=c(t);if(q.length){s=document.createElement("pre");s.innerHTML=y.value;y.value=k(q,c(s),x)}y.value=i(y.value,w,r);var u=t.className;if(!u.match("(\\s|^)(language-)?"+v+"(\\s|$)")){u=u?(u+" "+v):v}if(/MSIE [678]/.test(navigator.userAgent)&&t.tagName=="CODE"&&t.parentNode.tagName=="PRE"){s=t.parentNode;var p=document.createElement("div");p.innerHTML="<pre><code>"+y.value+"</code></pre>";t=p.firstChild.firstChild;p.firstChild.cN=s.cN;s.parentNode.replaceChild(p.firstChild,s)}else{t.innerHTML=y.value}t.className=u;t.result={language:v,kw:y.keyword_count,re:y.r};if(y.second_best){t.second_best={language:y.second_best.language,kw:y.second_best.keyword_count,re:y.second_best.r}}}function o(){if(o.called){return}o.called=true;var r=document.getElementsByTagName("pre");for(var p=0;p<r.length;p++){var q=b(r[p]);if(q){n(q,hljs.tabReplace)}}}function l(){if(window.addEventListener){window.addEventListener("DOMContentLoaded",o,false);window.addEventListener("load",o,false)}else{if(window.attachEvent){window.attachEvent("onload",o)}else{window.onload=o}}}var e={};this.LANGUAGES=e;this.highlight=d;this.highlightAuto=g;this.fixMarkup=i;this.highlightBlock=n;this.initHighlighting=o;this.initHighlightingOnLoad=l;this.IR="[a-zA-Z][a-zA-Z0-9_]*";this.UIR="[a-zA-Z_][a-zA-Z0-9_]*";this.NR="\\b\\d+(\\.\\d+)?";this.CNR="\\b(0[xX][a-fA-F0-9]+|(\\d+(\\.\\d*)?|\\.\\d+)([eE][-+]?\\d+)?)";this.BNR="\\b(0b[01]+)";this.RSR="!|!=|!==|%|%=|&|&&|&=|\\*|\\*=|\\+|\\+=|,|\\.|-|-=|/|/=|:|;|<|<<|<<=|<=|=|==|===|>|>=|>>|>>=|>>>|>>>=|\\?|\\[|\\{|\\(|\\^|\\^=|\\||\\|=|\\|\\||~";this.ER="(?![\\s\\S])";this.BE={b:"\\\\.",r:0};this.ASM={cN:"string",b:"'",e:"'",i:"\\n",c:[this.BE],r:0};this.QSM={cN:"string",b:'"',e:'"',i:"\\n",c:[this.BE],r:0};this.CLCM={cN:"comment",b:"//",e:"$"};this.CBLCLM={cN:"comment",b:"/\\*",e:"\\*/"};this.HCM={cN:"comment",b:"#",e:"$"};this.NM={cN:"number",b:this.NR,r:0};this.CNM={cN:"number",b:this.CNR,r:0};this.BNM={cN:"number",b:this.BNR,r:0};this.inherit=function(r,s){var p={};for(var q in r){p[q]=r[q]}if(s){for(var q in s){p[q]=s[q]}}return p}}();hljs.LANGUAGES.cpp=function(){var a={keyword:{"false":1,"int":1,"float":1,"while":1,"private":1,"char":1,"catch":1,"export":1,virtual:1,operator:2,sizeof:2,dynamic_cast:2,typedef:2,const_cast:2,"const":1,struct:1,"for":1,static_cast:2,union:1,namespace:1,unsigned:1,"long":1,"throw":1,"volatile":2,"static":1,"protected":1,bool:1,template:1,mutable:1,"if":1,"public":1,friend:2,"do":1,"return":1,"goto":1,auto:1,"void":2,"enum":1,"else":1,"break":1,"new":1,extern:1,using:1,"true":1,"class":1,asm:1,"case":1,typeid:1,"short":1,reinterpret_cast:2,"default":1,"double":1,register:1,explicit:1,signed:1,typename:1,"try":1,"this":1,"switch":1,"continue":1,wchar_t:1,inline:1,"delete":1,alignof:1,char16_t:1,char32_t:1,constexpr:1,decltype:1,noexcept:1,nullptr:1,static_assert:1,thread_local:1,restrict:1,_Bool:1,complex:1},built_in:{std:1,string:1,cin:1,cout:1,cerr:1,clog:1,stringstream:1,istringstream:1,ostringstream:1,auto_ptr:1,deque:1,list:1,queue:1,stack:1,vector:1,map:1,set:1,bitset:1,multiset:1,multimap:1,unordered_set:1,unordered_map:1,unordered_multiset:1,unordered_multimap:1,array:1,shared_ptr:1}};return{dM:{k:a,i:"</",c:[hljs.CLCM,hljs.CBLCLM,hljs.QSM,{cN:"string",b:"'\\\\?.",e:"'",i:"."},{cN:"number",b:"\\b(\\d+(\\.\\d*)?|\\.\\d+)(u|U|l|L|ul|UL|f|F)"},hljs.CNM,{cN:"preprocessor",b:"#",e:"$"},{cN:"stl_container",b:"\\b(deque|list|queue|stack|vector|map|set|bitset|multiset|multimap|unordered_map|unordered_set|unordered_multiset|unordered_multimap|array)\\s*<",e:">",k:a,r:10,c:["self"]}]}}}();hljs.LANGUAGES.r={dM:{c:[hljs.HCM,{cN:"number",b:"\\b0[xX][0-9a-fA-F]+[Li]?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+(?:[eE][+\\-]?\\d*)?L\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+\\.(?!\\d)(?:i\\b)?",e:hljs.IMMEDIATE_RE,r:1},{cN:"number",b:"\\b\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\.\\d+(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"keyword",b:"(?:tryCatch|library|setGeneric|setGroupGeneric)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\.",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\d+(?![\\w.])",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\b(?:function)",e:hljs.IMMEDIATE_RE,r:2},{cN:"keyword",b:"(?:if|in|break|next|repeat|else|for|return|switch|while|try|stop|warning|require|attach|detach|source|setMethod|setClass)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"literal",b:"(?:NA|NA_integer_|NA_real_|NA_character_|NA_complex_)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"literal",b:"(?:NULL|TRUE|FALSE|T|F|Inf|NaN)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"identifier",b:"[a-zA-Z.][a-zA-Z0-9._]*\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"<\\-(?!\\s*\\d)",e:hljs.IMMEDIATE_RE,r:2},{cN:"operator",b:"\\->|<\\-",e:hljs.IMMEDIATE_RE,r:1},{cN:"operator",b:"%%|~",e:hljs.IMMEDIATE_RE},{cN:"operator",b:">=|<=|==|!=|\\|\\||&&|=|\\+|\\-|\\*|/|\\^|>|<|!|&|\\||\\$|:",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"%",e:"%",i:"\\n",r:1},{cN:"identifier",b:"`",e:"`",r:0},{cN:"string",b:'"',e:'"',c:[hljs.BE],r:0},{cN:"string",b:"'",e:"'",c:[hljs.BE],r:0},{cN:"paren",b:"[[({\\])}]",e:hljs.IMMEDIATE_RE,r:0}]}};
+hljs.initHighlightingOnLoad();
+</script>
+
+
+
+<style type="text/css">
+body, td {
+   font-family: sans-serif;
+   background-color: white;
+   font-size: 13px;
+}
+
+body {
+  max-width: 800px;
+  margin: auto;
+  padding: 1em;
+  line-height: 20px;
+}
+
+tt, code, pre {
+   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
+}
+
+h1 {
+   font-size:2.2em;
+}
+
+h2 {
+   font-size:1.8em;
+}
+
+h3 {
+   font-size:1.4em;
+}
+
+h4 {
+   font-size:1.0em;
+}
+
+h5 {
+   font-size:0.9em;
+}
+
+h6 {
+   font-size:0.8em;
+}
+
+a:visited {
+   color: rgb(50%, 0%, 50%);
+}
+
+pre, img {
+  max-width: 100%;
+}
+pre {
+  overflow-x: auto;
+}
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code {
+  font-size: 92%;
+  border: 1px solid #ccc;
+}
+
+code[class] {
+  background-color: #F8F8F8;
+}
+
+table, td, th {
+  border: none;
+}
+
+blockquote {
+   color:#666666;
+   margin:0;
+   padding-left: 1em;
+   border-left: 0.5em #EEE solid;
+}
+
+hr {
+   height: 0px;
+   border-bottom: none;
+   border-top-width: thin;
+   border-top-style: dotted;
+   border-top-color: #999999;
+}
+
+@media print {
+   * {
+      background: transparent !important;
+      color: black !important;
+      filter:none !important;
+      -ms-filter: none !important;
+   }
+
+   body {
+      font-size:12pt;
+      max-width:100%;
+   }
+
+   a, a:visited {
+      text-decoration: underline;
+   }
+
+   hr {
+      visibility: hidden;
+      page-break-before: always;
+   }
+
+   pre, blockquote {
+      padding-right: 1em;
+      page-break-inside: avoid;
+   }
+
+   tr, img {
+      page-break-inside: avoid;
+   }
+
+   img {
+      max-width: 100% !important;
+   }
+
+   @page :left {
+      margin: 15mm 20mm 15mm 10mm;
+   }
+
+   @page :right {
+      margin: 15mm 10mm 15mm 20mm;
+   }
+
+   p, h2, h3 {
+      orphans: 3; widows: 3;
+   }
+
+   h2, h3 {
+      page-break-after: avoid;
+   }
+}
+</style>
+
+
+
+</head>
+
+<body>
+<pre><code class="r">library(irt)
+</code></pre>
+
+<p>An <code>Itempool</code> object is a collection of <code>Item</code> and <code>Testlet</code> objects. It
+contains information of all items in a test or all items that will be used in an
+item pool of an adaptive test.</p>
+
+<h2>Creating an <code>Itempool</code> Object</h2>
+
+<h3>Dichotomous Items (<code>Rasch</code>, <code>1PL</code>, <code>2PL</code>, <code>3PL</code>, <code>4PL</code>)</h3>
+
+<p>There are multiple ways to create an <code>Itempool</code> object. If all of the items 
+are from the same psychometric model, then using a <code>data.frame</code> object to create
+an <code>Itempool</code> object is the most straightforward way. </p>
+
+<pre><code class="r"># Create an item pool of 2PL items:
+ip_dtf &lt;- data.frame(
+  a = c(1.1821, 0.6645, 0.8994, 1.0731, 1.0252, 1.2325, 0.9278, 1.0967), 
+  b = c(0.4185, -0.5992, 0.2193, 0.8823, 0.4652, 1.4006, -1.1193, -0.3747))
+
+ip &lt;- itempool(ip_dtf, model = &quot;2PL&quot;)
+ip
+#&gt; An object of class &#39;Itempool&#39;.
+#&gt; Model of items: 2PL
+#&gt; D = 1
+#&gt; 
+#&gt;   item_id     a      b
+#&gt;   &lt;chr&gt;   &lt;dbl&gt;  &lt;dbl&gt;
+#&gt; 1 Item_1  1.18   0.418
+#&gt; 2 Item_2  0.664 -0.599
+#&gt; 3 Item_3  0.899  0.219
+#&gt; 4 Item_4  1.07   0.882
+#&gt; 5 Item_5  1.03   0.465
+#&gt; 6 Item_6  1.23   1.40 
+#&gt; 7 Item_7  0.928 -1.12 
+#&gt; 8 Item_8  1.10  -0.375
+</code></pre>
+
+<p>If desired, <code>item_id</code>&#39;s and content areas of each item can be specified:</p>
+
+<pre><code class="r">ip_dtf &lt;- data.frame( 
+  a = c(1.1821, 0.6645, 0.8994, 1.0731, 1.0252, 1.2325, 0.9278, 1.0967), 
+  b = c(0.4185, -0.5992, 0.2193, 0.8823, 0.4652, 1.4006, -1.1193, -0.3747),
+  item_id = c(&quot;i1&quot;, &quot;i2&quot;, &quot;i3&quot;, &quot;i4&quot;, &quot;i5&quot;, &quot;i6&quot;, &quot;i7&quot;, &quot;i8&quot;), 
+  content = c(&quot;Geometry&quot;, &quot;Geometry&quot;, &quot;Algebra&quot;, &quot;Algebra&quot;, &quot;Algebra&quot;, 
+              &quot;Geometry&quot;, &quot;Algebra&quot;, &quot;Algebra&quot;)
+  )
+
+ip &lt;- itempool(ip_dtf, model = &quot;2PL&quot;)
+ip
+#&gt; An object of class &#39;Itempool&#39;.
+#&gt; Model of items: 2PL
+#&gt; D = 1
+#&gt; 
+#&gt;   item_id     a      b content 
+#&gt;   &lt;chr&gt;   &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;   
+#&gt; 1 i1      1.18   0.418 Geometry
+#&gt; 2 i2      0.664 -0.599 Geometry
+#&gt; 3 i3      0.899  0.219 Algebra 
+#&gt; 4 i4      1.07   0.882 Algebra 
+#&gt; 5 i5      1.03   0.465 Algebra 
+#&gt; 6 i6      1.23   1.40  Geometry
+#&gt; 7 i7      0.928 -1.12  Algebra 
+#&gt; 8 i8      1.10  -0.375 Algebra
+</code></pre>
+
+<p>By default, the scaling parameter <code>D</code> for most of the models are set to 1. 
+This can be overwritten: </p>
+
+<pre><code class="r">ip &lt;- itempool(ip_dtf, model = &quot;2PL&quot;, D = 1.7)
+ip
+#&gt; An object of class &#39;Itempool&#39;.
+#&gt; Model of items: 2PL
+#&gt; D = 1.7
+#&gt; 
+#&gt;   item_id     a      b content 
+#&gt;   &lt;chr&gt;   &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;   
+#&gt; 1 i1      1.18   0.418 Geometry
+#&gt; 2 i2      0.664 -0.599 Geometry
+#&gt; 3 i3      0.899  0.219 Algebra 
+#&gt; 4 i4      1.07   0.882 Algebra 
+#&gt; 5 i5      1.03   0.465 Algebra 
+#&gt; 6 i6      1.23   1.40  Geometry
+#&gt; 7 i7      0.928 -1.12  Algebra 
+#&gt; 8 i8      1.10  -0.375 Algebra
+</code></pre>
+
+<p>Please review <a href="irt-models.html">psychometric models</a> for other models and 
+required parameters. For example, for <code>3PL</code> model: </p>
+
+<pre><code class="r">ip_dtf &lt;- data.frame(a = c(0.9303, 1.9423, 0.8417, 1.2622), 
+                     b = c(1.3515, -0.5039, -1.7263, 1.3125), 
+                     c = c(0.2301, 0.2224, 0.0967, 0.0112))
+ip &lt;- itempool(ip_dtf, model = &quot;3PL&quot;, D = 1.7)
+ip
+#&gt; An object of class &#39;Itempool&#39;.
+#&gt; Model of items: 3PL
+#&gt; D = 1.7
+#&gt; 
+#&gt;   item_id     a      b      c
+#&gt;   &lt;chr&gt;   &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;
+#&gt; 1 Item_1  0.930  1.35  0.230 
+#&gt; 2 Item_2  1.94  -0.504 0.222 
+#&gt; 3 Item_3  0.842 -1.73  0.0967
+#&gt; 4 Item_4  1.26   1.31  0.0112
+</code></pre>
+
+<h3>Polytomous Items (<code>GRM</code>, <code>GPCM</code>, <code>PCM</code>)</h3>
+
+<p>For polytomous items, usually a vector of item thresholds should be specified.
+So, threshold (or step) parameters can given as the following example:</p>
+
+<pre><code class="r">ip_dtf &lt;- data.frame(a = c(1.8619, 1.2458, 1.3213, 0.6174, 1.3625), 
+                     b1 = c(-0.3666, -0.9717, -1.1588, 0.1093, 0.0858), 
+                     b2 = c(0.3178, 0.2458, -0.4978, 0.6437, 0.5161), 
+                     b3 = c(1.0384, 1.2382, 1.2787, 1.3609, 1.2145))
+
+ip &lt;- itempool(ip_dtf, model = &quot;GPCM&quot;)
+ip
+#&gt; An object of class &#39;Itempool&#39;.
+#&gt; Model of items: GPCM
+#&gt; D = 1
+#&gt; 
+#&gt;   item_id     a      b1     b2    b3
+#&gt;   &lt;chr&gt;   &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt;
+#&gt; 1 Item_1  1.86  -0.367   0.318  1.04
+#&gt; 2 Item_2  1.25  -0.972   0.246  1.24
+#&gt; 3 Item_3  1.32  -1.16   -0.498  1.28
+#&gt; 4 Item_4  0.617  0.109   0.644  1.36
+#&gt; 5 Item_5  1.36   0.0858  0.516  1.21
+</code></pre>
+
+<p>The number of threshold parameters can be differ among items. In those cases, 
+simply fill the rest of the values using <code>NA</code>:</p>
+
+<pre><code class="r">ip_dtf &lt;- data.frame(a = c(1.175, 0.981, 1.0625, 0.9545, 0.7763), 
+                     b1 = c(-0.9633, -0.4098, -0.298, 0.0576, -0.5342), 
+                     b2 = c(-0.6213, NA, 0.4792, 0.538, 0.0363), 
+                     b3 = c(0.5938, NA, NA, 0.9815, NA), 
+                     b4 = c(NA, NA, NA, 1.3351, NA))
+ip &lt;- itempool(ip_dtf, model = &quot;GRM&quot;, D = 1.702)
+ip
+#&gt; An object of class &#39;Itempool&#39;.
+#&gt; Model of items: GRM
+#&gt; D = 1.702
+#&gt; 
+#&gt;   item_id     a      b1      b2     b3    b4
+#&gt;   &lt;chr&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt;
+#&gt; 1 Item_1  1.18  -0.963  -0.621   0.594 NA   
+#&gt; 2 Item_2  0.981 -0.410  NA      NA     NA   
+#&gt; 3 Item_3  1.06  -0.298   0.479  NA     NA   
+#&gt; 4 Item_4  0.954  0.0576  0.538   0.982  1.34
+#&gt; 5 Item_5  0.776 -0.534   0.0363 NA     NA
+</code></pre>
+
+<p>An example re-parametrized &ldquo;GPCM&rdquo; item pool (see 
+<a href="irt-models.html">psychometric models</a> vignette for details of this model):</p>
+
+<pre><code class="r">ip_dtf &lt;- data.frame(a = c(1.1152, 0.8231, 0.9527, 0.6423), 
+                     b = c(0.234, 0.0219,  0.7424, -0.3426), 
+                     d1 = c(0.0081, 0.8569, -1.5181, -0.8458), 
+                     d2 = c(0.3392, NA, -0.1978, 0.3756), 
+                     d3 = c(NA, NA, 0.1677, NA))
+ip &lt;- itempool(ip_dtf, model = &quot;GPCM2&quot;, D = 1.702)
+ip
+#&gt; An object of class &#39;Itempool&#39;.
+#&gt; Model of items: GPCM2
+#&gt; D = 1.702
+#&gt; 
+#&gt;   item_id     a       b      d1     d2     d3
+#&gt;   &lt;chr&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;
+#&gt; 1 Item_1  1.12   0.234   0.0081  0.339 NA    
+#&gt; 2 Item_2  0.823  0.0219  0.857  NA     NA    
+#&gt; 3 Item_3  0.953  0.742  -1.52   -0.198  0.168
+#&gt; 4 Item_4  0.642 -0.343  -0.846   0.376 NA
+</code></pre>
+
+<h3>Mixture of Models</h3>
+
+<p>If an <code>Itempool</code> object should consist of mixture of items, then the 
+item parameter of each item should be specified as the examples above. But,
+<code>model</code> should be specified for each item in the <code>data.frame</code>.</p>
+
+<p>For example, the following item pool consists of three <code>3PL</code> items and two
+<code>GPCM</code> items:</p>
+
+<pre><code class="r">ip_dtf &lt;- data.frame(
+  model = c(&quot;3PL&quot;, &quot;3PL&quot;, &quot;3PL&quot;, &quot;GPCM&quot;, &quot;GPCM&quot;), 
+  a = c(1.6242, 0.9471, 1.4643, 0.6582, 1.0234), 
+  b = c(0.4563, -0.2994, -0.3027, NA, NA), 
+  c = c(0.0156, 0.0339, 0.1243, NA, NA), 
+  b1 = c(NA, NA, NA, -1.1532, -1.2171), 
+  b2 = c(NA, NA, NA, -0.5384, -0.3992), 
+  b3 = c(NA, NA, NA, 0.0591, 0.1431), 
+  b4 = c(NA, NA, NA, NA, 1.52), 
+  D = c(1.7, 1.7, 1.7, 1, 1))
+ip &lt;- itempool(ip_dtf)
+ip
+#&gt; An object of class &#39;Itempool&#39;.
+#&gt; 
+#&gt;   item_id model     a      b       c    b1     b2      b3    b4     D
+#&gt;   &lt;chr&gt;   &lt;chr&gt; &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+#&gt; 1 Item_1  3PL   1.62   0.456  0.0156 NA    NA     NA      NA      1.7
+#&gt; 2 Item_2  3PL   0.947 -0.299  0.0339 NA    NA     NA      NA      1.7
+#&gt; 3 Item_3  3PL   1.46  -0.303  0.124  NA    NA     NA      NA      1.7
+#&gt; 4 Item_4  GPCM  0.658 NA     NA      -1.15 -0.538  0.0591 NA      1  
+#&gt; 5 Item_5  GPCM  1.02  NA     NA      -1.22 -0.399  0.143   1.52   1
+</code></pre>
+
+<h3>Other Ways to Create <code>Itempool</code> Objects</h3>
+
+<p>An <code>Itempool</code> object can be created using individual <code>Item</code> and <code>Testlet</code> objects.
+For example, in the the following code, individual <code>Item</code> objects are combined
+to create an <code>Itempool</code> object. </p>
+
+<pre><code class="r">ip &lt;- c(item(model = &quot;3PL&quot;, a = 2.09, b = 1.17, c = 0.25, item_id = &quot;i1&quot;), 
+        item(model = &quot;3PL&quot;, a = 0.59, b = 0.77, c = 0.13, item_id = &quot;i2&quot;), 
+        item(model = &quot;3PL&quot;, a = 1.67, b = 1.05, c = 0.04, item_id = &quot;i3&quot;), 
+        item(model = &quot;3PL&quot;, a = 0.84, b = -1.8, c = 0.24, item_id = &quot;i4&quot;), 
+        item(model = &quot;GPCM&quot;, a = 1.96, b = c(-0.94, -0.09, 0.25), item_id = &quot;i5&quot;), 
+        item(model = &quot;GPCM&quot;, a = 0.59, b = c(0.07, 1.46), item_id = &quot;i6&quot;), 
+        item(model = &quot;GPCM&quot;, a = 0.73, b = c(-1.2, -0.78, 0.2, 1.8), item_id = &quot;i7&quot;))
+ip
+#&gt; An object of class &#39;Itempool&#39;.
+#&gt; D = 1
+#&gt; 
+#&gt;   item_id model     a     b     c    b1    b2    b3    b4
+#&gt;   &lt;chr&gt;   &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+#&gt; 1 i1      3PL    2.09  1.17  0.25 NA    NA    NA     NA  
+#&gt; 2 i2      3PL    0.59  0.77  0.13 NA    NA    NA     NA  
+#&gt; 3 i3      3PL    1.67  1.05  0.04 NA    NA    NA     NA  
+#&gt; 4 i4      3PL    0.84 -1.8   0.24 NA    NA    NA     NA  
+#&gt; 5 i5      GPCM   1.96 NA    NA    -0.94 -0.09  0.25  NA  
+#&gt; 6 i6      GPCM   0.59 NA    NA     0.07  1.46 NA     NA  
+#&gt; 7 i7      GPCM   0.73 NA    NA    -1.2  -0.78  0.2    1.8
+</code></pre>
+
+<p>Using this method, <code>Testlet</code> objects can be added to the item pool. </p>
+
+<pre><code class="r"># Create a testlet object with three items. 
+t1 &lt;- testlet(c(item(model = &quot;3PL&quot;, a = 2.09, b = 1.17, c = 0.25, item_id = &quot;i1&quot;), 
+                item(model = &quot;3PL&quot;, a = 0.59, b = 0.77, c = 0.13, item_id = &quot;i2&quot;), 
+                item(model = &quot;3PL&quot;, a = 1.67, b = 1.05, c = 0.04, item_id = &quot;i3&quot;)), 
+              testlet_id = &quot;Testlet-932&quot;)
+# Create another testlet object with two items. 
+t2 &lt;- testlet(c(item(model = &quot;3PL&quot;, a = 0.84, b = -1.8, c = 0.24, item_id = &quot;i4&quot;), 
+                item(model = &quot;GPCM&quot;, a = 1.96, b = c(-0.94, -0.09, 0.25), 
+                     item_id = &quot;i5&quot;)), 
+              testlet_id = &quot;Testlet-77&quot;)
+# Standalone items to be added:
+i6 &lt;- item(model = &quot;GPCM&quot;, a = 0.59, b = c(0.07, 1.46), item_id = &quot;i6&quot;)
+i7 &lt;- item(model = &quot;GPCM&quot;, a = 0.73, b = c(-1.2, -0.78, 0.2, 1.8), item_id = &quot;i7&quot;)
+
+# Combine all items and testlets:
+ip_testlet &lt;- c(t1, t2, i6, i7)
+ip_testlet
+#&gt; An object of class &#39;Itempool&#39;.
+#&gt; D = 1
+#&gt; 
+#&gt;   item_id testlet_id  model     a     b     c    b1    b2    b3    b4
+#&gt;   &lt;chr&gt;   &lt;chr&gt;       &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+#&gt; 1 i1      Testlet-932 3PL    2.09  1.17  0.25 NA    NA    NA     NA  
+#&gt; 2 i2      Testlet-932 3PL    0.59  0.77  0.13 NA    NA    NA     NA  
+#&gt; 3 i3      Testlet-932 3PL    1.67  1.05  0.04 NA    NA    NA     NA  
+#&gt; 4 i4      Testlet-77  3PL    0.84 -1.8   0.24 NA    NA    NA     NA  
+#&gt; 5 i5      Testlet-77  GPCM   1.96 NA    NA    -0.94 -0.09  0.25  NA  
+#&gt; 6 i6      &lt;NA&gt;        GPCM   0.59 NA    NA     0.07  1.46 NA     NA  
+#&gt; 7 i7      &lt;NA&gt;        GPCM   0.73 NA    NA    -1.2  -0.78  0.2    1.8
+</code></pre>
+
+<h1>Operations with <code>Itempool</code> Objects</h1>
+
+<p>We will show the operations that can be performed on an <code>Itempool</code> object 
+using the following three example item pools:</p>
+
+<pre><code class="r">ip1 &lt;- itempool(data.frame( 
+  a = c(1.1821, 0.6645, 0.8994, 1.0731, 1.0252, 1.2325, 0.9278, 1.0967), 
+  b = c(0.4185, -0.5992, 0.2193, 0.8823, 0.4652, 1.4006, -1.1193, -0.3747),
+  item_id = c(&quot;i1&quot;, &quot;i2&quot;, &quot;i3&quot;, &quot;i4&quot;, &quot;i5&quot;, &quot;i6&quot;, &quot;i7&quot;, &quot;i8&quot;), 
+  content = c(&quot;Geometry&quot;, &quot;Geometry&quot;, &quot;Algebra&quot;, &quot;Algebra&quot;, &quot;Algebra&quot;, 
+              &quot;Geometry&quot;, &quot;Algebra&quot;, &quot;Algebra&quot;)
+  ))
+
+ip_mixed &lt;- itempool(data.frame(
+  model = c(&quot;3PL&quot;, &quot;3PL&quot;, &quot;3PL&quot;, &quot;GPCM&quot;, &quot;GPCM&quot;), 
+  a = c(1.6242, 0.9471, 1.4643, 0.6582, 1.0234), 
+  b = c(0.4563, -0.2994, -0.3027, NA, NA), 
+  c = c(0.0156, 0.0339, 0.1243, NA, NA), 
+  b1 = c(NA, NA, NA, -1.1532, -1.2171), 
+  b2 = c(NA, NA, NA, -0.5384, -0.3992), 
+  b3 = c(NA, NA, NA, 0.0591, 0.1431), 
+  b4 = c(NA, NA, NA, NA, 1.52), 
+  D = c(1.7, 1.7, 1.7, 1.7, 1.7)))
+
+ip_testlet &lt;- c(
+  testlet(c(item(model = &quot;3PL&quot;, a = 2.09, b = 1.17, c = 0.25, item_id = &quot;i1&quot;), 
+            item(model = &quot;3PL&quot;, a = 0.59, b = 0.77, c = 0.13, item_id = &quot;i2&quot;), 
+            item(model = &quot;3PL&quot;, a = 1.67, b = 1.05, c = 0.04, item_id = &quot;i3&quot;)), 
+          testlet_id = &quot;Testlet-932&quot;), 
+  item(model = &quot;GPCM&quot;, a = 0.59, b = c(0.07, 1.46), item_id = &quot;i6&quot;),
+  testlet(c(item(model = &quot;3PL&quot;, a = 0.84, b = -1.8, c = 0.24, item_id = &quot;i4&quot;), 
+            item(model = &quot;GPCM&quot;, a = 1.96, b = c(-0.94, -0.09, 0.25), 
+                 item_id = &quot;i5&quot;)), 
+          testlet_id = &quot;Testlet-77&quot;), 
+  item(model = &quot;GPCM&quot;, a = 0.73, b = c(-1.2, -0.78, 0.2, 1.8), item_id = &quot;i7&quot;))
+</code></pre>
+
+<h2>Combining Item Pools</h2>
+
+<p>Two <code>Itempool</code> objects can be combined using <code>c()</code> function. </p>
+
+<pre><code class="r">ip &lt;- c(ip1, ip_mixed)
+ip
+#&gt; An object of class &#39;Itempool&#39;.
+#&gt; 
+#&gt;    item_id model     a      b       c    b1     b2      b3    b4     D content 
+#&gt;    &lt;chr&gt;   &lt;chr&gt; &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;   
+#&gt;  1 i1      2PL   1.18   0.418 NA      NA    NA     NA      NA      1   Geometry
+#&gt;  2 i2      2PL   0.664 -0.599 NA      NA    NA     NA      NA      1   Geometry
+#&gt;  3 i3      2PL   0.899  0.219 NA      NA    NA     NA      NA      1   Algebra 
+#&gt;  4 i4      2PL   1.07   0.882 NA      NA    NA     NA      NA      1   Algebra 
+#&gt;  5 i5      2PL   1.03   0.465 NA      NA    NA     NA      NA      1   Algebra 
+#&gt;  6 i6      2PL   1.23   1.40  NA      NA    NA     NA      NA      1   Geometry
+#&gt;  7 i7      2PL   0.928 -1.12  NA      NA    NA     NA      NA      1   Algebra 
+#&gt;  8 i8      2PL   1.10  -0.375 NA      NA    NA     NA      NA      1   Algebra 
+#&gt;  9 Item_1  3PL   1.62   0.456  0.0156 NA    NA     NA      NA      1.7 &lt;NA&gt;    
+#&gt; 10 Item_2  3PL   0.947 -0.299  0.0339 NA    NA     NA      NA      1.7 &lt;NA&gt;    
+#&gt; 11 Item_3  3PL   1.46  -0.303  0.124  NA    NA     NA      NA      1.7 &lt;NA&gt;    
+#&gt; 12 Item_4  GPCM  0.658 NA     NA      -1.15 -0.538  0.0591 NA      1.7 &lt;NA&gt;    
+#&gt; 13 Item_5  GPCM  1.02  NA     NA      -1.22 -0.399  0.143   1.52   1.7 &lt;NA&gt;
+</code></pre>
+
+<h2>Subsetting</h2>
+
+<p><code>Itempool</code> objects can be subsetted using brackets <code>[ ]</code>. This operation will 
+always return an <code>Itempool</code> object. </p>
+
+<pre><code class="r"># Subset only the first element of the item pool
+ip1[1]
+#&gt; An object of class &#39;Itempool&#39;.
+#&gt; Model of items: 2PL
+#&gt; D = 1
+#&gt; Content = Geometry
+#&gt; 
+#&gt;   item_id     a     b
+#&gt;   &lt;chr&gt;   &lt;dbl&gt; &lt;dbl&gt;
+#&gt; 1 i1       1.18 0.418
+
+# Create an Itempool using the first and third element:
+ip1[c(1, 3)] # Order is important
+#&gt; An object of class &#39;Itempool&#39;.
+#&gt; Model of items: 2PL
+#&gt; D = 1
+#&gt; 
+#&gt;   item_id     a     b content 
+#&gt;   &lt;chr&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;   
+#&gt; 1 i1      1.18  0.418 Geometry
+#&gt; 2 i3      0.899 0.219 Algebra
+ip1[c(3, 1)]
+#&gt; An object of class &#39;Itempool&#39;.
+#&gt; Model of items: 2PL
+#&gt; D = 1
+#&gt; 
+#&gt;   item_id     a     b content 
+#&gt;   &lt;chr&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;   
+#&gt; 1 i3      0.899 0.219 Algebra 
+#&gt; 2 i1      1.18  0.418 Geometry
+
+# Create an Itempool using all but the second element: 
+ip1[-2]
+#&gt; An object of class &#39;Itempool&#39;.
+#&gt; Model of items: 2PL
+#&gt; D = 1
+#&gt; 
+#&gt;   item_id     a      b content 
+#&gt;   &lt;chr&gt;   &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;   
+#&gt; 1 i1      1.18   0.418 Geometry
+#&gt; 2 i3      0.899  0.219 Algebra 
+#&gt; 3 i4      1.07   0.882 Algebra 
+#&gt; 4 i5      1.03   0.465 Algebra 
+#&gt; 5 i6      1.23   1.40  Geometry
+#&gt; 6 i7      0.928 -1.12  Algebra 
+#&gt; 7 i8      1.10  -0.375 Algebra
+
+# Subsetting using item ID&#39;s:
+ip1[c(&quot;i2&quot;, &quot;i1&quot;)]
+#&gt; An object of class &#39;Itempool&#39;.
+#&gt; Model of items: 2PL
+#&gt; D = 1
+#&gt; Content = Geometry
+#&gt; 
+#&gt;   item_id     a      b
+#&gt;   &lt;chr&gt;   &lt;dbl&gt;  &lt;dbl&gt;
+#&gt; 1 i2      0.664 -0.599
+#&gt; 2 i1      1.18   0.418
+
+# Subsetting using logical operators:
+ip1[ip1$b &lt; 0]
+#&gt; An object of class &#39;Itempool&#39;.
+#&gt; Model of items: 2PL
+#&gt; D = 1
+#&gt; 
+#&gt;   item_id     a      b content 
+#&gt;   &lt;chr&gt;   &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;   
+#&gt; 1 i2      0.664 -0.599 Geometry
+#&gt; 2 i7      0.928 -1.12  Algebra 
+#&gt; 3 i8      1.10  -0.375 Algebra
+
+# Select items with information values larger than 0.2 at theta = 1:
+ip1[info(ip1, theta = 1) &gt; 0.2]
+#&gt; An object of class &#39;Itempool&#39;.
+#&gt; Model of items: 2PL
+#&gt; D = 1
+#&gt; 
+#&gt;   item_id     a     b content 
+#&gt;   &lt;chr&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;   
+#&gt; 1 i1       1.18 0.418 Geometry
+#&gt; 2 i4       1.07 0.882 Algebra 
+#&gt; 3 i5       1.03 0.465 Algebra 
+#&gt; 4 i6       1.23 1.40  Geometry
+</code></pre>
+
+<h2>Extracting Items</h2>
+
+<p>An <code>Item</code> object can be extracted from an <code>Itempool</code> using double bracket 
+operator <code>[[ ]]</code>. This operation will return an <code>Item</code> or <code>Testlet</code> object. </p>
+
+<pre><code class="r"># Extract the second element
+ip1[[2]]
+#&gt; A &#39;2PL&#39; item.
+#&gt; Item ID:      i2
+#&gt; Model:   2PL (Two-Parameter Logistic Model)
+#&gt; Content: Geometry
+#&gt; Model Parameters:
+#&gt;   a = 0.6645
+#&gt;   b = -0.5992
+#&gt;   D = 1
+#&gt; 
+#&gt; --------------------------
+
+# Extract a testlet
+ip_testlet[[3]]
+#&gt; An object of class &#39;Testlet&#39;.
+#&gt; Testlet ID:      Testlet-77
+#&gt; Model:   BTM
+#&gt; 
+#&gt; Item List:
+#&gt; D = 1
+#&gt; 
+#&gt;   item_id model     a     b     c    b1    b2    b3
+#&gt;   &lt;chr&gt;   &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+#&gt; 1 i4      3PL    0.84  -1.8  0.24 NA    NA    NA   
+#&gt; 2 i5      GPCM   1.96  NA   NA    -0.94 -0.09  0.25
+</code></pre>
+
+<h2>Replacing Items of an <code>Itempool</code></h2>
+
+<p>Using the double bracket with assignment operator, individual items of an 
+<code>Itempool</code> object can be replaced. </p>
+
+<pre><code class="r">ip_new &lt;- ip1
+# Replace the second item with a new item
+ip_new[[2]] &lt;- item(a = 1, b = c(-1, 0, 1), model = &quot;GRM&quot;, item_id = &quot;NewItm4&quot;,
+                    D = 1.7, content = &quot;Quadratic Functions&quot;)
+ip_new
+#&gt; An object of class &#39;Itempool&#39;.
+#&gt; 
+#&gt;   item_id model     a      b    b1    b2    b3     D content            
+#&gt;   &lt;chr&gt;   &lt;chr&gt; &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;              
+#&gt; 1 i1      2PL   1.18   0.418    NA    NA    NA   1   Geometry           
+#&gt; 2 NewItm4 GRM   1     NA        -1     0     1   1.7 Quadratic Functions
+#&gt; 3 i3      2PL   0.899  0.219    NA    NA    NA   1   Algebra            
+#&gt; 4 i4      2PL   1.07   0.882    NA    NA    NA   1   Algebra            
+#&gt; 5 i5      2PL   1.03   0.465    NA    NA    NA   1   Algebra            
+#&gt; 6 i6      2PL   1.23   1.40     NA    NA    NA   1   Geometry           
+#&gt; 7 i7      2PL   0.928 -1.12     NA    NA    NA   1   Algebra            
+#&gt; 8 i8      2PL   1.10  -0.375    NA    NA    NA   1   Algebra
+</code></pre>
+
+<h2>Accessing Parts of an <code>Itempool</code> object</h2>
+
+<p><code>$</code> operator can be used to access parts of an <code>Itempool</code> object. Here, we will 
+discuss the most common uses of this operator. The full list of available 
+options can be found in the help page:</p>
+
+<pre><code class="r">?`$,Itempool-method`
+</code></pre>
+
+<pre><code class="r"># Extract the ID&#39;s of the items within an item pool
+ip1$item_id
+#&gt; [1] &quot;i1&quot; &quot;i2&quot; &quot;i3&quot; &quot;i4&quot; &quot;i5&quot; &quot;i6&quot; &quot;i7&quot; &quot;i8&quot;
+
+# Extract the contents of the items within an item pool
+ip1$content
+#&gt;         i1         i2         i3         i4         i5         i6         i7 
+#&gt; &quot;Geometry&quot; &quot;Geometry&quot;  &quot;Algebra&quot;  &quot;Algebra&quot;  &quot;Algebra&quot; &quot;Geometry&quot;  &quot;Algebra&quot; 
+#&gt;         i8 
+#&gt;  &quot;Algebra&quot;
+
+# Extract the models of the items within an item pool
+ip1$model
+#&gt;    i1    i2    i3    i4    i5    i6    i7    i8 
+#&gt; &quot;2PL&quot; &quot;2PL&quot; &quot;2PL&quot; &quot;2PL&quot; &quot;2PL&quot; &quot;2PL&quot; &quot;2PL&quot; &quot;2PL&quot;
+ip_mixed$model
+#&gt; Item_1 Item_2 Item_3 Item_4 Item_5 
+#&gt;  &quot;3PL&quot;  &quot;3PL&quot;  &quot;3PL&quot; &quot;GPCM&quot; &quot;GPCM&quot;
+
+# Maximum possible score of items
+ip1$max_score
+#&gt; [1] 8
+ip_mixed$max_score
+#&gt; [1] 10
+ip_testlet$max_score
+#&gt; [1] 13
+
+# Maximum scores of each standalone item
+ip1$item_max_score
+#&gt; i1 i2 i3 i4 i5 i6 i7 i8 
+#&gt;  1  1  1  1  1  1  1  1
+ip_mixed$item_max_score
+#&gt; Item_1 Item_2 Item_3 Item_4 Item_5 
+#&gt;      1      1      1      3      4
+ip_testlet$item_max_score
+#&gt; i1 i2 i3 i6 i4 i5 i7 
+#&gt;  1  1  1  2  1  3  4
+</code></pre>
+
+<p>Item parameters can also be accessed:</p>
+
+<pre><code class="r">ip1$a
+#&gt;     i1     i2     i3     i4     i5     i6     i7     i8 
+#&gt; 1.1821 0.6645 0.8994 1.0731 1.0252 1.2325 0.9278 1.0967
+ip1$b
+#&gt;      i1      i2      i3      i4      i5      i6      i7      i8 
+#&gt;  0.4185 -0.5992  0.2193  0.8823  0.4652  1.4006 -1.1193 -0.3747
+ip1$c
+#&gt; NULL
+ip1$D
+#&gt; i1 i2 i3 i4 i5 i6 i7 i8 
+#&gt;  1  1  1  1  1  1  1  1
+
+ip_mixed$a
+#&gt; Item_1 Item_2 Item_3 Item_4 Item_5 
+#&gt; 1.6242 0.9471 1.4643 0.6582 1.0234
+ip_mixed$b
+#&gt;  Item_1  Item_2  Item_3  Item_4  Item_5 
+#&gt;  0.4563 -0.2994 -0.3027      NA      NA
+ip_mixed$b1
+#&gt;  Item_1  Item_2  Item_3  Item_4  Item_5 
+#&gt;      NA      NA      NA -1.1532 -1.2171
+ip_mixed$b4
+#&gt; Item_1 Item_2 Item_3 Item_4 Item_5 
+#&gt;     NA     NA     NA     NA   1.52
+ip_mixed$D
+#&gt; Item_1 Item_2 Item_3 Item_4 Item_5 
+#&gt;    1.7    1.7    1.7    1.7    1.7
+</code></pre>
+
+<p>Using the operator <code>$n</code>, we can extract a detailed summary of the number of 
+<code>Item</code>s and <code>Testlet</code>s in the item pool. 
+This is especially useful if the item pool has both standalone and testlet 
+items. </p>
+
+<ul>
+<li> <code>$n$elements</code> gives the total number of testlets and standalone items. </li>
+<li> <code>$n$testlets</code> gives the total number of testlets. </li>
+<li> <code>$n$items</code> gives the total number of standalone items and items within 
+testlets. </li>
+</ul>
+
+<pre><code class="r"># Extract the number of items within an item pool
+ip1$n
+#&gt; $elements
+#&gt; [1] 8
+#&gt; 
+#&gt; $testlets
+#&gt; [1] 0
+#&gt; 
+#&gt; $items
+#&gt; [1] 8
+# In ip_testlet, there are two testlets and two standalone items. Within those
+# two testlets, there are a total of 5 items. At total there are 7 items.
+ip_testlet$n
+#&gt; $elements
+#&gt; [1] 4
+#&gt; 
+#&gt; $testlets
+#&gt; [1] 2
+#&gt; 
+#&gt; $items
+#&gt; [1] 7
+</code></pre>
+
+<h2>Updating Parts of an <code>Itempool</code> object</h2>
+
+<p>Using <code>$&lt;-</code> operator, the parts of an item pool can be updated. For example, 
+using the following code, we can change the <code>item_id</code>s and <code>content</code>s of the items 
+of an item pool. </p>
+
+<pre><code class="r">ip_new &lt;- ip1
+ip_new$item_id &lt;- paste0(&quot;Question-&quot;, 1:length(ip_new))
+ip_new$content &lt;- c(&quot;M&quot;, &quot;M&quot;, &quot;R&quot;, &quot;M&quot;, &quot;E&quot;, &quot;R&quot;, &quot;E&quot;, &quot;M&quot;)
+</code></pre>
+
+<p>New item parameters can be set this way as well: </p>
+
+<pre><code class="r">ip_new$a &lt;- 1
+ip_new
+#&gt; An object of class &#39;Itempool&#39;.
+#&gt; Model of items: 2PL
+#&gt; D = 1
+#&gt; 
+#&gt;   item_id        a      b content
+#&gt;   &lt;chr&gt;      &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;  
+#&gt; 1 Question-1     1  0.418 M      
+#&gt; 2 Question-2     1 -0.599 M      
+#&gt; 3 Question-3     1  0.219 R      
+#&gt; 4 Question-4     1  0.882 M      
+#&gt; 5 Question-5     1  0.465 E      
+#&gt; 6 Question-6     1  1.40  R      
+#&gt; 7 Question-7     1 -1.12  E      
+#&gt; 8 Question-8     1 -0.375 M
+ip_new$b &lt;- rnorm(length(ip_new))
+ip_new
+#&gt; An object of class &#39;Itempool&#39;.
+#&gt; Model of items: 2PL
+#&gt; D = 1
+#&gt; 
+#&gt;   item_id        a      b content
+#&gt;   &lt;chr&gt;      &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;  
+#&gt; 1 Question-1     1 -0.362 M      
+#&gt; 2 Question-2     1 -0.261 M      
+#&gt; 3 Question-3     1 -1.10  R      
+#&gt; 4 Question-4     1 -0.515 M      
+#&gt; 5 Question-5     1 -0.561 E      
+#&gt; 6 Question-6     1 -0.629 R      
+#&gt; 7 Question-7     1  0.176 E      
+#&gt; 8 Question-8     1 -1.20  M
+</code></pre>
+
+<!-- ## Converting an `Itempool` to a `data.frame`  -->
+
+<!-- ## Converting an `Itempool` to a `list`  -->
+
+<!-- ## Printing an `Itempool` -->
+
+</body>
+
+</html>

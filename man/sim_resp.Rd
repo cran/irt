@@ -8,15 +8,15 @@
 \alias{sim_resp,numMatDfListChar-method}
 \title{Generate responses for a given model}
 \usage{
-sim_resp(ip, theta, prop_missing = 0)
+sim_resp(ip, theta, prop_missing = 0, output = "matrix")
 
-\S4method{sim_resp}{Item}(ip, theta, prop_missing = 0)
+\S4method{sim_resp}{Item}(ip, theta, prop_missing = 0, output = "matrix")
 
-\S4method{sim_resp}{Testlet}(ip, theta, prop_missing = 0)
+\S4method{sim_resp}{Testlet}(ip, theta, prop_missing = 0, output = "matrix")
 
-\S4method{sim_resp}{Itempool}(ip, theta, prop_missing = 0)
+\S4method{sim_resp}{Itempool}(ip, theta, prop_missing = 0, output = "matrix")
 
-\S4method{sim_resp}{numMatDfListChar}(ip, theta)
+\S4method{sim_resp}{numMatDfListChar}(ip, theta, prop_missing = 0, output = "matrix")
 }
 \arguments{
 \item{ip}{An \code{\link{Item-class}}, \code{\link{Itempool-class}},
@@ -27,6 +27,13 @@ sim_resp(ip, theta, prop_missing = 0)
 \item{prop_missing}{Proportion of responses that should be missing. Default
 value is \code{0}. This argument is valid for only
 \code{\link{Itempool-class}} and \code{\link{Testlet-class}} objects.}
+
+\item{output}{Type of the output. Following options are available:
+\describe{
+  \item{\code{"matrix"}}{A \code{matrix} object.}
+  \item{\code{"response_set"}}{A \code{\link{Response_set-class}}
+        object with item pool attached.}
+}}
 }
 \value{
 A vector of responses.

@@ -4,22 +4,105 @@
 \alias{item_fit}
 \title{Calculate item-fit indices}
 \usage{
-item_fit(ip, resp, theta, type = "Q3")
+item_fit(ip, resp, theta = NULL, type = "Q1", item_id = NULL, n_groups = NULL)
 }
 \arguments{
 \item{ip}{An \code{\link{Itempool-class}} object.}
 
-\item{resp}{A vector of item responses.}
+\item{resp}{A \code{\link{Response_set-class}} object, \code{matrix} or
+\code{data.frame} containing the item responses.}
 
-\item{theta}{An vector containing ability parameters.}
+\item{theta}{An vector containing ability parameters. When
+\code{type = "Q1"} and \code{theta = NULL} or an invalid \code{theta}
+vector provided, theta values will be estimated using item parameters and
+responses. In order to speed up the function for large data sets, theta
+values can be supplied.}
 
-\item{type}{The type of the item-fit index.}
+\item{type}{The type of the item-fit index. Currently the following indices
+  are available:
+  \describe{
+    \item{"Q3"}{Yen's Q3 index (Yen, 1984)}
+    \item{"Q1"}{Yen's Q1 index (Yen, 1981). Only available for unidimensional
+      dichotomous items.}
+    \item{"G2"}{PARSCALE's fit statistic. See DeMars (2005) for details.}
+  }
+
+The default value is \code{"Q1"}.}
+
+\item{item_id}{A string vector that is holding the ID's of the item for
+which item fit should be calculated. The default value is \code{NULL}
+where item fit statistic of all items will be calculated.}
+
+\item{n_groups}{An integer representing the number of groups of examinees.
+When \code{type = "Q1"} and \code{n_groups = NULL}, the default value
+will be 10 (as specified in Yen (1981)). For example, if there are
+900 examinees, when \code{n_groups = 10}, first examinees will be sorted
+according to their theta scores and separated into 10 equally sized groups
+of approximately 90 examinees each. The same default value is used when
+\code{type = "G2"}.}
 }
 \value{
-A vector of item-fit index values.
+A vector of item-fit index values for \code{Q1} and \code{G2}.
+  A correlation matrix will be returned for \code{Q3}.
 }
 \description{
 \code{item_fit} calculates the fit of an item to a given psychometric model.
+}
+\details{
+# Yen's Q3
+
+The details of Yen's Q3 can be found in Yen (1984). It is mainly used as a
+measure of local dependence between two set of items.
+
+
+# Yen's Q1
+
+The details of Yen's Q1 can be found in Yen (1981). Please note that Q1
+can have inflated Type-I error rates (Orlando & Thissen, 2000).
+
+# PARSCALE's G2
+
+PARSCALE's fit statistic G2 is explained in Kang and Chen (2008) and
+DeMars (2005) in detail. DeMars also detailed the situations when G2 index
+yields inflated Type-I error rates. Specifically, she did not recommend this
+index for short tests.
+}
+\examples{
+ip <- generate_ip(model = "3PL", n = 10)
+theta <- rnorm(1000)
+resp <- sim_resp(ip = ip, theta = theta, output = "response_set")
+
+### Yen's Q1 ###
+# Calculate Yen's Q1 for all items
+item_fit(ip = ip, resp = resp, theta = theta, type = "Q1")
+
+# Calculate Yen's Q1 for only selected items
+item_fit(ip = ip, resp = resp, theta = theta, type = "Q1",
+         item_id = c("Item_3", "Item_5"))
+
+# Change the number of groups examinees will be separated into:
+item_fit(ip = ip, resp = resp, theta = theta, type = "Q1", n_groups = 15)
+
+}
+\references{
+DeMars, C. E. (2005). Type I error rates for PARSCALE’s fit index.
+  Educational and psychological measurement, 65(1), 42-50.
+
+Kang, T., & Chen, T. T. (2008). Performance of the generalized S-X2 item
+  fit index for polytomous IRT models.
+  *Journal of Educational Measurement*, 45(4), 391–406.
+  https://doi.org/10.1111/j.1745-3984.2008.00071.x
+
+Orlando, M., & Thissen, D. (2000). New item fit indices for dichotomous
+  item response theory models. Applied Psychological Measurement, 24, 50–64.
+
+Yen, W. M. (1981). Using simulation results to choose a latent trait model.
+  *Applied Psychological Measurement*, 5(2), 245–262.
+  https://doi.org/10.1177/014662168100500212
+
+Yen, W. M. (1984). Effects of local item dependence on the fit and equating
+  performance of the three-parameter logistic model.
+  *Applied Psychological Measurement*, 8(2), 125–145.
 }
 \author{
 Emre Gonulates

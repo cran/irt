@@ -389,7 +389,7 @@ Rcpp::NumericVector calculate_exposure_rates_cpp(Rcpp::StringVector item_ids,
     // Rcout << "  calculate_overlap_rates_cpp == 3.1 - i = " << i << std::endl;
     est_history = cat_output_list[i];
     est_history = est_history["est_history"];
-    // old_testlet_id holds the id of previously administered testlet. If
+    // old_testlet_id holds the ID of previously administered testlet. If
     // it is "" it means that no testlet administered before.
     old_testlet_id = "";
     // Iterate through est_history:
@@ -402,7 +402,7 @@ Rcpp::NumericVector calculate_exposure_rates_cpp(Rcpp::StringVector item_ids,
       if (Rf_isNull(est_history_step("testlet"))) { // there is no testlet
         // Rcout << "    calculate_overlap_rates_cpp == 3.2.1 " << std::endl;
         item = as<S4>(est_history_step("item"));
-        item_id = as<std::string>(item.slot("id"));
+        item_id = as<std::string>(item.slot("item_id"));
         // Rcout << "    calculate_overlap_rates_cpp == 3.2.1.1 " << std::endl;
         //idx = std::find(item_ids.begin(), ip)
         er[item_id] = as<double>(er[item_id]) + 1;
@@ -412,7 +412,7 @@ Rcpp::NumericVector calculate_exposure_rates_cpp(Rcpp::StringVector item_ids,
       } else { // There is a testlet
         // Rcout << "    calculate_overlap_rates_cpp == 3.2.2 " << std::endl;
         testlet = as<S4>(est_history_step("testlet"));
-        testlet_id = as<std::string>(testlet.slot("id"));
+        testlet_id = as<std::string>(testlet.slot("testlet_id"));
         if (old_testlet_id != testlet_id) {
           er[testlet_id] = as<double>(er[testlet_id]) + 1;
         }
@@ -467,13 +467,13 @@ Rcpp::NumericVector calculate_overlap_rates_cpp(Rcpp::StringVector item_ids,
   S4 item("Item");
   S4 testlet("Testlet");
   // Rcout << "calculate_overlap_rates_cpp == 2 " << std::endl;
-  // This list will hold all of the administered id's of each test
+  // This list will hold all of the administered ID's of each test
   List item_id_list(n_sim);
-  // Get the administered id's of all tests and store it in item_id_list
+  // Get the administered ID's of all tests and store it in item_id_list
   for (unsigned int i = 0; i < n_sim; i++ ) {
     est_history = cat_output_list[i];
     est_history = est_history["est_history"];
-    // old_testlet_id holds the id of previously administered testlet. If
+    // old_testlet_id holds the ID of previously administered testlet. If
     // it is "" it means that no testlet administered before.
     old_testlet_id = "";
     Rcpp::StringVector item_ids_i;
@@ -482,11 +482,11 @@ Rcpp::NumericVector calculate_overlap_rates_cpp(Rcpp::StringVector item_ids,
       est_history_step = est_history[j];
       if (Rf_isNull(est_history_step("testlet"))) { // there is no testlet
         item = as<S4>(est_history_step("item"));
-        item_ids_i.push_back(as<std::string>(item.slot("id")));
+        item_ids_i.push_back(as<std::string>(item.slot("item_id")));
         old_testlet_id = "";
       } else { // There is a testlet
         testlet = as<S4>(est_history_step("testlet"));
-        testlet_id = as<std::string>(testlet.slot("id"));
+        testlet_id = as<std::string>(testlet.slot("testlet_id"));
         if (old_testlet_id != testlet_id) {
           item_ids_i.push_back(testlet_id);
           // item_ids_i[j] = testlet_id;
@@ -510,7 +510,7 @@ Rcpp::NumericVector calculate_overlap_rates_cpp(Rcpp::StringVector item_ids,
       //0 with items in item_ids_j
       for (int k = 0; k < item_ids_i.size(); k++) {
         temp_id = as<std::string>(item_ids_i[k]);
-        // Rcout << "    calculate_overlap_rates_cpp == 3.1.1.1 - k = " << k << "/" << item_ids_i.size() <<" ;  id = " << temp_id << std::endl;
+        // Rcout << "    calculate_overlap_rates_cpp == 3.1.1.1 - k = " << k << "/" << item_ids_i.size() <<" ;  ID = " << temp_id << std::endl;
         // Checks whether item_ids_i[k] in item_ids_j
         if (std::find(item_ids_j.begin(), item_ids_j.end(), temp_id) != item_ids_j.end())
           overlap_rate[temp_id] = as<double>(overlap_rate[temp_id]) + 1;

@@ -26,18 +26,16 @@ rsss <- function(ip, raw_score = NULL, scale_score = NULL,
                  theta_range = c(-5, 5)) {
   result <- NULL
   if (!is.null(raw_score)) {
-    max_possible_score <- sum(ip$resp_max_score)
+    max_possible_score <- sum(ip$item_max_score)
     if (any(raw_score > max_possible_score) || any(raw_score < 0))
       stop(paste0("Raw score values cannot larger than the maximum possible ",
                   "raw score of ", max_possible_score, " or smaller than 0."))
     raw_score_to_scale_score <- Vectorize(function(y) {
-      uniroot(f = function(x) {
-        sum(prob(ip = ip, theta = x, expected_value = TRUE)) - y
-        }, lower=sort(theta_range)[1], upper = sort(theta_range)[2])$root
-    })
+      uniroot(f = function(x) {sum(mean(ip, theta = x)) - y},
+              lower = sort(theta_range)[1], upper = sort(theta_range)[2])$root})
     result <- tryCatch(
       raw_score_to_scale_score(raw_score),
-      error=function(e) {
+      error = function(e) {
         if (grepl(pattern = "values at end points not of opposite sign",
                   e$message))
           stop(paste0(
@@ -52,7 +50,7 @@ rsss <- function(ip, raw_score = NULL, scale_score = NULL,
     )
   } else if (!is.null(scale_score) && all(sapply(scale_score, is.numeric))) {
     scale_score_to_raw_score <- Vectorize(function(x) {
-      sum(prob(ip = ip, theta = x, expected_value = TRUE))
+      sum(mean(ip, theta = x))
     })
     result <- scale_score_to_raw_score(x = scale_score)
   }

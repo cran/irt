@@ -31,7 +31,7 @@
 get_max_possible_total_score <- function(ip, resp = NULL) {
   if (!is(ip, "Itempool"))
     stop("ip should be an 'Itempool' object.")
-  max_scores <- ip$resp_max_score
+  max_scores <- ip$item_max_score
   if (!is.null(resp)) {
     ip_size <- length(max_scores)
     if (is.vector(resp)) {
@@ -52,21 +52,28 @@ get_max_possible_total_score <- function(ip, resp = NULL) {
 
 
 
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%####
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%% convert_resp %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 #' Convert responses to wide format
 #'
 #' @param resp A \code{matrix} or \code{data.frame} containing the item
 #'   responses. By default, it is assumed that the first column is examinee
-#'   ids, second column is item id's and third column is responses.
-#' @param examinee_id_col Column name or the column number of the examinee id
+#'   ids, second column is item ID's and third column is responses.
+#' @param examinee_id_col Column name or the column number of the examinee ID
 #'   column.
-#' @param item_id_col Column name or the column number of the item id column.
+#' @param item_id_col Column name or the column number of the item ID column.
 #' @param resp_col Column name or the column number of the response column.
 #' @param to \code{wide}: convert response data from long to wide.
 #'   \code{long}: convert response data from wide to long.
 #'
 #' @return A response \code{matrix} in wide format where row names are
-#'   examinee id's and column names are item id's.
+#'   examinee ID's and column names are item ID's.
 #'
 #' @keywords internal
 #'
@@ -89,10 +96,17 @@ convert_resp <- function(resp, examinee_id_col = NULL, item_id_col = NULL,
   temp <- cbind(expand.grid(item_id = item_id, examinee_id = examinee_id,
                               stringsAsFactors = FALSE)[, 2:1])
   temp <- merge(temp, resp, by = c("examinee_id", "item_id"), all.x = TRUE)
-  return(matrix(temp[["score"]], ncol= length(item_id), byrow = TRUE,
+  return(matrix(temp[["score"]], ncol = length(item_id), byrow = TRUE,
                 dimnames = list(examinee_id, item_id)))
 }
 
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%####
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%% format_text %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 #' Colourise text for display in the terminal.
 #'
@@ -104,7 +118,8 @@ convert_resp <- function(resp, examinee_id_col = NULL, item_id_col = NULL,
 #' purple, red, white, yellow
 #'
 #' # This function is literally taken from Hadley Wickham's testthat package:
-#' https://github.com/r-lib/testthat/blob/717b02164def5c1f027d3a20b889dae35428b6d7/R/colour-text.r
+#' https://github.com/r-lib/testthat/blob/
+#'   717b02164def5c1f027d3a20b889dae35428b6d7/R/colour-text.r
 #'
 #' More formatting options can be found here:
 #' https://stackoverflow.com/a/33206814/2275286
@@ -189,5 +204,148 @@ format_text <- function(text, fg = "black",
   init <- col_escape(col)
   reset <- col_escape("0")
   paste0(init, text, reset)
+}
+
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%####
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%% is_integer ###%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%####
+#' Check whether a value is integer
+#'
+#' @keywords internal
+#'
+#' @noRd
+#'
+is_integer <- function(x, tol = 10 * .Machine$double.eps) {
+  if (is.atomic(x) && !is.matrix(x) && length(x) > 0) {
+    return(sapply(x, function(k) is.numeric(k) &&
+             (abs(k - round(k)) <= tol & !is.infinite(k))))
+  } else if (is.null(x)) {
+    return(FALSE)
+  } else if (length(x) == 0) {
+    return(FALSE)
+  } else if (inherits(x, "data.frame")) {
+    return(sapply(x, is_integer))
+  } else if (is.matrix(x)) {
+    return(apply(x, 2, is_integer))
+  }
+  return(rep(FALSE, length(x)))
+}
+
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%####
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%% is_single_value %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#' Check whether an object is a single length vector
+#'
+#' \code{NULL} is not acceptable and returns \code{FALSE}
+#'
+#' @param x An object to be tested
+#' @param class class of the object. It can be either \code{NULL},
+#'   \code{"numeric"}, \code{"integer"}, \code{"character"}, \code{"logical"},
+#'   \code{"complex"} or \code{Date}. When it is \code{NULL}, it can be either
+#'   one of the five classes above.
+#' @param accept_na If \code{TRUE}, the object is allowed to be a \code{NA}.
+#'
+#' @return Either \code{TRUE} or \code{FALSE}
+#'
+#' @keywords internal
+#'
+#' @noRd
+#'
+#' @examples
+#' is_single_value(12)   # TRUE
+#' is_single_value(12, class = "numeric")   # TRUE
+#' is_single_value(12, class = "character")   # FALSE
+#' is_single_value("12", class = "character")   # TRUE
+#' is_single_value(12, class = "logical")   # FALSE
+#'
+#' is_single_value(c(12, 18), class = "numeric")   # FALSE
+#' is_single_value(12L, class = "numeric")   # FALSE
+#' is_single_value(12L, class = "integer")   # TRUE
+#'
+#' is_single_value(12, class = c("numeric", "integer"))   # TRUE
+#' is_single_value(12L, class = c("numeric", "integer"))   # TRUE
+#' is_single_value(1:5, class = c("numeric", "integer"))   # FALSE
+#'
+#' is_single_value(as.Date("2021-01-01"))   # TRUE
+#'
+is_single_value <- function(x, class = NULL, accept_na = FALSE) {
+  # if (is.null(accept_na) || !is.atomic(accept_na) || is.matrix(accept_na) ||
+  #     length(accept_na) != 1 || !is.logical(accept_na))
+  #   stop("Invalid 'accept_na'.")
+  if (is.null(x)) return(FALSE)
+  if (!accept_na && is.na(x)) return(FALSE)
+  # First check if the value is a single value
+  if (!is.atomic(x) || is.matrix(x) || length(x) > 1) return(FALSE)
+
+  # Check class
+  acceptable_classes <- c("numeric", "integer", "character", "logical",
+                          "complex", "Date")
+  if (!is.null(class) && !all(class %in% acceptable_classes))
+    stop("'class' should be either 'numeric', 'integer', 'character', ",
+         "'logical', 'complex' or NULL.", call. = FALSE)
+
+  if (is.null(class)) class <- acceptable_classes
+
+  if (length(class) == 1 && class == "integer") return(is_integer(x))
+
+  return(class(x) %in% class)
+}
+
+
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%####
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%% is_atomic_vector %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#' Check whether an object is an atomic vector
+#'
+#' \code{NULL} is not acceptable and returns \code{FALSE}
+#'
+#' @param x An object to be tested
+#' @param class class of the object. It can be either \code{NULL},
+#'   \code{"numeric"}, \code{"integer"}, \code{"character"}, \code{"logical"},
+#'   \code{"complex"} or \code{"Date"}. When it is \code{NULL}, it can be either
+#'   one of the five classes above.
+#' @param accept_na If \code{TRUE}, the object is allowed to be a \code{NA}.
+#'
+#' @return Either \code{TRUE} or \code{FALSE}
+#'
+#' @keywords internal
+#'
+#' @noRd
+#'
+#' @examples
+#' is_atomic_vector(1:6)
+#' is_atomic_vector(1:6, class = "integer")
+#' is_atomic_vector(1:6, class = "numeric")
+#' is_atomic_vector(1:6, class = c("integer", "numeric"))
+is_atomic_vector <- function(x, class = NULL, accept_na = TRUE) {
+  # if (is.null(accept_na) || !is.atomic(accept_na) || is.matrix(accept_na) ||
+  #     length(accept_na) != 1 || !is.logical(accept_na))
+  #   stop("Invalid 'accept_na'.")
+  if (is.null(x) || !is.atomic(x) || is.matrix(x)) return(FALSE)
+  if (!accept_na && any(is.na(x))) return(FALSE)
+
+  # Check class
+  acceptable_classes <- c("numeric", "integer", "character", "logical",
+                          "complex", "Date")
+  if (!is.null(class) && !all(class %in% acceptable_classes))
+    stop("'class' should be either 'numeric', 'integer', 'character', ",
+         "'logical', 'complex' or NULL.", call. = FALSE)
+
+  if (is.null(class)) class <- acceptable_classes
+
+  if (length(class) == 1 && class == "integer") return(all(is_integer(x)))
+
+  return(class(x) %in% class)
 }
 

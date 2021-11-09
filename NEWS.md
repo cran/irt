@@ -1,5 +1,14 @@
 
 
+# irt 0.1.4
+
+* Bug fix: An `Itempool` object with one testlet can be printed without an 
+  error.
+* Added `$item_ids` to testlet object to get the ids of the items within the
+  testlet. 
+* Fixed bugs in `plot_empirical_icc()` function. 
+
+
 # irt 0.1.3
 
 * Added `$max_score` for `Testlet` objects. For a given `Testlet` object `t1`, 

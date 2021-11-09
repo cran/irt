@@ -518,7 +518,7 @@
 #'   ip = ip, termination_rule = c('min_item', 'max_item'),
 #'   termination_par = list(min_item = 20, max_item = 20),
 #'   next_item_rule = 'fixed',
-#'   next_item_par = list(item_id = ip$id[1:20]))
+#'   next_item_par = list(item_id = ip$item_id[1:20]))
 #'
 #' # Linear test where all of the items in the item pool administered in the
 #' # same order as item pool
@@ -530,8 +530,8 @@
 #'
 #' # Generate an item pool with two testlets and three standalone items and
 #' # administer first seven items as a linear test.
-#' ip <- c(generate_testlet(n = 2, id = "t1"), generate_ip(n = 3),
-#'         generate_testlet(n = 5, id = "t2"))
+#' ip <- c(generate_testlet(n = 2, testlet_id = "t1"), generate_ip(n = 3),
+#'         generate_testlet(n = 5, testlet_id = "t2"))
 #' create_cat_design(
 #'   ip = ip, termination_rule = c('max_item'),
 #'   termination_par = list(max_item = 7),
@@ -539,7 +539,7 @@
 #'
 #'
 #' # A linear test where the item order is predefined.
-#' ip1 <- itempool(data.frame(b = rnorm(5)), id = paste0("i",1:5))
+#' ip1 <- itempool(data.frame(b = rnorm(5)), item_id = paste0("i",1:5))
 #' cd <- create_cat_design(
 #'   ip = ip1,
 #'   next_item_rule = 'fixed',
@@ -672,7 +672,7 @@ create_cat_design <- function(
         stop("'ip' should be an 'Itempool' object. ")
       # Check validity of ip
       validObject(ip)
-      # Rule: item pool should have unique id's
+      # Rule: item pool should have unique ID's
       if (any(duplicated(ip$id)))
         stop("Items in the item pool should have unique IDs.")
       # Rule: item pool size should not be smaller than the maximum test length.
@@ -689,7 +689,7 @@ create_cat_design <- function(
       if (length(ip) != length(true_ip))
         stop("'true_ip' should have the same length as 'ip'.")
       if (!all(true_ip$id %in% ip$id))
-        stop("Id's of 'ip' and 'true_ip' should be the same. ")
+        stop("ID's of 'ip' and 'true_ip' should be the same. ")
     }
     return(TRUE)
   }
@@ -742,6 +742,7 @@ create_cat_design <- function(
     # Structure "3":
     #   next_item_par = list(var_calc_method = "eap")
     #
+
     if (is.null(next_item_rules[[next_item_rule]]$par_names)) {
       next_item_par_structure = 0
     } else if (
@@ -765,13 +766,13 @@ create_cat_design <- function(
          "item_id" %in% names(next_item_par) &&
          !is.null(ip) &&
          any(sapply(ip@item_list, is, "Testlet")) &&
-         ip[unique(next_item_par$item_id)]$n$items >= max_test_length &&
+         ip[unique(next_item_par$id)]$n$items >= max_test_length &&
          (
            # Sometimes there is only one testlet so, the selection raises error
-           length(unique(next_item_par$item_id)[-length(
-           unique(next_item_par$item_id))]) == 0 ||
-           ip[unique(next_item_par$item_id)[-length(
-             unique(next_item_par$item_id))]]$n$items <= max_test_length
+           length(unique(next_item_par$id)[-length(
+           unique(next_item_par$id))]) == 0 ||
+           ip[unique(next_item_par$id)[-length(
+             unique(next_item_par$id))]]$n$items <= max_test_length
            )
          )
         )
@@ -845,8 +846,8 @@ create_cat_design <- function(
       # If the next item selection method is "fixed", there should be a
       # valid item pool (ip) argument.
       if (is.null(ip) || !is(ip, "Itempool"))
-        stop("There should be a valid item pool (argument) for next item
-             rule 'fixed' to work. ")
+        stop("There should be a valid item pool (argument) for next item ",
+             "rule 'fixed' to work. ")
       # next_item_par should be a list of item_id's
       if (!is(next_item_par, "list"))
         stop("next_item_par should be a list object.")
@@ -856,7 +857,7 @@ create_cat_design <- function(
       # "item_id"
       # The following check might be redundant but the error is informative so
       # keep it.
-      if (any(sapply(next_item_par, "names") != "item_id") && !( # Structure 1
+      if (any(sapply(next_item_par, "names") != "item_id") && !(# Structure 1
         # Or it can be something like: # Structure 2
         # next_item_par = list(item_id = c("i3", "i2", "i4", "i5", "i1"))
         is.list(next_item_par) &&
@@ -868,9 +869,9 @@ create_cat_design <- function(
         # or there are testlets in the item pool and the "fixed" specifies the
         # test lengths of the testlet items and standalone items.
         (any(sapply(ip@item_list, is, "Testlet")) &&
-         ip[next_item_par$item_id]$n$items >= max_test_length &&
-         (length(next_item_par$item_id[-length(next_item_par$item_id)])  == 0 ||
-          ip[next_item_par$item_id[-length(next_item_par$item_id)]]$n$items <=
+         ip[next_item_par$id]$n$items >= max_test_length &&
+         (length(next_item_par$id[-length(next_item_par$id)])  == 0 ||
+          ip[next_item_par$id[-length(next_item_par$id)]]$n$items <=
           max_test_length
          )
          )
@@ -891,16 +892,32 @@ create_cat_design <- function(
            next_item_par[[next_item_rules[[next_item_rule]]$par_names]])))
       )
         stop("All item_id's should be unique. Please check 'next_item_par'.")
-      # All of the item_id field's should be within the id's of item pool (ip)
+      # All of the item_id field's should be within the item_id's of item pool (ip)
+
+      # print("1------------------------")
+      # print(next_item_par)
+      # print("2------------------------")
+      # print(ip)
+      # print("3------------------------")
+      # print(next_item_rules[[next_item_rule]]$par_names)
+      # print("4------------------------")
+      # print(next_item_par_structure == 1 &&
+      #          !all(sapply(next_item_par, "[[", "item_id") %in% ip$item_id))
+      # print("5------------------------")
+      # print(next_item_par[[
+      #        next_item_rules[[next_item_rule]]$par_names]] %in% ip$id)
+      # print("6------------------------")
+
+
       if ((next_item_par_structure == 1 &&
-           !all(sapply(next_item_par, "[[", "item_id") %in% ip$id)) ||
+           !all(sapply(next_item_par, "[[", "item_id") %in% ip$item_id)) ||
           (next_item_par_structure == 2 &&
            !all(next_item_par[[
-             next_item_rules[[next_item_rule]]$par_names]] %in% ip$id))
+             next_item_rules[[next_item_rule]]$par_names]] %in% ip$item_id))
           )
-        stop("All of the id's in 'item_id' field of next_item_par should be
-             also in the item pool (ip) id's. Some of the 'item_id's are not
-             valid.")
+        stop("All of the ID's in 'item_id' field of next_item_par should be ",
+             "also in the item pool (ip) ID's. Some of the 'item_id's are not",
+             "valid.", call. = FALSE)
     }
     return(TRUE)
   }
@@ -926,8 +943,8 @@ create_cat_design <- function(
     if (!final_ae &&
         (length(ability_est_rule) > 1) &&
         (length(ability_est_rule) != max_test_length))
-      stop("The length of ability_est_rule should be equal to the maximum item
-           length.")
+      stop("The length of ability_est_rule should be equal to the maximum ",
+           "item length.")
 
     # Make sure that the length of ability_est_rule and ability_est_par are the
     # same.
@@ -961,8 +978,8 @@ create_cat_design <- function(
                         paste0(par_names, collapse = " = , "), " = )"))
         }
       } else {
-        stop("The length of ability_est_rule should be equal to the length of
-             ability_est_par.")
+        stop("The length of ability_est_rule should be equal to the length of ",
+             "'ability_est_par'.")
       }
       # if (all(sapply(ability_est_par, is, "list")) &&
       #     (length(ability_est_par) > 1) &&
@@ -1015,9 +1032,10 @@ create_cat_design <- function(
 
     if (!is.null(exposure_control_rule) &&
         !all(exposure_control_rule %in% names(exposure_control_rules)))
-      stop(paste0("exposure_control_rule should be a vector with elements either: ",
-                  paste0("'", names(exposure_control_rules), "'", collapse = ", "),
-                  "."))
+      stop(paste0(
+        "exposure_control_rule should be a vector with elements either: ",
+        paste0("'", names(exposure_control_rules), "'", collapse = ", "), "."),
+        call. = FALSE)
     if (!is.null(exposure_control_rule))
     {
       # Make sure that the length of exposure_control_rule and
@@ -1028,47 +1046,50 @@ create_cat_design <- function(
           (length(exposure_control_rule) != 1) &&
           (length(exposure_control_rule) != length(exposure_control_par)))
         stop("The length of exposure_control_rule should be equal to the ",
-             "length of exposure_control_par.")
+             "length of exposure_control_par.", call. = FALSE)
       if (!is.null(exposure_control_par) &&
           !is(exposure_control_par, "list"))
-        stop("exposure_control_par should be a list object.")
+        stop("exposure_control_par should be a list object.", call. = FALSE)
       # If exposure_control_rule is a vector with length larger than one, it's
       # size should be equal to the max_test_length (maximum test length)
       if ((length(exposure_control_rule) > 1) &&
           (length(exposure_control_rule) != max_test_length))
         stop("The length of exposure_control_rule should be equal to the ",
-             "maximum item length.")
+             "maximum item length.", call. = FALSE)
       if (!is.null(exposure_control_par) &&
           all(sapply(exposure_control_par, is, "list")) &&
           (length(exposure_control_par) > 1) &&
           (length(exposure_control_par) != max_test_length))
         stop("The length of exposure_control_par should be equal to the ",
-             "maximum item length.")
+             "maximum item length.", call. = FALSE)
       ### "sympson-hetter" checks
       # If the exposure_control_rule is "sympson-hetter", then each Item/testlet
       # of the "ip" should have a parameter for "sympson-hetter" method.
       if (any(exposure_control_rule %in% "sympson-hetter")) {
         if (is.null(ip) || !is(ip, "Itempool"))
-          stop("For 'sympson-hetter' exposure control rule, there should be a
-               valid item pool (ip) in the arguments. ")
+          stop("For 'sympson-hetter' exposure control rule, there should be a ",
+               "valid item pool (ip) in the arguments.", call. = FALSE)
         for (item in ip@item_list)
           if (!"sympson_hetter_k" %in% names(item@misc) ||
               item@misc[["sympson_hetter_k"]] < 0 ||
               item@misc[["sympson_hetter_k"]] > 1)
             stop(paste0(
-            "For 'sympson-hetter' exposure control rule, there should be valid
-            'sympson_hetter_k' values for each item. Make sure to check for
-            each item 'item$misc' and ensure that it has an element named
-            'sympson_hetter_k' which is between 0 and 1. For an item, you can
-            use 'add_misc(item, list(sympson_hetter_k = .75))', to add
-            that value."))
-        if (sum(sapply(ip, function(k) k@misc$sympson_hetter_k) == 1) < max_test_length)
-          warning(paste0("When using 'sympson-hetter' exposure control rule, ",
-                         "please ensure that there are at least ",
-                         max_test_length, " items with 'sympson_hetter_k' ",
-                         "values 1. Otherwise, examinees might not get a ",
-                         "complete test and an error might be raised by ",
-                         "the simulation function."), call. = FALSE)
+            "For 'sympson-hetter' exposure control rule, there should be ",
+            "valid 'sympson_hetter_k' values for each item. Make sure to ",
+            "check for each item 'item$misc' and ensure that it has an",
+            " element named 'sympson_hetter_k' which is between 0 and 1. For ",
+            "an item, you can use ",
+            "'add_misc(item, list(sympson_hetter_k = .75))', to add that ",
+            "value."), call. = FALSE)
+        if (sum(sapply(ip, function(k) k@misc$sympson_hetter_k) == 1) <
+            max_test_length)
+          warning(paste0(
+            "When using 'sympson-hetter' exposure control rule, ",
+            "please ensure that there are at least ",
+            max_test_length, " items with 'sympson_hetter_k' ",
+            "values 1. Otherwise, examinees might not get a ",
+            "complete test and an error might be raised by ",
+            "the simulation function."), call. = FALSE)
       }
     }
     return(TRUE)
@@ -1277,8 +1298,8 @@ create_cat_design <- function(
   # first n items in the item pool is just larger than the test length.
   if (next_item_rule == "fixed" && is.null(next_item_par) &&
       is(ip, "Itempool")) {
-    next_item_par <- list(item_id = ip$id[1:which(sapply(1:length(ip), function(i)
-      ip[1:i]$n$items) >= max_test_length)[1]])
+    next_item_par <- list(item_id = ip$item_id[1:which(sapply(
+      1:length(ip), function(i) ip[1:i]$n$items) >= max_test_length)[1]])
   }
 
   ##########################################################################@###
@@ -1323,9 +1344,9 @@ create_cat_design <- function(
   # If next_item_rule is "fixed" and there are testlets in the "item_ids", then
   # repeat the testlets
   if (next_item_rule == "fixed" &&
-      length(next_item_par$item_id) != max_test_length)
-    next_item_par$item_id <- rep(next_item_par$item_id, times = sapply(
-      ip[next_item_par$item_id]$item_list, length))
+      length(next_item_par$id) != max_test_length)
+    next_item_par$id <- rep(next_item_par$id, times = sapply(
+      ip[next_item_par$id]$item_list, length))
 
   for (i in 1:length(cd$step)) {
     ### Set next_item_rule for each step ###
@@ -1457,7 +1478,7 @@ create_cat_design <- function(
   }
 
   # -------------------------------------------------------------------------- #
-  class(cd) <- "cat_design"
+  class(cd) <-  c("cat_design", class(cd))
   return(cd)
 }
 
@@ -1659,14 +1680,3 @@ cat_sim_fast <- function(true_ability, cd, verbose = -1, n_cores = NULL)
 }
 
 
-
-#############################################################################@
-########################### calculate_exposure_cont_pars_cpp #################
-#############################################################################@
-# Calculate exposure control parameters
-#
-# This function calculates the exposure control parameters for the
-# Sympson-Hetter method.
-#
-#
-#calculate_exposure_cont_pars_cpp <- function()

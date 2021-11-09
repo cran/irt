@@ -17,7 +17,7 @@ calculate_overlap_rates(cat_sim_output, cd = NULL, item_ids = NULL)
 }
 \value{
 This function returns a numeric vector of each item's overlap rate
-  where the names of each overlap rate value is the item's id.
+  where the names of each overlap rate value is the item's ID.
 }
 \description{
 This function calculates the overlap rate of items for a

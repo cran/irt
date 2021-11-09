@@ -10,7 +10,7 @@ est_bilog(
   target_dir = getwd(),
   analysis_name = "bilog_calibration",
   items = NULL,
-  id_var = NULL,
+  examinee_id_var = NULL,
   group_var = NULL,
   logistic = TRUE,
   num_of_alternatives = NULL,
@@ -19,17 +19,21 @@ est_bilog(
   max_em_cycles = 100,
   newton = 20,
   reference_group = NULL,
+  fix = NULL,
   scoring_options = c("METHOD=1", "NOPRINT"),
   calib_options = c("NORMAL"),
+  prior_ability = NULL,
+  prior_ip = NULL,
   overwrite = FALSE,
   show_output_on_console = TRUE,
   bilog_exe_folder = file.path("C:/Program Files/BILOGMG")
 )
 }
 \arguments{
-\item{x}{Either a \code{data.frame} or \code{matrix} object. When the data
-is not necessary, i.e. user only wants to read the BILOG-MG output from
-the \code{target_dir}, then this can be set to \code{NULL}.}
+\item{x}{Either a \code{data.frame}, \code{matrix} or
+\code{\link{Response_set-class}} object. When the data is not necessary,
+i.e. user only wants to read the BILOG-MG output from the
+\code{target_dir}, then this can be set to \code{NULL}.}
 
 \item{model}{The model of the items. The value is one of the
   following:
@@ -54,9 +58,9 @@ created for the analysis.}
 represents the responses. If, in the syntax file, no entry for item
 names are desired, then, simply write \code{items = "none"}.}
 
-\item{id_var}{The column name or number that contains individual subject IDs.
-If none is provided (i.e. \code{id_var = NULL}), the program will check
-whether the data provided has row names.}
+\item{examinee_id_var}{The column name or number that contains individual
+subject IDs. If none is provided (i.e. \code{examinee_id_var = NULL}), the
+program will check whether the data provided has row names.}
 
 \item{group_var}{The column name or number that contains group membership
 information if multi-group calibration is desired. Ideally, it grouping
@@ -93,7 +97,7 @@ file as: \code{NQPT = num_of_quadrature}. The BILOG-MG default value is
 \item{max_em_cycles}{An integer (0, 1, ...) representing the maximum number
 of EM cycles. This value will be represented in BILOG-MG control file as:
 \code{CYCLES = max_em_cycles}.
-The default value is 10.}
+The default value is 100.}
 
 \item{newton}{An integer (0, 1, ...) representing the number of Gauss-Newton
 iterations following EM cycles. This value will be represented in BILOG-MG
@@ -109,6 +113,13 @@ control file as: \code{NEWTON = newton}.}
 
   This value will be represented in BILOG-MG control file as:
   \code{REFERENCE = reference_group}.}
+
+\item{fix}{This arguments helps to specify whether the parameters of
+specific items are free to be estimated or are to be held fixed at
+their starting values. This argument accepts a \code{data.frame} with
+an \code{item_id} column in which items for which the item parameters
+will be held fixed; \code{a}, \code{b}, \code{c} parameter values. See,
+examples section for a demonstration.}
 
 \item{scoring_options}{A string vector of keywords/options that will be added
   to the \code{SCORE} section in BILOG-MG syntax. Set the value of
@@ -157,6 +168,10 @@ control file as: \code{NEWTON = newton}.}
   When \code{"COMMON"} is included in \code{calib_options}, a common value
   for the lower asymptote for all items in the 3PL model will be estimated.
 
+  If items will be calibrated using \code{"RASCH"} model, set
+  \code{model = "Rasch"}, instead of adding \code{"RASCH"} keyword to
+  \code{calib_options}.
+
   Following keywords/options can be added to \code{calib_options}:
 
   \code{"PRINT=n"}, \code{"IDIST=n"}, \code{"PLOT=n"}, \code{"DIAGNOSIS=n"},
@@ -165,7 +180,7 @@ control file as: \code{NEWTON = newton}.}
   \code{"NORMAL"}, \code{"FIXED"}, \code{"TPRIOR"}, \code{"SPRIOR"},
   \code{"GPRIOR"}, \code{"NOTPRIOR"}, \code{"NOSPRIOR"}, \code{"NOGPRIOR"},
   \code{"READPRIOR"}, \code{"NOFLOAT"}, \code{"FLOAT"}, \code{"NOADJUST"},
-  \code{"GROUP-PLOT"}, \code{"RASCH"}, \code{"NFULL"}, \code{"CHI=(a,b)"}.
+  \code{"GROUP-PLOT"}, \code{"NFULL"}, \code{"CHI=(a,b)"}.
 
   See BILOG-MG manual for more details about these keywords/options.
 
@@ -173,6 +188,61 @@ control file as: \code{NEWTON = newton}.}
   since they will already be included:
 
   \code{NQPT}, \code{CYCLES}, \code{NEWTON}, \code{CRIT}, \code{REFERENCE}}
+
+\item{prior_ability}{Prior ability is the quadrature points and weights of
+  the discrete finite representations of the prior distribution for the
+  groups. It should be a list in the following form:
+
+  \code{list(<GROUP-NAME-1> = list(points = ...., weights = ...),
+             <GROUP-NAME-2> = list(points = ...., weights = ...),
+             ...
+             )}
+
+  \code{GROUP-NAME-1} is the name of the first group, \code{GROUP-NAME-2} is
+  the name of the second group, etc.
+
+  See examples section for an example implementation.}
+
+\item{prior_ip}{Specify priors distributions for item parameters. The
+  default value is \code{NULL}, where BILOG-MG defaults will be used. In
+  order to specify priors, a list of one or more of the following elements
+  needs to be provided:
+  \describe{
+    \item{"ALPHA"}{"'alpha' parameters for the beta prior distribution of
+      lower asymptote (guessing) parameters"}
+    \item{"BETA"}{"'beta' parameters for the beta prior distribution of
+      lower asymptote (guessing) parameters."}
+    \item{"SMU"}{prior means for slope parameters}
+    \item{"SSIGMA"}{prior standard deviations for slope parameters}
+    \item{"TMU"}{prior means for threshold parameters}
+    \item{"TSIGMA"}{prior standard deviations for threshold parameters}
+    }
+  Quoted descriptions were taken from BILOG-MG manual.
+
+  Here are couple examples:
+  \code{list(ALPHA = 4, BETA = 3, SMU = 1, SSIGMA = 1.648, TMU = 0,
+             TSIGMA = 2)}
+
+  A very strong prior for guessing which almost fixes all guessing
+  parameters at 0.2:
+
+  \code{list(ALPHA = 1000000, BETA = 4000000)}
+
+  Fix guessing at 0.25:
+  \code{list(ALPHA = 1000000, BETA = 3000000)}
+
+  More generally, one can play with the alpha and beta parameters to obtain
+  desired number considering the mode of beta distribution is:
+
+  \deqn{mode = \frac{\alpha - 1}{\alpha + \beta - 2}}
+
+  Also, one can set SSIGMA or TSIGMA to a very small value to effectively
+  fix the item parameters, for example set \code{TSIGMA = 0.005} or
+  \code{SSIGMA = 0.001} to effectively fix those item parameters. Note that
+  there might be convergence issues with these restrictions.
+
+  Note that a non-null \code{prior_ip} value will automatically add
+  \code{READPRIOR} option to \code{CALIB} section.}
 
 \item{overwrite}{If \code{TRUE} and there are already a BILOG-MG analysis
 files in the target path with the same name, these file will be
@@ -190,8 +260,9 @@ is \code{TRUE}.}
 A list of following objects:
   \describe{
     \item{"ip"}{An \code{\link{Itempool-class}} object holding the item
-      parameters. This element will not be created when
-      \code{model = "CTT"}.}
+      parameters. Please check whether model converged (using
+      \code{...$converged}) before interpreting/using \code{ip}.
+      This element will not be created when \code{model = "CTT"}.}
     \item{"score"}{A data frame object that holds the number of item
       examinee has attempted (\code{tried}), the number of item examinee got
       right (\code{right}), the estimated scores of examinees
@@ -210,6 +281,9 @@ A list of following objects:
     \item{"converged"}{A logical value indicating whether a model has been
       converged or not. If the value is \code{TRUE}, model has been
       converged. This element will not be created when \code{model = "CTT"}.}
+    \item{"cycle"}{Number of cycles run before calibration converge or fail
+      to converge.}
+    \item{"largest_change"}{Largest change between the last two cycles.}
     \item{"neg_2_log_likelihood"}{-2 Log Likelihood value. This value is
       \code{NULL}, when model does not converge. This element will not be
       created when \code{model = "CTT"}.}
@@ -231,15 +305,21 @@ A list of following objects:
 }
 \examples{
 \dontrun{
-### Example 1 ###
+#############################################
+############## Example 1 - 2PL ##############
+#############################################
+# IRT Two-parameter Logistic Model Calibration
+
 # Create responses to be used in BILOG-MG estimation
+true_theta <- rnorm(4000)
 true_ip <- generate_ip(n = 30, model = "2PL")
-resp <- sim_resp(true_ip, rnorm(4000))
+resp <- sim_resp(true_ip, true_theta)
 
 # The following line will run BILOG-MG, estimate 2PL model and put the
 # analysis results under the target directory:
 bilog_calib <- est_bilog(x = resp, model = "2PL",
-                         target_dir = "C:/Temp/Analysis", overwrite = TRUE)
+                         target_dir = "C:/Temp/Analysis",
+                         overwrite = TRUE)
 # Check whether the calibration converged
 bilog_calib$converged
 
@@ -255,24 +335,115 @@ bilog_calib$ctt
 # Get -2LogLikelihood for the model (mainly for model comparison purposes):
 bilog_calib$neg_2_log_likelihood
 
+# Get estimated scores
+head(bilog_calib$score)
 
-### Example 2 ###
-# Get Expected-a-posteriori theta scores:
+# Compare true and estimated abilities
+plot(true_theta, bilog_calib$score$ability, xlab = "True Theta",
+     ylab = "Estimated theta")
+abline(a = 0, b = 1, col = "red", lty = 2)
+
+# Compare true item parameters
+plot(true_ip$a, bilog_calib$ip$a, xlab = "True 'a'", ylab = "Estimated 'a'")
+abline(a = 0, b = 1, col = "red", lty = 2)
+
+plot(true_ip$b, bilog_calib$ip$b, xlab = "True 'b'", ylab = "Estimated 'b'")
+abline(a = 0, b = 1, col = "red", lty = 2)
+
+mean(bilog_calib$score$ability)
+
+# Quadrature points and posterior weights:
+head(bilog_calib$posterior_dist)
+
+#############################################
+############## Example 2 - EAP ##############
+#############################################
+# Getting Expected-a-posteriori theta scores
 result <- est_bilog(x = resp, model = "2PL",
                     scoring_options = c("METHOD=2", "NOPRINT"),
-                    target_dir = "C:/Temp/Analysis", overwrite = TRUE)
+                    target_dir = "C:/Temp/Analysis",
+                    overwrite = TRUE)
+head(result$score)
 
 
-### Example 3 ###
-# Multi-group calibration
+###############################################
+############## Example 3 - Rasch ##############
+###############################################
+# Rasch Model Calibration
+true_theta <- rnorm(400)
+true_ip <- generate_ip(n = 30, model = "Rasch")
+resp <- sim_resp(true_ip, true_theta)
+
+# Run calibration
+bilog_calib <- est_bilog(x = resp, model = "Rasch",
+                         target_dir = "C:/Temp/Analysis",
+                         overwrite = TRUE)
+bilog_calib$ip
+
+plot(true_ip$b, bilog_calib$ip$b, xlab = "True 'b'", ylab = "Estimated 'b'")
+abline(a = 0, b = 1, col = "red", lty = 2)
+
+# Note that the 'b' parameters are rescaled so that their arithmetic mean
+# equals 0.0.
+mean(bilog_calib$ip$b)
+
+
+#############################################
+############## Example 4 - 3PL ##############
+#############################################
+# IRT Three-parameter Logistic Model Calibration
+
+# Create responses to be used in BILOG-MG estimation
+true_theta <- rnorm(4000)
+true_ip <- generate_ip(n = 30, model = "3PL")
+resp <- sim_resp(true_ip, true_theta)
+
+# The following line will run BILOG-MG, estimate 2PL model and put the
+# analysis results under the target directory:
+bilog_calib <- est_bilog(x = resp, model = "3PL",
+                         target_dir = "C:/Temp/Analysis",
+                         overwrite = TRUE)
+
+bilog_calib$ip
+
+#############################################
+############## Example 5 - 1PL ##############
+#############################################
+# One-Parameter Logistic Model Calibration
+true_theta <- rnorm(800)
+true_ip <- generate_ip(n = 30, model = "2PL")
+# Set 'a' parameters to a fixed number
+true_ip$a <- 1.5
+resp <- sim_resp(true_ip, true_theta)
+
+# Run calibration
+bilog_calib <- est_bilog(x = resp, model = "1PL",
+                         target_dir = "C:/Temp/Analysis",
+                         overwrite = TRUE)
+# Note that all 'a' parameter values and all 'se_a' values are the same:
+bilog_calib$ip
+
+plot(true_ip$b, bilog_calib$ip$b, xlab = "True 'b'", ylab = "Estimated 'b'")
+abline(a = 0, b = 1, col = "red", lty = 2)
+
+
+#############################################################
+############## Example 6.1 - Multi-group - 3PL ##############
+#############################################################
+# Multi-group IRT calibration - 3PL
+
+## Generate Data ##
 ip <- generate_ip(n = 35, model = "3PL", D = 1.7)
 n_upper <- sample(1200:3000, 1)
 n_lower <- sample(1900:2800, 1)
 theta_upper <- rnorm(n_upper, 1.5, .25)
 theta_lower <- rnorm(n_lower)
 resp <- sim_resp(ip = ip, theta = c(theta_lower, theta_upper))
-dt <- data.frame(level = c(rep("Lower", n_lower), rep("Upper", n_upper)), resp)
+# Create response data where first column group information
+dt <- data.frame(level = c(rep("Lower", n_lower), rep("Upper", n_upper)),
+                 resp)
 
+## Run Calibration ##
 mg_calib <- est_bilog(x = dt, model = "3PL",
                       group_var = "level",
                       reference_group = "Lower",
@@ -292,15 +463,241 @@ mg_calib$converged
 # Print estimated scores of first five examinees
 head(mg_calib$score)
 
+# Posterior distributions of 'Lower' (in red)  and 'Upper' group
+plot(mg_calib$posterior_dist$Upper$point,
+     mg_calib$posterior_dist$Upper$weight)
+points(mg_calib$posterior_dist$Lower$point,
+       mg_calib$posterior_dist$Lower$weight, col = "red")
 
-### Example 4 ###
+
+#############################################################
+############## Example 6.2 - Multi-group - Response_set #####
+#############################################################
+# Multi-group IRT calibration - Response_set 2PL
+
+## Generate Data ##
+ip <- generate_ip(n = 35, model = "2PL", D = 1.7)
+n_upper <- sample(1000:2000, 1)
+n_lower <- sample(1000:2000, 1)
+resp_set <- generate_resp_set(
+  ip = ip, theta = c(rnorm(n_lower), rnorm(n_upper, 1.5, .25)))
+# Attach the group information
+resp_set$mygroup <- c(rep("Lower", n_lower), rep("Upper", n_upper))
+
+## Run Calibration ##
+mg_calib <- est_bilog(x = resp_set,
+                      model = "2PL",
+                      group_var = "mygroup",
+                      reference_group = "Lower",
+                      target_dir = "C:/Temp/Analysis",
+                      overwrite = TRUE,
+                      show_output_on_console = FALSE)
+# Estimated item pool
+mg_calib$ip
+# Print group means
+mg_calib$group_info
+
+###############################################################
+############## Example 6.3 - Multi-group - 1PL ################
+###############################################################
+# Multi-group IRT calibration - 1PL
+
+## Generate Data ##
+n_item <- sample(30:40, 1)
+ip <- generate_ip(n = n_item, model = "2PL", D = 1.7)
+ip$a <- 1.25
+n_upper <- sample(700:1000, 1)
+n_lower <- sample(1200:1800, 1)
+theta_upper <- rnorm(n_upper, 1.5, .25)
+theta_lower <- rnorm(n_lower)
+resp <- sim_resp(ip = ip, theta = c(theta_lower, theta_upper))
+# Create response data where first column group information
+dt <- data.frame(level = c(rep("Lower", n_lower), rep("Upper", n_upper)),
+                 resp)
+
+## Run Calibration ##
+mg_calib <- est_bilog(x = dt,
+                      model = "1PL",
+                      group_var = "level",
+                      reference_group = "Lower",
+                      items = 2:ncol(dt), # Exclude the 'group' column
+                      target_dir = "C:/Temp/Analysis",
+                      overwrite = TRUE,
+                      show_output_on_console = FALSE)
+# Estimated item pool
+mg_calib$ip
+# Print group means
+mg_calib$group_info
+# Check Convergence
+mg_calib$converged
+# Print estimated scores of first five examinees
+head(mg_calib$score)
+
+
+###############################################################
+############## Example 6.4 - Multi-group - Prior Ability ######
+###############################################################
+# Multi-group IRT calibration - 3PL with user supplied prior ability
+# parameters
+n_item <- sample(40:70, 1)
+ip <- generate_ip(n = n_item, model = "3PL", D = 1.7)
+n_upper <- sample(2000:4000, 1)
+n_lower <- sample(3000:5000, 1)
+theta_upper <- rgamma(n_upper, shape = 2, rate = 2)
+# hist(theta_upper)
+theta_lower <- rnorm(n_lower)
+true_theta <- c(theta_lower, theta_upper)
+resp <- sim_resp(ip = ip, theta = true_theta, prop_missing = .2)
+# Create response data where first column group information
+dt <- data.frame(level = c(rep("Lower", n_lower), rep("Upper", n_upper)),
+                 resp)
+
+# Set prior ability parameters
+points <- seq(-4, 4, .1)
+prior_ability = list(
+  Lower = list(points = points, weights = dnorm(points)),
+  # Also try misspecified prior:
+  # Upper = list(points = points, weights = dnorm(points, 1, .25))
+  Upper = list(points = points, weights = dgamma(points, 2, 2))
+  )
+mg_calib <- est_bilog(x = dt,
+                      model = "3PL",
+                      group_var = "level",
+                      reference_group = "Lower",
+                      items = 2:ncol(dt), # Exclude the 'group' column
+                      calib_options = c("IDIST = 2"),
+                      prior_ability = prior_ability,
+                      # Use MAP ability estimation.
+                      scoring_options = c("METHOD=3"),
+                      target_dir = target_dir,
+                      overwrite = TRUE,
+                      show_output_on_console = FALSE)
+
+# Check whether model has convergence
+mg_calib$converged
+
+# Group information
+mg_calib$group_info
+
+# Quadrature points and posterior weights:
+head(mg_calib$posterior_dist$Lower)
+
+plot(mg_calib$posterior_dist$Lower$point,
+     mg_calib$posterior_dist$Lower$weight,
+     xlab = "Quadrature Points",
+     ylab = "Weights",
+     xlim = c(min(c(mg_calib$posterior_dist$Lower$point,
+                    mg_calib$posterior_dist$Upper$point)),
+              max(c(mg_calib$posterior_dist$Lower$point,
+                    mg_calib$posterior_dist$Upper$point))),
+     ylim = c(min(c(mg_calib$posterior_dist$Lower$weight,
+                    mg_calib$posterior_dist$Upper$weight)),
+              max(c(mg_calib$posterior_dist$Lower$weight,
+                    mg_calib$posterior_dist$Upper$weight))))
+points(mg_calib$posterior_dist$Upper$point,
+      mg_calib$posterior_dist$Upper$weight, col = "red")
+
+# Comparison of true and estimated item parameters
+plot(ip$a, mg_calib$ip$a, xlab = "True 'a'", ylab = "Estimated 'a'")
+plot(ip$b, mg_calib$ip$b, xlab = "True 'b'", ylab = "Estimated 'b'")
+plot(ip$c, mg_calib$ip$c, xlab = "True 'c'", ylab = "Estimated 'c'")
+
+# Ability parameters
+plot(true_theta, mg_calib$score$ability,
+     xlab = "True Theta",
+     ylab = "Estimated Theta")
+abline(a = 0, b = 1, col = "red")
+
+
+
+####################################################################
+############## Example 7 - Read Pars without BILOG-MG ##############
+####################################################################
 # When user wants to read BILOG-MG output saved in the directory "Analysis/"
-# with file names "my_analysis", use the following syntax:
-# (The following code does not require an installed BILOG-MG program.)
+# with file names "my_analysis.PH1", "my_analysis.PH2", etc.,
+use the following syntax to read Bilog output files without running the
+calibration:
+# (The following code does not require an installed BILOG-MG program on the
+#  computer.)
 result <- est_bilog(target_dir = file.path("Analysis/"), model = "3PL",
                     analysis_name = "my_analysis", overwrite = FALSE)
 
-}
+
+
+####################################################################
+############## Example 8 - Fixed Item Parameters ###################
+####################################################################
+# The idea is to fix individual item parameters to certain values.
+# If all of values of a certain item parameter(s) need to be fixed,
+# then, strong priors can also be used. See the documentation for
+# "prior_ip" argument.
+
+# Create responses to be used in BILOG-MG estimation
+true_theta <- rnorm(3000)
+true_ip <- generate_ip(n = 30, model = "3PL")
+resp <- sim_resp(true_ip, true_theta)
+
+# Setup the data frame that will hold 'item_id's to be fixed, and the
+# item parameters to be fixed.
+fix_pars <- data.frame(item_id = c("Item_5", "Item_4", "Item_10"),
+                       a = c(1, 1.5, 1.75),
+                       b = c(-1, 0.25, 0.75),
+                       c = c(.15, .25, .35))
+
+fixed_calib <- est_bilog(x = resp, fix = fix_pars,
+                         target_dir = "C:/Temp/Analysis", overwrite = TRUE)
+# Check item parameters for  Item_4, Item_5, Item_10:
+fixed_calib$ip
+
+######### #########
+# If only some of the parameters are supplied, the defaults will be used
+# for the missing parameters. For example, for the example below, the
+# default 'a' parameter value is 1, and the default 'c' parameter value is
+# (1/num_of_alternatives) = (1/5) = 0.2.
+fix_pars2 <- data.frame(item_id = c("Item_1", "Item_2", "Item_3"),
+                        b = c(-1, 0.25, 0.75))
+
+fixed_calib2 <- est_bilog(x = resp, fix = fix_pars2,
+                          target_dir = "C:/Temp/Analysis", overwrite = TRUE)
+# Check item parameters for  Item_4, Item_5, Item_10:
+fixed_calib2$ip
+
+
+##################################################################
+############## Example 9 - 3PL with Common Guessing ##############
+##################################################################
+# IRT Three-parameter Logistic Model Calibration with Common Guessing
+
+# Create responses to be used in BILOG-MG estimation
+true_theta <- rnorm(4000)
+true_ip <- generate_ip(n = 30, model = "3PL")
+resp <- sim_resp(true_ip, true_theta)
+
+# Run calibration:
+bilog_calib <- est_bilog(x = resp, model = "3PL",
+                         target_dir = "C:/Temp/Analysis",
+                         calib_options = c("NORMAL", "COMMON"),
+                         overwrite = TRUE)
+
+# Note the 'c' parameters
+bilog_calib$ip
+
+##################################################################
+############## Example 10 - 3PL with Fixed Guessing ##############
+##################################################################
+# IRT Three-parameter Logistic Model Calibration with Fixed Guessing
+# The aim is to fix guessing parameters of all items to a fixed
+# number like 0.25
+true_theta <- rnorm(3000)
+true_ip <- generate_ip(n = 30, model = "3PL")
+true_ip$c <- 0.25
+resp <- sim_resp(true_ip, true_theta)
+prc1 <- est_bilog(x = resp, model = "3PL", target_dir = "C:/Temp/Analysis",
+                  prior_ip = list(ALPHA = 10000000, BETA = 30000000),
+                  overwrite = TRUE)
+
+
+} # end dontrun
 }
 \author{
 Emre Gonulates

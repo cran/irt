@@ -7,16 +7,21 @@
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-#' Ability Estimation of an examinee
+#' Estimate Ability of Examinees
+#'
 #' @description
-#' \code{est_ability} estimates ability using on various methods such as
+#' \code{est_ability} estimates ability using various methods such as
 #' Owen's Bayesian estimation, Maximum Likelihood estimation,
 #' Expected-a-Posteriori.
 #'
-#' @param ip An \code{\link{Item-class}}, \code{\link{Itempool-class}} or a
-#'   \code{\link{Testlet-class}} object.
-#' @param resp A vector containing examinee responses. If there are missing
+#' @param resp A \code{\link{Response_set-class}}, \code{matrix} or a
+#'   \code{data.frame} object that holds responses. If there are missing
 #'   responses, they will not be included in the ability estimation.
+#' @param ip An \code{\link{Item-class}}, \code{\link{Itempool-class}} or a
+#'   \code{\link{Testlet-class}} object. The default value is \code{NULL}. If
+#'   the value is \code{NULL}, \code{resp} should be a
+#'   \code{\link{Response_set-class}} object with a valid
+#'   \code{\link{Itempool-class}}.
 #' @param method The method that will be used to estimate the ability.
 #'   The default value is \code{"eap"}.
 #'
@@ -31,14 +36,25 @@
 #'
 #'       Formulas were implemented in Owen (1975) and Vale (1977).  Original
 #'       formulation does not contain D parameter. If \code{D = 1} original
-#'       solution will be obtained. If \code{D = 1.7}  the \code{a} parameter
+#'       solution will be obtained. If \code{D = 1.7} the \code{a} parameter
 #'       will be multiplied with this number.
 #'
+#'       User needs to supply prior parameters, i.e. \code{prior_pars}. Prior
+#'       parameters should be a numeric vector of length two. The first
+#'       component is prior mean and the second component is prior standard
+#'       deviation (note that it is NOT prior variance). So, for example,
+#'       if the prior mean is 0.1 and prior variance is 4, set the prior
+#'       parameters as \code{prior_pars = c(0.1, 2)}.
 #'       }
 #'     \item{\strong{\code{'ml'}}}{Maximum Likelihood Ability Estimation
 #'       via Newton-Raphson Algorithm}
 #'     \item{\strong{\code{'eap'}}}{Expected-a-Posteriori Ability
 #'       Estimation}
+#'     \item{\strong{\code{'map'}}}{Maximum-a-Posteriori Ability
+#'       Estimation (or Bayes Modal estimation.). Prior information must be
+#'       provided for this function. Currently only \code{'norm'} prior
+#'       distribution is available.
+#'       }
 #'   }
 #' @param ... Additional arguments passed to specific methods
 #' @param prior_dist The shape of the prior distribution. Currently following
@@ -75,6 +91,8 @@
 #'   incorrect and all NA, the \code{est} returned will be NA.
 #' @return \code{se} The standard error(s) of the ability estimate(s). For
 #'   \code{"sum_score"} method, all of the standard errors will be \code{NA}.
+#'   For Bayesian methods (like EAP or Owen's) this value is the square root
+#'   of the posterior variance.
 #'
 #' @author Emre Gonulates
 #' @export
@@ -88,94 +106,228 @@
 #' Bayesian Adaptive Testing. Research Report 77-4. Minneapolis, MN.
 #'
 #' @examples
-#' ip <- generate_ip()
-#' resp <- sim_resp(ip, theta = rnorm(1))
+#' ip <- generate_ip(n = 7)
+#' resp <- sim_resp(ip, theta = rnorm(3))
 #'
-#' # EAP estimation
-#' est_ability(ip, resp)
-#' est_ability(ip, resp, number_of_quads = 81)
-#' est_ability(ip, resp, prior_pars = c(0, 3))
-#' est_ability(ip, resp, prior_dist = 'unif',  prior_pars = c(-3, 3))
-#' est_ability(ip, resp, prior_dist = 't',  prior_pars = 3)
-#' est_ability(ip, resp, prior_dist = 'cauchy',  prior_pars = c(0, 1))
+#' ### EAP estimation ###
+#' est_ability(resp, ip)
+#' est_ability(resp, ip, number_of_quads = 81)
+#' # The default prior_dist is 'norm'. prior_pars = c(mean, sd)
+#' est_ability(resp, ip, prior_pars = c(0, 3))
+#' # prior_pars = c(min, max)
+#' est_ability(resp, ip, prior_dist = 'unif',  prior_pars = c(-3, 3))
+#' # prior_pars = c(df)
+#' est_ability(resp, ip, prior_dist = 't',  prior_pars = 3)
+#' # prior_pars = c(location, scale)
+#' est_ability(resp, ip, prior_dist = 'cauchy',  prior_pars = c(0, 1))
 #'
-#' # Maximum Likelihood estimation
-#' est_ability(ip, resp, method = 'ml')
-#' est_ability(ip, resp, method = 'ml', tol = 1e-8)
-#' est_ability(ip, resp = rep(1, length(ip)), method = 'ml')
-#' est_ability(ip, resp = rep(1, length(ip)), method = 'ml',
+#'
+#' ### MAP estimation (Bayes Modal estimation) ###
+#' est_ability(resp, ip, method = "map")
+#' # The default prior_dist is 'norm'. prior_pars = c(mean, sd)
+#' est_ability(resp, ip, method = "map", prior_pars = c(0, 2))
+#'
+#'
+#' ### Maximum Likelihood estimation ###
+#' est_ability(resp, ip, method = 'ml')
+#' est_ability(resp, ip, method = 'ml', tol = 1e-8)
+#' est_ability(resp = rep(1, length(ip)), ip, method = 'ml')
+#' est_ability(resp = rep(1, length(ip)), ip, method = 'ml',
 #'             theta_range = c(-3, 3))
 #'
-#' # Owen's Bayesian ability estimation
-#' est_ability(ip, resp, method = 'owen')
-#' est_ability(ip, resp, method = 'owen', prior_pars = c(0, 3))
+#' ### Owen's Bayesian ability estimation ###
+#' est_ability(resp, ip, method = 'owen')
+#' est_ability(resp, ip, method = 'owen', prior_pars = c(0, 3))
 #'
-est_ability <- function(ip, resp, method = "eap", ...,
+#'
+#'
+est_ability <- function(resp,
+                        ip = NULL,
+                        method = "eap",
+                        ...,
                         prior_dist = "norm",
                         prior_pars = c(0, 1),
                         theta_range = c(-5, 5),
                         number_of_quads = 41,
-                        tol = 0.000001) {
+                        tol = 1e-6) {
   # args <- list(...)
-  if (!is.matrix(resp)) {
-    if (is.numeric(resp)) {
-      if (length(resp) != length(ip))
-        stop(paste0("The length of the response pattern should be equal ",
-                    "to the number of items."))
-      resp <- matrix(resp, nrow = 1)
-    } else if (inherits(resp, "tbl_df")) { # if the response vector is a 'tibble'
-      resp <- as.matrix(resp)
-    } else if (all(is.na(resp))) { # if the response vector is all NAs
-      return(list(est = NA, se = NA))
-    } else stop("Invalid response pattern.")
+
+  # Check item pool:
+  if (!is.null(ip) && !is(ip, "Itempool")) ip <- itempool(ip)
+  if (is.null(ip) && method != "sum_score") {
+    stop(paste0("Invalid 'ip'. For '", method, "', ip cannot be NULL."))
   }
-  if (!is(ip, "Itempool") | !is(ip, "Item")) ip <- itempool(ip)
+
+  # Convert resp to Response_set object. For sum_score, conversion is not
+  # necessary if resp is already a data.frame or 'matrix'.
+  if (method == "sum_score" &&
+      (is.matrix(resp) || inherits(resp, "data.frame"))) {
+       resp_set <- resp
+  } else resp_set <- convert_to_resp_set(resp = resp, ip = ip, object_name = "resp")
+
   switch(
     method,
     "sum_score" = {
-      se <- est <- rep(NA, nrow(resp))
-      est <- rowSums(resp, na.rm = TRUE)
+      if (is(resp_set, "Response_set")) {
+        resp_matrix <- as.matrix(resp_set, output = "score")
+      # When method = "sum_score" and resp is matrix/data.frame, resp was
+      # previously assigned to resp_set.
+      } else resp_matrix <- resp_set
+      se <- est <- rep(NA, nrow(resp_matrix))
+      est <- rowSums(resp_matrix, na.rm = TRUE)
     },
     "owen" = {
       # This method cannot be used for models other than dichotomous IRT models.
-      if (!all(ip$model %in% names(Pmodels)[sapply(Pmodels, function(x)
-        x$model_family == "UIRT")]))
+      if (!all(ip$model %in% UNIDIM_DICHO_MODELS))
         stop(paste0("Owen's Bayesian ability estimation method can only ",
                     "be used for dichotomous IRT models: ",
-                    paste0(names(Pmodels)[sapply(Pmodels, function(x)
-                      x$model_family == "UIRT")], collapse = ", "), "."))
-      output <- sapply(apply(resp, 1, function(r) est_ability_owen_cpp(
+                    paste0(UNIDIM_DICHO_MODELS, collapse = ", "), "."))
+      resp_matrix <- as.matrix(resp_set, ip = ip, output = "score")
+
+      output <- sapply(apply(resp_matrix, 1, function(r) est_ability_owen_cpp(
         ip = ip, resp = r, m0 = prior_pars[1], v0 = prior_pars[2]^2)
         ), function(x) x)
       est <- unlist(output[1, ])
       se <- unlist(output[2, ])
     },
     "ml" = {
-      se <- est <- rep(NA, nrow(resp))
-      est <- apply(resp, 1, function(r) stats::optimize(f = function(x)
-        resp_loglik_itempool_cpp(resp = matrix(r, nrow = 1), theta = x, ip = ip),
-        interval = theta_range, maximum = TRUE, tol = tol*.5)$maximum)
-      se <- as.vector(1/sqrt(info(ip, theta = est, tif = TRUE, resp = resp)))
+      # ip_list <- flatten_itempool_cpp(ip)
+      se <- est <- rep(NA, length(resp_set))
+
+      est <- sapply(resp_set@response_list, function(r)
+        stats::optimize(f = resp_loglik_response_cpp, resp = r, ip = ip,
+                        lower = theta_range[1], upper = theta_range[2],
+                        tol = tol, maximum = TRUE)$maximum)
+
+      # est <- sapply(resp_set@response_list, function(r)
+      #   stats::optimize(f = function(x) resp_loglik_response_cpp(
+      #     theta = x, resp = r, ip = ip),
+      #     interval = theta_range, maximum = TRUE, tol = tol*.5)$maximum)
+
+      # For 3PL model `optimize` function sometimes finds the local maximum
+      # instead of local minimum. The following piece tacles with this
+      if ("3PL" %in% ip$item_model) {
+        n <- length(resp_set)
+        ll_lb <- resp_loglik_response_set_cpp(
+          resp_set = resp_set, theta = rep(theta_range[1], n), ip = ip)
+        ll_ub <- resp_loglik_response_set_cpp(
+          resp_set = resp_set, theta = rep(theta_range[2], n), ip = ip)
+        ll_est <- resp_loglik_response_set_cpp(
+          resp_set = resp_set, theta = est, ip = ip)
+        est <- ifelse(ll_est >= ll_ub & ll_est >= ll_lb, est,
+                      ifelse(ll_ub >= ll_est, theta_range[2], theta_range[1]))
+      }
+
+      # est <- stats::optim(par = 0,
+      #                     fn = function(x) -irt:::resp_loglik_response_cpp(
+      #                       theta = x, resp = r, ip_list = ip_list),
+      #                     method = "Brent",
+      #                     lower = theta_range[1], upper = theta_range[2],
+      #                     control = list(factr = tol))$par
+
+      # est <- apply(resp, 1, function(r) stats::optimize(f = function(x)
+      #   resp_loglik_itempool_cpp(resp = matrix(r, nrow = 1), theta = x,
+      #                            ip = ip),
+      #   interval = theta_range, maximum = TRUE, tol = tol*.5)$maximum)
+
+      if (any(ip$model == "RTM")) { # Use Hessian for Rasch Testlet Model
+        min_func <- function(theta, resp, ip) {
+         -1 * resp_loglik_response_cpp(theta = theta, resp = resp, ip = ip)
+        }
+
+        for (i in 1:length(est)) {
+          se[i] <-  1/sqrt(stats::optimHess(par = est[i], fn = min_func,
+                                            resp = resp_set[[i]], ip = ip)[1])
+        }
+      } else {
+        se <- 1/sqrt(info_response_set_cpp(theta = est, resp_set = resp_set,
+                                           ip = ip, tif = TRUE)[, 1])
+      }
     },
+    # "ml_parallel" = {
+    #   ip_list <- flatten_itempool_cpp(ip)
+    #   se <- est <- rep(NA, length(resp_set))
+    #
+    #   max_cores <- parallel::detectCores()
+    #   n_cores <- NULL
+    #   n_cores <- ifelse(is.null(n_cores), max_cores, min(max(n_cores, 1),
+    #                                                      max_cores))
+    #   optim_func <- function(r, ip_list, theta_range, tol) {
+    #     stats::optimize(f = function(x) irt:::resp_loglik_response_cpp(
+    #       theta = x, resp = r, ip_list = ip_list),
+    #       interval = theta_range, maximum = TRUE, tol = tol*.5)$maximum
+    #   }
+    #   cl <- parallel::makeCluster(n_cores)
+    #   est <- parallel::parSapplyLB(
+    #     cl = cl, X = resp_set@response_list, FUN = optim_func,
+    #     ip_list = ip_list, theta_range = theta_range, tol =  tol)
+    #   parallel::stopCluster(cl)
+    #   se <- 1/sqrt(info_response_set_cpp(theta = est, resp_set = resp_set,
+    #                                      ip = ip, tif = TRUE)[, 1])
+    # },
     "eap" = {
-      output <- est_ability_eap_cpp(
-        resp = resp, ip = ip, theta_range = theta_range,
+      output <- est_ability_eap_response_set_cpp(
+        resp_set = resp_set, ip = ip, theta_range = theta_range,
         no_of_quadrature = number_of_quads,
-        prior_dist = prior_dist, prior_par = prior_pars)
+        prior_dist = prior_dist,
+        prior_par = prior_pars)
+      # output <- est_ability_eap_cpp(
+      #   resp = resp, ip = ip, theta_range = theta_range,
+      #   no_of_quadrature = number_of_quads,
+      #   prior_dist = prior_dist, prior_par = prior_pars)
       est <- output$est
       se <- output$se
+    },
+    "map" = {
+      if (prior_dist != "norm") {
+        stop("Invalid 'prior_dist'. 'map' ability estimation method ",
+             "currently can only be used with normally distributed prior, ",
+             "i.e. please set prior_dist = 'norm'.")
+      }
 
+      # Check prior_pars
+      if (!is_atomic_vector(prior_pars, class = c("integer", "numeric")) ||
+          (length(prior_pars) != 2) || (prior_pars[2] < 0))
+        stop("Invalid 'prior_pars'. 'prior_pars' for normal distribution ",
+             "('norm') should be a numeric vector of length two. The first ",
+             "element should be the mean and second element should be the ",
+             "standard deviation.")
+      mu <- prior_pars[1]
+      sigma <- prior_pars[2]
+      se <- est <- rep(NA, length(resp_set))
+
+      map_func <- function(theta, resp, ip, mu, sigma) {
+        resp_lik_response_cpp(theta = theta, resp = resp, ip = ip) *
+          stats::dnorm(x = theta, mean = mu, sd = sigma)
+      }
+      est <- sapply(resp_set@response_list, function(r)
+        stats::optimize(f = map_func, resp = r, ip = ip, mu = mu, sigma = sigma,
+                        lower = theta_range[1], upper = theta_range[2],
+                        tol = tol, maximum = TRUE)$maximum)
+
+      se <- 1/sqrt(info_response_set_cpp(theta = est, resp_set = resp_set,
+                                         ip = ip, tif = TRUE)[, 1] + 1/sigma^2)
     },
     stop("This method has not been implemented yet.")
     )
 
   # Round numbers up to tolerance
-  est <- stats::setNames(round(est, floor(abs(log10(tol)))), rownames(resp))
-  se <- stats::setNames(round(se, floor(abs(log10(tol)))), rownames(resp))
-  # Convert all NA response strings's est and se to NA
-  all_na_rows <- apply(is.na(resp), 1, all)
-  est[all_na_rows] <- NA
-  se[all_na_rows] <- NA
+  if (method != "sum_score") {
+    est <- round(est, floor(abs(log10(tol))))
+    se <- round(se, floor(abs(log10(tol))))
+  }
+
+  # Set examinee names
+  if ((!is.atomic(resp) || is.matrix(resp)) && is(resp_set, "Response_set")) {
+    est <- stats::setNames(est, resp_set$examinee_id)
+    se <- stats::setNames(se, resp_set$examinee_id)
+  }
+
+
+  # # Convert all NA response strings's est and se to NA
+  # all_na_rows <- apply(is.na(resp), 1, all)
+  # est[all_na_rows] <- NA
+  # se[all_na_rows] <- NA
   return(list(est = est, se = se))
 }
 

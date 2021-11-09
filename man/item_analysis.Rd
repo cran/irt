@@ -4,16 +4,24 @@
 \alias{item_analysis}
 \title{Item Analysis Function}
 \usage{
-item_analysis(resp, criterion = NULL, suppress_output = FALSE)
+item_analysis(resp, criterion = NULL, ip = NULL, suppress_output = FALSE)
 }
 \arguments{
-\item{resp}{A \code{matrix} or \code{data.frame} containing the item
-responses.}
+\item{resp}{A \code{\link{Response_set-class}} object, \code{matrix} or
+\code{data.frame} containing the item responses.}
 
 \item{criterion}{Provide a continuous criterion variable such as a total
 raw score, or theta score that will be used in the calculation of
 correlation calculations. If this value is \code{NULL}, the total score
 will be used.}
+
+\item{ip}{An \code{\link{Itempool-class}} object. This will help function
+in two ways. First, if the \code{resp} is
+a \code{\link{Response_set-class}} object, the function will help the
+responses to be arranged in the same order as \code{ip}. Second, if there
+are polytomous items in the data, \code{ip} will help finding the maximum
+values of each item. Otherwise, the maximum values each item can take
+will be calculated using data, which may be fallible.}
 
 \item{suppress_output}{If \code{TRUE}, the function will suppress
 console output. Default value is \code{FALSE}}
@@ -21,9 +29,12 @@ console output. Default value is \code{FALSE}}
 \value{
 A list of
   \describe{
-    \item{'id'}{Item ID.}
+    \item{'item_id'}{Item ID.}
     \item{'n'}{Number of examinees responded this item.}
-    \item{'pval'}{p-value, proportion of examinees correctly answered items.}
+    \item{'pval'}{p-value, proportion of examinees correctly answered items.
+      If there are polytomous items in the data, p-value will be calculated
+      by dividing the mean of the scores for the item by the maximum
+      possible score of the item. }
     \item{'pbis'}{Point biserial correlation.}
     \item{'bis'}{Biserial correlation.}
     \item{'pbis_adj'}{Point biserial correlation between item and total score

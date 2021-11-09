@@ -3,6 +3,15 @@
 \name{info}
 \alias{info}
 \alias{info,Item-method}
+\alias{info,Rasch-method}
+\alias{info,1PL-method}
+\alias{info,2PL-method}
+\alias{info,3PL-method}
+\alias{info,4PL-method}
+\alias{info,PCM-method}
+\alias{info,GRM-method}
+\alias{info,GPCM-method}
+\alias{info,GPCM2-method}
 \alias{info,Itempool-method}
 \alias{info,Testlet-method}
 \alias{info,numMatDfListChar-method}
@@ -11,6 +20,24 @@
 info(ip, theta, tif = FALSE, observed = FALSE, resp = NULL)
 
 \S4method{info}{Item}(ip, theta, tif = FALSE, observed = FALSE, resp = NULL)
+
+\S4method{info}{Rasch}(ip, theta, tif = FALSE, observed = FALSE, resp = NULL)
+
+\S4method{info}{`1PL`}(ip, theta, tif = FALSE, observed = FALSE, resp = NULL)
+
+\S4method{info}{`2PL`}(ip, theta, tif = FALSE, observed = FALSE, resp = NULL)
+
+\S4method{info}{`3PL`}(ip, theta, tif = FALSE, observed = FALSE, resp = NULL)
+
+\S4method{info}{`4PL`}(ip, theta, tif = FALSE, observed = FALSE, resp = NULL)
+
+\S4method{info}{PCM}(ip, theta, tif = FALSE, observed = FALSE, resp = NULL)
+
+\S4method{info}{GRM}(ip, theta, tif = FALSE, observed = FALSE, resp = NULL)
+
+\S4method{info}{GPCM}(ip, theta, tif = FALSE, observed = FALSE, resp = NULL)
+
+\S4method{info}{GPCM2}(ip, theta, tif = FALSE, observed = FALSE, resp = NULL)
 
 \S4method{info}{Itempool}(ip, theta, tif = FALSE, observed = FALSE, resp = NULL)
 
@@ -42,7 +69,6 @@ This function sets a generic method for calculating the information of
 a suitable object
 }
 \examples{
-info(ip = generate_item(model = "Rasch"), theta = rnorm(1))
 info(ip = generate_item(model = "1PL"), theta = rnorm(1))
 info(ip = generate_item(model = "2PL"), theta = rnorm(1))
 info(ip = generate_item(model = "3PL"), theta = rnorm(1))
@@ -50,6 +76,24 @@ info(ip = generate_item(model = "4PL"), theta = rnorm(1))
 info(ip = generate_item(model = "GRM"), theta = rnorm(1))
 info(ip = generate_item(model = "GPCM"), theta = rnorm(1))
 info(ip = generate_item(model = "PCM"), theta = rnorm(1))
+info(ip = generate_item(model = "GPCM2"), theta = rnorm(1))
+
+info(ip = generate_item(model = "Rasch"), theta = rnorm(1))
+
+info(ip = generate_item(model = "1PL"), theta = rnorm(1))
+
+info(ip = generate_item(model = "2PL"), theta = rnorm(1))
+
+info(ip = generate_item(model = "3PL"), theta = rnorm(1))
+
+info(ip = generate_item(model = "4PL"), theta = rnorm(1))
+
+info(ip = generate_item(model = "PCM"), theta = rnorm(1))
+
+info(ip = generate_item(model = "GRM"), theta = rnorm(1))
+
+info(ip = generate_item(model = "GPCM"), theta = rnorm(1))
+
 info(ip = generate_item(model = "GPCM2"), theta = rnorm(1))
 
 info(ip = generate_ip(model = "Rasch"), theta = rnorm(1))

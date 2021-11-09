@@ -45,6 +45,18 @@ Rcpp::IntegerVector order_increasing(Rcpp::NumericVector &x) {
     std::sort(idx.begin(), idx.end(), c);
     return idx;
 }
+
+
+
+std::string get_s4_id(Rcpp::S4 element) {
+  if (element.inherits("Testlet")) { // element is Testlet
+    return as<std::string>(element.slot("testlet_id"));
+  } else {
+    return as<std::string>(element.slot("item_id"));
+  }
+}
+
+
 //#############################################################################@
 //########################### get_remaining_items ##############################
 //#############################################################################@
@@ -125,7 +137,7 @@ Rcpp::S4 get_remaining_items(Rcpp::List cd, Rcpp::List est_history,
   int no_of_set_aside_item_list = set_aside_item_list.size();
 
   bool element_administered; // indicates that element has been administered
-
+  // Rcout << "-- HERE 1 --" << std::endl;
   // Iterate through all items and get the ones that are unadministered or
   // if it is testlet has at least one unadministered item in it.
   for (int i = 0; i < no_of_elements; i++) {
@@ -134,13 +146,16 @@ Rcpp::S4 get_remaining_items(Rcpp::List cd, Rcpp::List est_history,
     //                       // current item is in testlet or not.
     element_administered = false;
     current_element = as<S4>(ip_list[i]); // This can be Testlet or independent item
-    std::string current_element_id = as<std::string>(current_element.slot("id"));
-
+    // TODO FIX THIS: currently working only for item_ids
+    std::string current_element_id = get_s4_id(current_element);
+    
     // Check whether current_element is in set_aside_item_list
     if (no_of_set_aside_item_list > 0) {
+      std::string temp_id;
       for (int j = 0; j < no_of_set_aside_item_list; j++) {
         temp_s4 = as<S4>(set_aside_item_list[j]);
-        if (as<std::string>(temp_s4.slot("id")) == current_element_id) {
+        temp_id = get_s4_id(temp_s4);
+        if (temp_id == current_element_id) {
           // Item should not be administered and cannot be added to remaining items list
           element_administered = true;
           break;
@@ -150,7 +165,8 @@ Rcpp::S4 get_remaining_items(Rcpp::List cd, Rcpp::List est_history,
     // if true, it means that item is in set_aside_item_list, so cannot be added to remaining items list
     if (element_administered) continue;
 
-    // Rcout << "  get_remaining_items 2.1 - current_element id = " << as<std::string>(current_element.slot("id")) << std::endl;
+    // Rcout << "  get_remaining_items 2.1 - current_element ID = "
+    // << as<std::string>(current_element.slot("item_id")) << std::endl;
     if (current_element.inherits("Testlet")) { // current element is Testlet
       // Check whether this testlet is in "testlet" elements of estimate
       // history. If it is then check whether all elements of it is administered.
@@ -172,8 +188,11 @@ Rcpp::S4 get_remaining_items(Rcpp::List cd, Rcpp::List est_history,
           // if it is not same, then move to the next estimate history step.
 
           eh_testlet = as<S4>(est_history_step["testlet"]);
-          // Rcout << "      get_remaining_items 2.1.1.1.2  - testlet of this step is NOT NULL. eh_testlet_id = " << as<std::string>(eh_testlet.slot("id")) << " ; current_element_id = " << as<std::string>(current_element.slot("id")) << std::endl;
-          if (as<std::string>(eh_testlet.slot("id")) == current_element_id) {
+          // Rcout << "      get_remaining_items 2.1.1.1.2  - testlet of " <<
+          // "this step is NOT NULL. eh_testlet_id = "
+          // << as<std::string>(eh_testlet.slot("testlet_id")) << " ; current_element_id = "
+          // << as<std::string>(current_element.slot("item_id")) << std::endl;
+          if (as<std::string>(eh_testlet.slot("testlet_id")) == current_element_id) {
             // This means that at least one item from this testlet has been
             // administered. Now, check whether all of the items in this
             // testlet has been administered or not. If all of them
@@ -188,19 +207,22 @@ Rcpp::S4 get_remaining_items(Rcpp::List cd, Rcpp::List est_history,
             // testlet has been administered. Starting at "step", because
             // until this step this testlet has not been seen.
             int count_testlet_items = 0;
-            // Rcout << "        get_remaining_items 2.1.1.1.2.1  - current_element is equal to eh_testlet;  count_testlet_items = " << count_testlet_items << std::endl;
+            // Rcout << "        get_remaining_items 2.1.1.1.2.1  - "
+            // << "current_element is equal to eh_testlet;  count_testlet_items = "
+            // << count_testlet_items << std::endl;
             for (int j = step; j < est_history_size; j++) {
               // Rcout << "          get_remaining_items 2.1.1.1.2.1.1  - sub-step = " << j << std::endl;
               temp_est_history_step = est_history[j];
               if (!Rf_isNull(temp_est_history_step["testlet"])) {
                 temp_testlet = as<S4>(temp_est_history_step["testlet"]);
-                if (as<std::string>(temp_testlet.slot("id")) == current_element_id)
+                if (as<std::string>(temp_testlet.slot("testlet_id")) == current_element_id)
                   count_testlet_items++;
               }
             }
             // Get the number of items of the testlet
             temp_list = current_element.slot("item_list");
-            // Rcout << "      get_remaining_items 2.1.1.1.4 -- temp_list size =  " << temp_list.size() << "  ; count_testlet_items = " << count_testlet_items << std::endl;
+            // Rcout << "      get_remaining_items 2.1.1.1.4 -- temp_list size =  "
+            // << temp_list.size() << "  ; count_testlet_items = " << count_testlet_items << std::endl;
             if (count_testlet_items == temp_list.size()) {
               // it means that all of the items in the testlet has been administered
               // Rcout << "      get_remaining_items 2.1.1.1.4.1 element has been administered " << std::endl;
@@ -210,7 +232,8 @@ Rcpp::S4 get_remaining_items(Rcpp::List cd, Rcpp::List est_history,
           } else continue; // step's testlet is not equal to current_testlet, move to the next step.
         }
       }
-    } else if (current_element.inherits("Item")) { // current element is 'Item' object
+    } else { // current element is 'Item' object
+    // } else if (current_element.inherits("Item")) { // current element is 'Item' object
       // Check the "item" elements of "est_history" steps. If the item has
       // not been administered (i.e. not in est_history), then add it to the
       // remaining_ip.
@@ -219,7 +242,7 @@ Rcpp::S4 get_remaining_items(Rcpp::List cd, Rcpp::List est_history,
         est_history_step = est_history[step];
         eh_item = as<S4>(est_history_step["item"]);
         // if true, this means item has been administered
-        if (as<std::string>(eh_item.slot("id")) == current_element_id) {
+        if (as<std::string>(eh_item.slot("item_id")) == current_element_id) {
           // Rcout << "    get_remaining_items 2.1.1.1  - current element is administered!" << std::endl;
           element_administered = true;
           break;
@@ -227,7 +250,8 @@ Rcpp::S4 get_remaining_items(Rcpp::List cd, Rcpp::List est_history,
       }
     }
     if (!element_administered) { // if element has not been administered, add it to the remaining_ip_list
-      item_ids.push_back(as<std::string>(current_element.slot("id")));
+      // item_ids.push_back(as<std::string>(current_element.slot("item_id")));
+      item_ids.push_back(current_element_id);      
       remaining_ip_list.push_back(current_element);
     }
   }
@@ -239,8 +263,8 @@ Rcpp::S4 get_remaining_items(Rcpp::List cd, Rcpp::List est_history,
 
 
 
-  // CharacterVector est_history_id(est_history_size); // item id's in the estimate history
-  // CharacterVector ip_id(ip_size); // item id's in item pool
+  // CharacterVector est_history_id(est_history_size); // item ID's in the estimate history
+  // CharacterVector ip_id(ip_size); // item ID's in item pool
   // bool item_in_est_history; // true if item is in estimate history.
   // List remaining_ip(ip_size - est_history_size); // list that holds remaining items
   // // Temporary variables
@@ -248,24 +272,24 @@ Rcpp::S4 get_remaining_items(Rcpp::List cd, Rcpp::List est_history,
   // std::string temp_id;
   // List temp_list;
   // Rcout << "    get_remaining_items 2  " << std::endl;
-  // // Get the id's of items in the estimation history
+  // // Get the ID's of items in the estimation history
   // for (int i = 0; i < est_history_size; i++)  {
   //   temp_list = est_history[i];
   //   temp_s4 = as<S4>(temp_list("item"));
-  //   est_history_id[i] = Rcpp::as<std::string>(temp_s4.slot("id"));
+  //   est_history_id[i] = Rcpp::as<std::string>(temp_s4.slot("item_id"));
   //   //// Rcout << ip_id[i] << "\\n";
   // }
   // Rcout << "    get_remaining_items 3  " << std::endl;
   // for (int i = 0; i < ip_size; i++)  {
   //   temp_s4 = as<S4>(ip_list[i]);
-  //   ip_id[i] = Rcpp::as<std::string>(temp_s4.slot("id"));
+  //   ip_id[i] = Rcpp::as<std::string>(temp_s4.slot("item_id"));
   // }
   // Rcout << "    get_remaining_items 4  " << std::endl;
   // int remaining_counter = 0;
   // for (int i = 0; i < ip_size; i++)  {
   //   Rcout << "      get_remaining_items 4.1  " << std::endl;
   //   temp_s4 = as<S4>(ip_list[i]);
-  //   temp_id = Rcpp::as<std::string>(temp_s4.slot("id"));
+  //   temp_id = Rcpp::as<std::string>(temp_s4.slot("item_id"));
   //   item_in_est_history = false;
   //   for (int j = 0; j < est_history_size; j++) {
   //     if (temp_id == as<std::string>(est_history_id(j))) {
@@ -286,7 +310,7 @@ Rcpp::S4 get_remaining_items(Rcpp::List cd, Rcpp::List est_history,
   // CharacterVector temptemp;
   // for (int i=0; i < tempint; i++) {
   //   temp_s4 = as<S4>(remaining_ip[i]);
-  //   temptemp = temp_s4.slot("id");
+  //   temptemp = temp_s4.slot("item_id");
   //   Rcout << "      get_remaining_items 5.2  - temptemp = " << temptemp << std::endl;
   // }
   //
@@ -346,13 +370,14 @@ Rcpp::S4 get_administered_items_cpp(Rcpp::List est_history) {
   if (!est_history_last_step.containsElementNamed("item") ||
         TYPEOF(est_history_last_step["item"]) != S4SXP )// the element is not an S4
   {
-     // Rcout << "              (get_administered_items_cpp) -- 2.2 -- Last element has 'item' TYPEOF:" << TYPEOF(est_history_last_step["item"]) << std::endl;
+     // Rcout << "              (get_administered_items_cpp) -- 2.2 -- Last element has 'item' TYPEOF:" <<
+     // TYPEOF(est_history_last_step["item"]) << std::endl;
     item_no = item_no - 1;
   } // else item_no = item_no - 1;
    // Rcout << "            (get_administered_items_cpp) -- 3 --  item_no is " << item_no << std::endl;
   // Create an item pool of administered items
   Rcpp::List administered_ip_list(item_no);
-  Rcpp::S4 temp_item("Item");
+  Rcpp::S4 temp_item;
   Rcpp::S4 administered_ip("Itempool");
   Rcpp::StringVector item_ids(item_no);
   if (item_no > 0) {
@@ -368,7 +393,7 @@ Rcpp::S4 get_administered_items_cpp(Rcpp::List est_history) {
       // Rcout << "                (get_administered_items_cpp) -- 3.2.3 -- iteration " << i << std::endl;
       // TODO: The list element should be a named list element
       administered_ip_list[i] = temp_item;
-      item_ids(i) = as<std::string>(temp_item.slot("id"));
+      item_ids(i) = as<std::string>(temp_item.slot("item_id"));  // TODO: This may not handle Testlets. Fix this!!!
       // est_history_last_step = eh[i];
       // administered_ip_list[i] = est_history_last_step["item"];
     }
@@ -397,11 +422,15 @@ Rcpp::IntegerVector get_response_categories(Rcpp::S4 item) {
   // For dichotomous IRT models it will return c(0, 1)
   // For polytomous IRT models it will return c(0, 1, 2, ...), number of item
   // thresholds plus one.
-  std::string model = as<std::string>(item.slot("model"));
-  if (model == "GPCM" || model == "GRM") {
+  std::string model = as<std::string>(item.attr("class"));
+  if (model == "GPCM" || model == "GRM" || model == "PCM" ||
+      model == "GPCM2") {
+    Rcpp::NumericVector b;
     // Item difficulty
-    Rcpp::List parList = as<List>(item.slot("parameters"));
-    Rcpp::NumericVector b = parList["b"];
+    if (model == "GPCM2") {
+      b = as<Rcpp::NumericVector>(item.slot("d"));
+    } else
+      b = as<Rcpp::NumericVector>(item.slot("b"));
     IntegerVector output(b.size() + 1);
     for (int i = 0; i < output.size(); i++)
       output[i] = i;
@@ -488,40 +517,40 @@ double loglik_est_history(Rcpp::List est_history, double theta,
 //#############################################################################@
 // This function first gets the remaining items list and calculates information
 // values of each element (item or testlet). Then it orderst the elements
-// from the ones who has the highest information to the lowest ones. 
-// It returns a sorted list of elements and sorted criteria (which is the 
-// information values). 
+// from the ones who has the highest information to the lowest ones.
+// It returns a sorted list of elements and sorted criteria (which is the
+// information values).
 //
 // [[Rcpp::export]]
-Rcpp::List select_next_item_fisher_max_info_cpp(Rcpp::List cd, 
+Rcpp::List select_next_item_fisher_max_info_cpp(Rcpp::List cd,
                                                 Rcpp::List est_history,
                                                 Rcpp::List additional_args) {
-  
+
   int item_no = est_history.size();  // The stage of the test.
   // Create an item pool of remaining items
   Rcpp::S4 remaining_ip = get_remaining_items(cd, est_history, additional_args);
   Rcpp::List remaining_ip_list = remaining_ip.slot("item_list");
   int no_of_remaining_items = remaining_ip_list.size();
-  if (no_of_remaining_items == 0) 
+  if (no_of_remaining_items == 0)
     stop("There are no items to select from for the next item selection function.");
   // info_values will hold the information values of each element (item
   // or testlet)
   Rcpp::NumericVector info_values(no_of_remaining_items);
-  
+
   // Get the previous (actually current) estimated ability
   Rcpp::List est_history_last_step = est_history[item_no-1];
-  double current_ability_est = est_history_last_step("est_before");  
-  
-  // Since there is one theta, the output will be a matrix with one row. So, 
+  double current_ability_est = est_history_last_step("est_before");
+
+  // Since there is one theta, the output will be a matrix with one row. So,
   // it can be converted to a NumericVector.
-  info_values = info_itempool_bare_cpp(current_ability_est, remaining_ip, false, 
+  info_values = info_itempool_bare_cpp(current_ability_est, remaining_ip, false,
                                        false, R_NilValue);
   // Get the sorted (from lowest to the highest) indices of info_values.
-  
+
   // Rcpp::IntegerVector idx = seq_along(info_values) - 1;
   // std::sort(idx.begin(), idx.end(), [&](int i, int j){return info_values[i] > info_values[j];});
   Rcpp::IntegerVector idx = order_decreasing(info_values);
-  
+
   // Sort info_values and remaining_ip_list using the sort order of epv_list
   return Rcpp::List::create(Named("criteria") = info_values[idx],
                             Named("remaining_ip_list") = remaining_ip_list[idx]);
@@ -542,16 +571,16 @@ Rcpp::S4 select_next_item_fmi_cpp(
   Rcpp::NumericMatrix ipMatrix;
   Rcpp::NumericVector infos;
   Rcpp::List item_list = ip.slot("item_list");
-  
+
   ipMatrix = get_parameters_itempool_cpp(ip);
   //Rcpp::NumericMatrix theta_matrix(1,1);
   //theta_matrix(0,0) = theta;
   //infos = info_itempool_cpp(theta_matrix, ip, false, false, R_NilValue);
-  // Since there is one theta, the output will be a matrix with one row. So, 
+  // Since there is one theta, the output will be a matrix with one row. So,
   // it can be converted to a NumericVector.
   infos = as<Rcpp::NumericVector>(info_itempool_cpp(theta, ip, false, false, R_NilValue));
-  
-  
+
+
   if (num_of_items <= randomesqueN) {
     // selected_item_no = rand() % num_of_items + 1;
     selected_item_no = as<int>(Rcpp::sample(num_of_items, 1));
@@ -572,7 +601,7 @@ Rcpp::S4 select_next_item_fmi_cpp(
         minIndex = j;
       }
     }
-  
+
     // Top randomesqueN most informative items will be hold here.
     for (i = randomesqueN; i < num_of_items; i++)
     {
@@ -580,7 +609,7 @@ Rcpp::S4 select_next_item_fmi_cpp(
       {
         // Find the indexes which has the minimum information, remove it
         // and replace it with the newly found value.
-  
+
         indexes[minIndex] = i;
         maxInfoThreshold = infos(0,i);
         for (j = 0; j < randomesqueN; j++)
@@ -597,7 +626,7 @@ Rcpp::S4 select_next_item_fmi_cpp(
     // selected_item_no = indexes[rand() % randomesqueN] + 1;
     selected_item_no = indexes[as<int>(Rcpp::sample(randomesqueN, 1)) - 1] + 1;
   }
-  
+
   // Rcout << "  Stage (sni-fmi) 1 -  selected_item_no: " << selected_item_no << std::endl;
   // Rcout << "  Stage (sni-fmi) 2 -  ENDING" << std::endl;
   return item_list[selected_item_no - 1];
@@ -648,7 +677,8 @@ double calculate_epv_cpp(std::string var_calc_method,
     testlet_item_list = List::create(candidate_item);
     testlet_ip.slot("item_list") = testlet_item_list;
   }
-  // Rcout << "          (calculate_epv_cpp) -- 1.2 -- Beginning - item_is_testlet = " << item_is_testlet << std::endl;
+  // Rcout << "          (calculate_epv_cpp) -- 1.2 -- Beginning - item_is_testlet = "
+  // << item_is_testlet << std::endl;
 
   // timer.step("Calculating P       "); //@@@@@@@@@@@@@@ TIMER @@@@@@@@@@@@@@@@@@
 
@@ -670,18 +700,23 @@ double calculate_epv_cpp(std::string var_calc_method,
     // Rcout << "            (calculate_epv_cpp) -- 4.1 -- Owen Selected" << std::endl;
     // est_list = est_ability_owen_cpp(all_items, all_resp, prior_mean, prior_var);
     est_list = est_ability_owen_cpp(testlet_ip, current_resp, prior_mean, prior_var);
-    // Rcout << "              (calculate_epv_cpp) -- 4.1.1 -- owen -- cand_item_id: " << as<std::string>(candidate_item.slot("id")) << " - current_resp " << current_resp << " est = " << as<double>(est_list["est"]) << " - se = " <<  as<double>(est_list["se"]) << std::endl;
+    // Rcout << "              (calculate_epv_cpp) -- 4.1.1 -- owen -- cand_item_id: "
+    // << as<std::string>(candidate_item.slot("item_id")) << " - current_resp "
+    // << current_resp << " est = " << as<double>(est_list["est"]) << " - se = "
+    // <<  as<double>(est_list["se"]) << std::endl;
 	} else { // else it is assumed that var_calc_method = "eap"
 
 	  //// Calculate the posterior variance given all previous items and
 	  //// current candidate item
       // All responses including current candidate response
     NumericVector all_resp = previous_resp;
-    // Rcout << "          (calculate_epv_cpp) -- 2.1 --  Previous Resp Size = " << previous_resp.size() << std::endl;
+    // Rcout << "          (calculate_epv_cpp) -- 2.1 --  Previous Resp Size = "
+    // << previous_resp.size() << std::endl;
     for (int i = 0; i < current_resp.size(); i++)
       all_resp.push_back(current_resp[i]);
 
-    // Rcout << "          (calculate_epv_cpp) -- 2.2 --  All Resp Size = " << all_resp.size() << std::endl;
+    // Rcout << "          (calculate_epv_cpp) -- 2.2 --  All Resp Size = "
+    // << all_resp.size() << std::endl;
     List all_items_list;
     //// Create an item pool of all items including the current candidate.
     // If administered_ip is not 'Itempool', it means that it is empty.
@@ -690,7 +725,7 @@ double calculate_epv_cpp(std::string var_calc_method,
     // administered_ip is empty.
 
 
-    // Check first item of administered_ip, if it has id NULL it means administered_ip is empty.
+    // Check first item of administered_ip, if it has ID NULL it means administered_ip is empty.
     all_items_list = administered_ip.slot("item_list");
 
     // timer.step("Check ip is NULL    "); //@@@@@@@@@@@@@@ TIMER @@@@@@@@@@@@@@@@@@
@@ -714,7 +749,8 @@ double calculate_epv_cpp(std::string var_calc_method,
       }
     }
     // timer.step("Checked ip is NULL  "); //@@@@@@@@@@@@@@ TIMER @@@@@@@@@@@@@@@@@@
-    // Rcout << "          (calculate_epv_cpp) -- 2.3 --  all_items_list Size = " << all_items_list.size() << std::endl;
+    // Rcout << "          (calculate_epv_cpp) -- 2.3 --  all_items_list Size = "
+    // << all_items_list.size() << std::endl;
 
 
     Rcpp::S4 all_items("Itempool");
@@ -729,11 +765,15 @@ double calculate_epv_cpp(std::string var_calc_method,
 		// Temp list hold the output of ability estimation
     NumericVector theta_range = NumericVector::create(-5, 5);
     NumericVector prior_par = NumericVector::create(prior_mean, prior_var);
-    // Rcout << "              (calculate_epv_cpp) -- 4.2.1 -- eap Selected - Is all items Itempool? " << all_items.inherits("Itempool") << std::endl;
+    // Rcout << "              (calculate_epv_cpp) -- 4.2.1 -- eap Selected - Is all items Itempool? "
+    // << all_items.inherits("Itempool") << std::endl;
 
 		est_list = est_ability_eap_single_examinee_cpp(
       all_resp, all_items, theta_range, 50, "norm", prior_par);
-    // Rcout << "              (calculate_epv_cpp) -- 4.2.3 -- eap -- cand_item_id: " << as<std::string>(candidate_item.slot("id")) << " - current_resp " << current_resp << " est = " << as<double>(est_list["est"]) << " - se = " <<  as<double>(est_list["se"]) << std::endl;
+    // Rcout << "              (calculate_epv_cpp) -- 4.2.3 -- eap -- cand_item_id: "
+    // << as<std::string>(candidate_item.slot("item_id")) << " - current_resp "
+    // << current_resp << " est = " << as<double>(est_list["est"]) << " - se = 0"
+    // <<  as<double>(est_list["se"]) << std::endl;
 	}
   // timer.step("After Ability Est   "); //@@@@@@@@@@@@@@ TIMER @@@@@@@@@@@@@@@@@@
   // Rcout << "          (calculate_epv_cpp) -- 5 -- After Selection" << std::endl;
@@ -789,7 +829,7 @@ Rcpp::List select_next_item_mepv_cpp(Rcpp::List cd, Rcpp::List est_history,
   S4 remaining_ip = get_remaining_items(cd, est_history, additional_args);
   List remaining_ip_list = remaining_ip.slot("item_list");
   int no_of_remaining_items = remaining_ip_list.size();
-  if (no_of_remaining_items == 0) 
+  if (no_of_remaining_items == 0)
     stop("There are no items to select from for the next item selection function.");
   // epv_list will hold the expected posterior variances of each element (item
   // or testlet)
@@ -833,11 +873,13 @@ Rcpp::List select_next_item_mepv_cpp(Rcpp::List cd, Rcpp::List est_history,
   // does not need to be calculated each time. Simply an informative prior works.
   double prior_mean = 0;
   double prior_var = 1;
-  if (var_calc_method == "owen" && item_no > 1) { // Make sure administered_ip is valid, i.e. it is not the beginning of the test
+  // Make sure administered_ip is valid, i.e. it is not the beginning of the test
+  if (var_calc_method == "owen" && item_no > 1) {
     temp_list = est_ability_owen_cpp(administered_ip, previous_resp,
                                      prior_mean, prior_var);
     prior_mean =  temp_list["est"];
-    prior_var =  as<double>(temp_list["se"]) * as<double>(temp_list["se"]); // pow(as<double>(temp_list["se"]), 2)
+    // pow(as<double>(temp_list["se"]), 2)
+    prior_var =  as<double>(temp_list["se"]) * as<double>(temp_list["se"]);
   }
 
   // timer.step("Before loops        "); //@@@@@@@@@@@@@@ TIMER @@@@@@@@@@@@@@@@@@
@@ -847,12 +889,14 @@ Rcpp::List select_next_item_mepv_cpp(Rcpp::List cd, Rcpp::List est_history,
     // timer.step("Loop " + std::to_string(i) + "             "); //@@@@@@@@@@@@@@ TIMER @@@@@@@@@@@@@@@@@@
     epv = 0;
     // Get the item or testlet
-    candidate_item = as<Rcpp::S4>(remaining_ip_list[i]);
-    std::string candidate_item_id = as<std::string>(candidate_item.slot("id"));
-    // Rcout << std::endl << std::endl << std::endl << "      mepv -- 6.1 -- Starting Simulation with Item: " << candidate_item_id << std::endl;
+    candidate_item = as<Rcpp::S4>(remaining_ip_list[i]);    
+    // Rcout << std::endl << std::endl << std::endl
+    // << "      mepv -- 6.1 -- Starting Simulation with Item: " <<
+    // candidate_item_id << std::endl;
     if (candidate_item.inherits("Testlet")) {
       // Rcout << "        mepv -- 6.2 -- Candidate Testlet" << std::endl;
       // Create possible response patterns of all items within the testlet
+      std::string candidate_item_id = as<std::string>(candidate_item.slot("testlet_id"));
       Rcpp::S4 ip, testlet_item;
       ip = as<S4>(candidate_item.slot("item_list"));// item list of the testlet as Itempool
       temp_list = ip.slot("item_list");  // item list as a list object
@@ -866,7 +910,9 @@ Rcpp::List select_next_item_mepv_cpp(Rcpp::List cd, Rcpp::List est_history,
       }
       // Create all possible patterns of items in the testlet using expand.grid:
       patterns = expand_grid(resp_category_list);
-    } else if (candidate_item.inherits("Item")) {
+    // } else if (candidate_item.inherits("Item")) {
+    } else {
+      std::string candidate_item_id = as<std::string>(candidate_item.slot("item_id"));
       // Rcout << "        mepv -- 6.3.1 -- Candidate item" << std::endl;
       resp_categories = get_response_categories(candidate_item);
       // Rcout << "        mepv -- 6.3.2 -- Expanding Grid" << std::endl;
@@ -888,7 +934,10 @@ Rcpp::List select_next_item_mepv_cpp(Rcpp::List cd, Rcpp::List est_history,
         current_resp[j] = temp_int_vector[pi];
       }
 
-      // Rcout << std::endl << "        mepv -- 6.3.3.1 -- epv Calc Iteration: " << pi << "/" << no_patterns-1 << "  Current Item: " << as<std::string>(candidate_item.slot("id")) << " - Response: " << current_resp << std::endl;
+      // Rcout << std::endl << "        mepv -- 6.3.3.1 -- epv Calc Iteration: "
+      // << pi << "/" << no_patterns-1 << "  Current Item: "
+      // << as<std::string>(candidate_item.slot("item_id")) << " - Response: "
+      // << current_resp << std::endl;
       // Rcout << "        mepv -- 6.3.3.2 -- Previous epv = " << epv << std::endl;
       epv = epv + calculate_epv_cpp(var_calc_method, current_resp, previous_resp,
                                     current_ability_est, candidate_item,
@@ -899,7 +948,7 @@ Rcpp::List select_next_item_mepv_cpp(Rcpp::List cd, Rcpp::List est_history,
     // Rcout << "      mepv -- 6.4 -- Final Updating epv = " << epv << std::endl;
 
     epv_list[i] = epv;
-    // // Updtate the mininum epv and the id of the item if a smaller value found
+    // // Updtate the mininum epv and the ID of the item if a smaller value found
     // if (epv < mepv) {
     //   mepv = epv;
     //   selected_item = candidate_item;
@@ -910,7 +959,7 @@ Rcpp::List select_next_item_mepv_cpp(Rcpp::List cd, Rcpp::List est_history,
   // IntegerVector idx = seq_along(epv_list) - 1;
   // std::sort(idx.begin(), idx.end(), [&](int i, int j){return epv_list[i] < epv_list[j];});
   Rcpp::IntegerVector idx = order_increasing(epv_list);
-  
+
   // Rcout << "      mepv -- 7 -- Returning selected item!! " << std::endl;
 
   // timer.step("Finishing mepv      ");   //@@@@@@@@@@@@@@ TIMER @@@@@@@@@@@@@@@@
@@ -943,7 +992,8 @@ Rcpp::List apply_exposure_control_cpp(Rcpp::List cd, Rcpp::List est_history,
   if (remaining_ip_list.size() == 0)
     stop("There are no items to select from for the exposure control function.");
   int item_no = est_history.size();  // The stage of the test.
-  // Rcout << "      apply_exposure_control_cpp 1 -- Beginning  -- item_no = " << item_no << " -- remaining_ip_list size = " << remaining_ip_list.size() << std::endl;
+  // Rcout << "      apply_exposure_control_cpp 1 -- Beginning  -- item_no = "
+  // << item_no << " -- remaining_ip_list size = " << remaining_ip_list.size() << std::endl;
 
   Rcpp::List aa = clone(additional_args);
   // cdi is the "cAT dESIGN iTEM"
@@ -997,15 +1047,20 @@ Rcpp::List apply_exposure_control_cpp(Rcpp::List cd, Rcpp::List est_history,
     for (int i=0; i < no_of_remaining_items; i++) {
       item = as<S4>(remaining_ip_list[i]);
 
-      // Rcout << "        apply_exposure_control_cpp 2.2.1 -- sympson-hetter --  item id: " << as<std::string>(item.slot("id")) << " --  misc slot exists? " <<  item.hasSlot("misc") << std::endl;
+      // Rcout << "        apply_exposure_control_cpp 2.2.1 -- sympson-hetter --  item ID: "
+      // << as<std::string>(item.slot("item_id")) << " --  misc slot exists? "
+      // <<  item.hasSlot("misc") << std::endl;
 
       // Extract the item's sympson_hetter_k
       temp_list = item.slot("misc");
-      // Rcout << "        apply_exposure_control_cpp 2.2.2 -- misc slot exists --  misc has sympson_hetter_k? " << temp_list.containsElementNamed("sympson_hetter_k") << std::endl;
+      // Rcout << "        apply_exposure_control_cpp 2.2.2 -- misc slot " <<
+      // "exists --  misc has sympson_hetter_k? "
+      // << temp_list.containsElementNamed("sympson_hetter_k") << std::endl;
       K = as<double>(temp_list["sympson_hetter_k"]);
 
       u = as<double>(runif(1, 0, 1));
-      // Rcout << "        apply_exposure_control_cpp 2.2.1 -- sympson-hetter -- Step " << i+1 << "/" << no_of_remaining_items << " -- K = " << K  << " -- u = " << u << std::endl;
+      // Rcout << "        apply_exposure_control_cpp 2.2.1 -- sympson-hetter -- Step " << i+1 << "/"
+      // << no_of_remaining_items << " -- K = " << K  << " -- u = " << u << std::endl;
 
       if (u > K) { // do not administer item and set that item aside
         // Add item to set_aside_item_list
@@ -1015,12 +1070,15 @@ Rcpp::List apply_exposure_control_cpp(Rcpp::List cd, Rcpp::List est_history,
         // If none of the items are selected by the exposure control algorighm,
         // the CAT should stop.
         if (i == no_of_remaining_items - 1) {
-          stop("Exposure control function cannot find an appropriate items in the item pool to administer.");
+          stop("Exposure control function cannot find an appropriate items "
+                 "in the item pool to administer.");
         }
         continue;
       } else break;
     }
-    // Rcout << "    apply_exposure_control_cpp  -- sympson-hetter -- "  << "set_aside_item_list size = " << set_aside_item_list.size() << " --  selected item id: " << as<std::string>(item.slot("id")) << std::endl;
+    // Rcout << "    apply_exposure_control_cpp  -- sympson-hetter -- "
+    // << "set_aside_item_list size = " << set_aside_item_list.size()
+    // << " --  selected item ID: " << as<std::string>(item.slot("item_id")) << std::endl;
 
     aa["set_aside_item_list"] = set_aside_item_list;
     return List::create(Named("additional_args") = aa,
@@ -1041,24 +1099,25 @@ Rcpp::List apply_exposure_control_cpp(Rcpp::List cd, Rcpp::List est_history,
 // select_next_item_mepv_cpp, it means that no item from this testlet has
 // been administered yet.
 Rcpp::List return_select_next_item_output(Rcpp::List cd, Rcpp::List est_history,
-                                          Rcpp::List remaining_ip_list,                                          
+                                          Rcpp::List remaining_ip_list,
                                           Rcpp::List additional_args) {
   Rcpp::List eh = clone(est_history);
   Rcpp::List aa = clone(additional_args);
   // Apply exposure control parameters
-  Rcpp::List ec_output = apply_exposure_control_cpp(cd, eh, remaining_ip_list, 
+  Rcpp::List ec_output = apply_exposure_control_cpp(cd, eh, remaining_ip_list,
                                                     aa);
-  Rcpp::S4 element = as<S4>(ec_output["item"]);  
+  Rcpp::S4 element = as<S4>(ec_output["item"]);
   int item_no = eh.size();  // The stage of the test.
   Rcpp::List est_history_last_step = eh[item_no-1];
   if (element.inherits("Testlet")) {
     Rcpp::List temp_list = element.slot("item_list");
     est_history_last_step["testlet"] = element; // Set the selected testlet
     est_history_last_step["item"] = as<S4>(temp_list[0]);  // Set the selected item
-  } else if (element.inherits("Item")) {
+  // } else if (element.inherits("Item")) {
+  } else {
     est_history_last_step["testlet"] = R_NilValue; // Set the selected testlet
     est_history_last_step["item"] = element;  // Set the selected item
-  } 
+  }
   eh[item_no-1] = est_history_last_step; // Update est_history
   return List::create(Named("est_history") = eh,
                       Named("additional_args") = ec_output["additional_args"]);
@@ -1089,16 +1148,16 @@ Rcpp::List select_next_item_cpp(Rcpp::List cd, Rcpp::List est_history,
   Rcpp::List aa = clone(additional_args);
   int item_no = eh.size();  // The stage of the test.
   Rcpp::List est_history_last_step = eh[item_no-1];
-  S4 item("Item");
+  Rcpp::S4 item;
   // Infinite Item Pool
   if (Rf_isNull(cd["ip"])) {
+    Rcpp::S4 temp_s4("1PL");
     // Get the latest ability estimate
     // Set item parameter as the current estimate, i.e. perfect item
     // is administered to examinee from infinite item pool
-    item.slot("parameters") = Rcpp::List::create(
-      Rcpp::Named("b") = est_history_last_step["est_before"]);
-    item.slot("model") = "1PL";
-    item.slot("id") = "Item-" + std::to_string(item_no);
+    item.slot("b") = est_history_last_step["est_before"];
+    item.slot("item_id") = "Item-" + std::to_string(item_no);
+    item = temp_s4;
     est_history_last_step["testlet"] = R_NilValue; // Set the selected testlet
     est_history_last_step["item"] = item;  // Set the selected item
     eh[item_no-1] = est_history_last_step; // Update est_history
@@ -1106,8 +1165,8 @@ Rcpp::List select_next_item_cpp(Rcpp::List cd, Rcpp::List est_history,
                         Named("additional_args") = aa);
   }
   Rcpp::List temp_list;
-  Rcpp::S4 temp_s4;
   Rcpp::S4 testlet("Testlet");
+  Rcpp::S4 temp_s4;
 
   // Rcout << "    (select_next_item) 1.2 - Checking testlets - item_no: " << item_no << std::endl;
   // timer.step("Checking testlets   ");  //@@@@@@@@@@@@@@ TIMER @@@@@@@@@@@@@@@@@@
@@ -1132,21 +1191,21 @@ Rcpp::List select_next_item_cpp(Rcpp::List cd, Rcpp::List est_history,
       temp_s4 = as<S4>(testlet.slot("item_list")); //item pool of testlet
       temp_list = temp_s4.slot("item_list");
       int temp_int = temp_list.size();
-      List eh_step;
-      S4 temp_item("Item");
+      Rcpp::List eh_step;
+      Rcpp::S4 temp_item;
       // Rcout << "      (select_next_item) 1.2.4 - Checking testlets" << std::endl;
       for (int i = 0; i < temp_int; i++) { // iterate through all of the items of the testlet
         // Rcout << "        (select_next_item) 1.2.4.1 - Checking testlets" << std::endl;
         bool administer_item = true;
         temp_s4 = as<S4>(temp_list[i]); // select the testlet item
-        std::string temp_s4_id = as<std::string>(temp_s4.slot("id"));
+        std::string temp_s4_id = get_s4_id(temp_s4);
         // Rcout << "        (select_next_item) 1.2.4.2 - Checking testlets : administer_item: " << administer_item << " - administered_item: " <<  temp_s4_id << std::endl;
         // Check whether this testlet item has been administered before:
         for (int j = item_no - 2; j >= 0; j--) {
           eh_step = eh[j];
           temp_item = as<S4>(eh_step["item"]);
-          std::string temp_id = as<std::string>(temp_item.slot("id"));
-          // Rcout << "          (select_next_item) 1.2.4.2.1 - Checking testlets - candidate item-id: " << temp_id << std::endl;
+          std::string temp_id = as<std::string>(temp_item.slot("item_id"));
+          // Rcout << "          (select_next_item) 1.2.4.2.1 - Checking testlets - candidate item-ID: " << temp_id << std::endl;
           if (temp_s4_id == temp_id) {
             // Rcout << "            (select_next_item) 1.2.4.2.1.1 - Checking testlets" << std::endl;
             administer_item = false;
@@ -1218,10 +1277,10 @@ Rcpp::List select_next_item_cpp(Rcpp::List cd, Rcpp::List est_history,
     ///////////////////////////////////////////////////////////////////////////
     /////////////////////////// MFI ///////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
-    
-    temp_list = select_next_item_fisher_max_info_cpp(cd, eh, aa); 
+
+    temp_list = select_next_item_fisher_max_info_cpp(cd, eh, aa);
     return return_select_next_item_output(cd, eh,
-                                          temp_list["remaining_ip_list"], aa); 
+                                          temp_list["remaining_ip_list"], aa);
 
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////// MEPV ////////////////////////////////////////////
@@ -1233,7 +1292,7 @@ Rcpp::List select_next_item_cpp(Rcpp::List cd, Rcpp::List est_history,
 
     // timer.step("mepv item selected  ");  //@@@@@@@@@@@@@@ TIMER @@@@@@@@@@@@@@@@@@
     // Rcout << "      (select_next_item) 2.4.2.1 - mepv -- apply_exposure_control_cpp " << std::endl;
-      
+
     // timer.step("mepv exp control end");  //@@@@@@@@@@@@@@ TIMER @@@@@@@@@@@@@@@@@@
     // Rcout << "      (select_next_item) 2.4.2.2 - mepv" << std::endl;
 
@@ -1245,8 +1304,8 @@ Rcpp::List select_next_item_cpp(Rcpp::List cd, Rcpp::List est_history,
     // }                                    //@@@@@@@@@@@@@@ TIMER @@@@@@@@@@@@@@@@@@
 
     return return_select_next_item_output(cd, eh,
-                                          temp_list["remaining_ip_list"], aa); 
-                                          
+                                          temp_list["remaining_ip_list"], aa);
+
   /////////////////////////////////////////////////////////////////////////////
   /////////////////////////// random //////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////
@@ -1258,11 +1317,11 @@ Rcpp::List select_next_item_cpp(Rcpp::List cd, Rcpp::List est_history,
     // Create a shuffled integer list
     Rcpp::IntegerVector int_seq(temp_list.size());
     std::iota(int_seq.begin(), int_seq.end(), 0);
-    // Feed the shuffled item list to exposure control parameter and return 
+    // Feed the shuffled item list to exposure control parameter and return
     // result
     return return_select_next_item_output(
-      cd, eh, temp_list[sample(int_seq, int_seq.size())], aa); 
-    // // Vector that hold the id's of remaining items in the item pool:
+      cd, eh, temp_list[sample(int_seq, int_seq.size())], aa);
+    // // Vector that hold the ID's of remaining items in the item pool:
     // Rcpp::StringVector  remaining_ip_ids;
     // remaining_ip_ids = get_slot_itempool_cpp(remaining_ip, "id");
     // // Rcout << "      (select_next_item) 2.4.2.1 - random" << std::endl;
@@ -1285,10 +1344,10 @@ Rcpp::List select_next_item_cpp(Rcpp::List cd, Rcpp::List est_history,
     // Rcout << "      (select_next_item) 2.4.5 - fixed" << std::endl;
     // Get next_item_par
     Rcpp::List next_item_par = cdi["next_item_par"];
-    // Get the next item parameter "item_id", which is the id of the next
+    // Get the next item parameter "item_id", which is the ID of the next
     // administered item.
     std::string next_item_id = next_item_par("item_id");
-    // Vector that hold the id's of remaining items in the item pool:
+    // Vector that hold the ID's of remaining items in the item pool:
     Rcpp::StringVector  remaining_ip_ids;
     remaining_ip_ids = get_slot_itempool_cpp(remaining_ip, "id");
     int temp_int = remaining_ip_ids.size();

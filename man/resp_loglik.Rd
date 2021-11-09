@@ -2,21 +2,27 @@
 % Please edit documentation in R/resp_loglik.R
 \name{resp_loglik}
 \alias{resp_loglik}
-\alias{resp_loglik,Item-method}
-\alias{resp_loglik,Itempool-method}
-\alias{resp_loglik,Testlet-method}
-\alias{resp_loglik,numMatDfListChar-method}
+\alias{resp_loglik,Item,ANY-method}
+\alias{resp_loglik,Itempool,ANY-method}
+\alias{resp_loglik,Testlet,ANY-method}
+\alias{resp_loglik,numMatDfListChar,ANY-method}
+\alias{resp_loglik,Itempool,Response-method}
+\alias{resp_loglik,Itempool,Response_set-method}
 \title{Log-likelihood of a Response String}
 \usage{
 resp_loglik(ip, resp, theta, derivative = 0)
 
-\S4method{resp_loglik}{Item}(ip, resp, theta, derivative = 0)
+\S4method{resp_loglik}{Item,ANY}(ip, resp, theta, derivative = 0)
 
-\S4method{resp_loglik}{Itempool}(ip, resp, theta, derivative = 0)
+\S4method{resp_loglik}{Itempool,ANY}(ip, resp, theta, derivative = 0)
 
-\S4method{resp_loglik}{Testlet}(ip, resp, theta, derivative = 0)
+\S4method{resp_loglik}{Testlet,ANY}(ip, resp, theta, derivative = 0)
 
-\S4method{resp_loglik}{numMatDfListChar}(ip, resp, theta, derivative = 0)
+\S4method{resp_loglik}{numMatDfListChar,ANY}(ip, resp, theta, derivative = 0)
+
+\S4method{resp_loglik}{Itempool,Response}(ip, resp, theta, derivative = 0)
+
+\S4method{resp_loglik}{Itempool,Response_set}(ip, resp, theta, derivative = 0)
 }
 \arguments{
 \item{ip}{An \code{\link{Item-class}}, \code{\link{Itempool-class}} or a

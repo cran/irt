@@ -23,10 +23,10 @@
 #'
 #' @return A matrix of likelihood(s)
 #'
-#' @include Item-class.R
-#' @include Itempool-class.R
-#' @include Item-class-methods.R
-#' @include Itempool-class-methods.R
+#' @include item-class.R
+#' @include itempool-class.R
+#' @include item-class-methods.R
+#' @include itempool-class-methods.R
 #'
 #' @author Emre Gonulates
 #'
@@ -56,8 +56,7 @@ setMethod(
   f = "resp_lik", signature = c(ip = "Item"),
   function(ip, resp, theta){
     # If the Model is one of the following: "irt1PM" "irt2PM" "irt3PM" "irt4PM"
-    if (ip$model %in% c(names(Pmodels)[sapply(
-      Pmodels, function(x) x$model_family == 'UIRT')], "GRM", "GPCM")) {
+    if (ip$model %in% c(UNIDIM_DICHO_MODELS, UNIDIM_POLY_MODELS)) {
       if (inherits(resp, 'integer')) {
         if (all(is.na(resp))) return(resp)
         if (!all(is.na(resp) | resp %in% 0L:length(ip$b)))
@@ -104,22 +103,25 @@ setMethod(
 #' ip <- generate_ip(model = "GRM")
 #' resp <- sim_resp(ip = ip, theta = theta, prop_missing = .1)
 #' resp_lik(ip = ip, resp = resp, theta = theta)
-#' 
+#'
 setMethod(
   f = "resp_lik", signature = c(ip = "Itempool"),
   function(ip, resp, theta){
     # If the Model is one of the following: "irt1PM" "irt2PM" "irt3PM" "irt4PM",
     #                                       "GRM", "GPCM"
-    if (all(ip$model %in% c(names(Pmodels)[sapply(
-      Pmodels, function(x) x$model_family == 'UIRT')], "GRM", "GPCM") |
+    if (all(ip$model %in% c(UNIDIM_DICHO_MODELS, UNIDIM_POLY_MODELS) |
       sapply(ip@item_list, is, "Testlet")))
     {
-      noItem <- get_itempool_size(ip)["items"]
-      noTheta <- length(theta)
-      if (inherits(resp, 'integer')) {
-        if (noItem == 1) {
+      num_items <- get_itempool_size(ip)["items"]
+      num_theta <- length(theta)
+      if (is(resp, "Response")) {
+        return(resp_lik_response_cpp(theta, resp, ip))
+      } else if (is(resp, "Response_set")) {
+        return(resp_lik_response_set_cpp(resp, theta, ip))
+      } else if (inherits(resp, 'integer')) {
+        if (num_items == 1) {
           # This Part newly added FROM HERE
-          if (noTheta == length(resp))
+          if (num_theta == length(resp))
           {
             item <- ip@item_list[[1]]
             if (is(item, "Item")) {
@@ -134,9 +136,9 @@ setMethod(
                         "should be equal to the number of responses."))
         } else {
           if (all(is.na(resp))) return(NA)
-          if ((noTheta == 1) && (noItem == length(resp))) {
+          if ((num_theta == 1) && (num_items == length(resp))) {
             result <- resp_lik_itempool_cpp(resp = matrix(resp, nrow = 1),
-                                             theta = theta, ip = ip)
+                                            theta = theta, ip = ip)
             } else
               stop(paste0("Invalid arguments. Number of subjects (theta) ",
                           "should be equal to 1 and the number of ",
@@ -145,7 +147,7 @@ setMethod(
       } else if (inherits(resp, c("numeric", "logical"))) {
         return(resp_lik(resp = as.integer(resp), ip = ip, theta = theta))
       } else if (inherits(resp, c("matrix"))) {
-        if ((ncol(resp) == noItem) && (nrow(resp) == noTheta) &&
+        if ((ncol(resp) == num_items) && (nrow(resp) == num_theta) &&
             is.numeric(resp)) {
           result <- resp_lik_itempool_cpp(resp = resp, theta = theta, ip = ip)
         } else

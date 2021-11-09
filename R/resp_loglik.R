@@ -32,17 +32,17 @@
 #'
 #' @return A matrix of log-likelihood(s)
 #'
-#' @include Item-class.R
-#' @include Itempool-class.R
-#' @include Item-class-methods.R
-#' @include Itempool-class-methods.R
+#' @include item-class.R
+#' @include itempool-class.R
+#' @include item-class-methods.R
+#' @include itempool-class-methods.R
 #'
 #' @author Emre Gonulates
 #'
 #' @rdname resp_loglik
 #'
 setGeneric("resp_loglik", function(ip, resp, theta, derivative = 0)
-{standardGeneric ("resp_loglik")})
+{standardGeneric("resp_loglik")})
 
 
 ###############################################################################@
@@ -65,8 +65,7 @@ setMethod(
   f = "resp_loglik", signature = c(ip = "Item"),
   function(ip, resp, theta, derivative = 0){
     # If the Model is one of the following: "irt1PM" "irt2PM" "irt3PM" "irt4PM"
-    if (ip$model %in% c(names(Pmodels)[sapply(
-      Pmodels, function(x) x$model_family == 'UIRT')], "GRM", "GPCM")) {
+    if (ip$model %in% c(UNIDIM_DICHO_MODELS, UNIDIM_POLY_MODELS)) {
       if (inherits(resp, 'integer')) {
         if (all(is.na(resp))) return(resp)
         if (!all(is.na(resp) | resp %in% 0L:length(ip$b)))
@@ -104,7 +103,7 @@ setMethod(
 
 
 ###############################################################################@
-############################# resp_loglik (Itempool) ##########################
+############################# resp_loglik (Itempool) ###########################
 ###############################################################################@
 #' @export
 #' @rdname resp_loglik
@@ -125,17 +124,27 @@ setMethod(
 setMethod(
   f = "resp_loglik", signature = c(ip = "Itempool"),
   function(ip, resp, theta, derivative = 0){
+
+    # if (inherits(resp, "Response")) {
+    #   # Convert response to response_set
+    #   resp <- response_set(lapply(1:length(theta), function(x) resp), ip = ip)
+    #   return(resp_loglik_response_set_cpp(resp, theta, derivative = derivative))
+    # } else if (inherits(resp, "Response_set")) {
+    #   return(resp_loglik_response_set_cpp(resp, theta, ip = ip,
+    #                                       derivative = derivative))
+    # }
+
+
     # If the Model is one of the following: "irt1PM" "irt2PM" "irt3PM" "irt4PM",
     #                                       "GRM", "GPCM"
-    if (all(ip$model %in% c(names(Pmodels)[sapply(
-      Pmodels, function(x) x$model_family == 'UIRT')], "GRM", "GPCM") |
+    if (all(ip$model %in% c(UNIDIM_DICHO_MODELS, UNIDIM_POLY_MODELS) |
       sapply(ip@item_list, is, "Testlet"))) {
-      noItem <- get_itempool_size(ip)["items"]
-      noTheta <- length(theta)
+      num_items <- get_itempool_size(ip)["items"]
+      num_theta <- length(theta)
       if (inherits(resp, 'integer')) {
-        if (noItem == 1) {
+        if (num_items == 1) {
           # This Part newly added FROM HERE
-          if (noTheta == length(resp)) {
+          if (num_theta == length(resp)) {
             item <- ip@item_list[[1]]
             if (is(item, "Item")) {
               result <- resp_loglik_item_cpp(resp = resp, theta = theta,
@@ -151,7 +160,7 @@ setMethod(
                         "should be equal to the number of responses."))
         } else {
           if (all(is.na(resp))) return(NA)
-          if ((noTheta == 1) && (noItem == length(resp))) {
+          if ((num_theta == 1) && (num_items == length(resp))) {
             result <- resp_loglik_itempool_cpp(resp = matrix(resp, nrow = 1),
                                                 theta = theta, ip = ip,
                                                 derivative = derivative)
@@ -164,7 +173,7 @@ setMethod(
         return(resp_loglik(resp = as.integer(resp), ip = ip, theta = theta,
                            derivative = derivative))
       } else if (inherits(resp, c("matrix"))) {
-        if ((ncol(resp) == noItem) && (nrow(resp) == noTheta) &&
+        if ((ncol(resp) == num_items) && (nrow(resp) == num_theta) &&
             is.numeric(resp)) {
           result <- resp_loglik_itempool_cpp(resp = resp, theta = theta,
                                               ip = ip,
@@ -222,5 +231,44 @@ setMethod(
            "Please provide a valid 'Item' or 'Itempool' object using either ",
            "'item()' or 'itempool()' function.")
     }
+  }
+)
+
+
+
+###############################################################################@
+############################# resp_loglik (Response) ###########################
+###############################################################################@
+#' @export
+#' @rdname resp_loglik
+#'
+#' @include response-class.R
+#'
+
+setMethod(
+  f = "resp_loglik", signature = c(ip = "Itempool", resp = "Response"),
+  function(ip, resp, theta, derivative = 0){
+    # Convert response to response_set
+    resp <- response_set(lapply(1:length(theta), function(x) resp), ip = ip)
+    return(resp_loglik_response_set_cpp(resp, theta, ip = ip,
+                                        derivative = derivative))
+  }
+)
+
+
+###############################################################################@
+############################# resp_loglik (Response_set) #######################
+###############################################################################@
+#' @export
+#' @rdname resp_loglik
+#'
+#' @include response_set-class.R
+#'
+
+setMethod(
+  f = "resp_loglik", signature = c(ip = "Itempool", resp = "Response_set"),
+  function(ip, resp, theta, derivative = 0){
+    return(resp_loglik_response_set_cpp(resp_set = resp, theta = theta,
+                                        ip = ip, derivative = derivative))
   }
 )

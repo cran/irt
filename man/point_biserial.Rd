@@ -4,13 +4,13 @@
 \alias{point_biserial}
 \title{Calculate point-biserial correlation}
 \usage{
-point_biserial(score, total_score)
+point_biserial(score, criterion)
 }
 \arguments{
 \item{score}{Item scores of each examinee for which point-biserial
 correlation will be calculated}
 
-\item{total_score}{Total score of each examinee}
+\item{criterion}{Total score of each examinee}
 }
 \value{
 Point-biserial correlation value

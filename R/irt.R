@@ -8,7 +8,6 @@
 #'
 #'
 #' @import Rcpp
-#' @import ggplot2
 #'
 #' @author Emre Gonulates \email{egonulates@gmail.com}
 #'

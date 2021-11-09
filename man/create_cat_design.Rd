@@ -547,7 +547,7 @@ create_cat_design(
   ip = ip, termination_rule = c('min_item', 'max_item'),
   termination_par = list(min_item = 20, max_item = 20),
   next_item_rule = 'fixed',
-  next_item_par = list(item_id = ip$id[1:20]))
+  next_item_par = list(item_id = ip$item_id[1:20]))
 
 # Linear test where all of the items in the item pool administered in the
 # same order as item pool
@@ -559,8 +559,8 @@ create_cat_design(
 
 # Generate an item pool with two testlets and three standalone items and
 # administer first seven items as a linear test.
-ip <- c(generate_testlet(n = 2, id = "t1"), generate_ip(n = 3),
-        generate_testlet(n = 5, id = "t2"))
+ip <- c(generate_testlet(n = 2, testlet_id = "t1"), generate_ip(n = 3),
+        generate_testlet(n = 5, testlet_id = "t2"))
 create_cat_design(
   ip = ip, termination_rule = c('max_item'),
   termination_par = list(max_item = 7),
@@ -568,7 +568,7 @@ create_cat_design(
 
 
 # A linear test where the item order is predefined.
-ip1 <- itempool(data.frame(b = rnorm(5)), id = paste0("i",1:5))
+ip1 <- itempool(data.frame(b = rnorm(5)), item_id = paste0("i",1:5))
 cd <- create_cat_design(
   ip = ip1,
   next_item_rule = 'fixed',

@@ -1,5 +1,6 @@
 #include <Rcpp.h>
 #include "itempool_class_methods.h"
+#include "response_set_methods.h"
 #include "prob.h"
 #include "resp_loglik.h"
 using namespace Rcpp;
@@ -20,17 +21,16 @@ double info_4pm_bare_cpp(double theta, Rcpp::S4 item)
 {
   // This function calculates the expected information of a single item
   // for one theta.
-  Rcpp::List parList = as<List>(item.slot("parameters"));
-  std::string model = as<std::string>(item.slot("model"));
-  double a = 1, b = as<double>(parList["b"]), c = 0, d = 1, D = 1;
+  std::string model = as<std::string>(item.attr("class"));
+  double a = 1, b = as<double>(item.slot("b")), c = 0, d = 1, D = 1;
   if (model != "Rasch") {
-    D = as<double>(parList["D"]);
+    D = as<double>(item.slot("D"));
     if ((model == "2PL") || (model == "3PL") || (model == "4PL")) {
-      a = as<double>(parList["a"]);
+      a = as<double>(item.slot("a"));
       if ((model == "3PL") || (model == "4PL")) {
-        c = as<double>(parList["c"]);
+        c = as<double>(item.slot("c"));
         if (model == "4PL")
-          d = as<double>(parList["d"]);
+          d = as<double>(item.slot("d"));
       }
     }
   }
@@ -44,73 +44,6 @@ double info_4pm_bare_cpp(double theta, Rcpp::S4 item)
   //      pow(1 + exp(-D * a * (theta - b)), 2));
 }
 
-//##############################################################################
-//########################### info_4pm_matrix_cpp ##############################
-//##############################################################################
-
-// [[Rcpp::export]]
-NumericMatrix info_4pm_matrix_cpp(NumericVector theta, NumericMatrix ip,
-                                  bool tif)
-{
-  int num_of_theta = theta.size();
-  int num_of_items = ip.nrow();
-  int model = ip.ncol()-1;
-  NumericVector a(num_of_items), b(num_of_items), c(num_of_items), d(num_of_items), D(num_of_items);
-  NumericMatrix output(num_of_theta, num_of_items);
-  for(int j = 0; j < num_of_items; j++)
-  {
-    if (model == 1) {
-      a[j] = 1;
-    } else {
-      a[j] = ip(j, 0);
-    }
-    if (model == 1) {
-      b[j] = ip(j, 0);
-    } else {
-      b[j] = ip(j, 1);
-    }
-    if ((model == 1) || (model == 2)) {
-      c[j] = 0;
-    } else {
-      c[j] = ip(j, 2);
-    }
-    if ((model == 1) || (model == 2) || (model == 3)) {
-      d[j] = 1;
-    } else {
-      d[j] = ip(j, 3);
-    }
-    D[j] = ip(j, model);
-  }
-   for(int i = 0; i < num_of_theta; i++)
-   {
-      for(int j = 0; j < num_of_items; j++)
-      {
-        output(i,j) = ((D[j] * a[j]) * (D[j] * a[j]) * (d[j] - c[j]) * (d[j] - c[j])) /
-       ((c[j] + d[j] * exp(D[j] * a[j] * (theta[i] - b[j]))) *
-       (1 - c[j] + (1-d[j]) * exp(D[j] * a[j] * (theta[i]-b[j]))) *
-       (1 + exp(-D[j] * a[j] * (theta[i] - b[j]))) * 
-       (1 + exp(-D[j] * a[j] * (theta[i] - b[j]))));
-       // output(i,j) = (pow(D[j] * a[j], 2) * pow(d[j] - c[j], 2)) /
-       // ((c[j] + d[j] * exp(D[j] * a[j] * (theta[i] - b[j]))) *
-       // (1 - c[j] + (1-d[j]) * exp(D[j] * a[j] * (theta[i]-b[j]))) *
-       // pow(1 + exp(-D[j] * a[j] * (theta[i] - b[j])), 2));
-      }
-   }
-  if (tif == true)
-  {
-    NumericMatrix tifMatrix(num_of_theta, 1);
-    for(int i = 0; i < num_of_theta; i++)
-    {
-     tifMatrix(i, 0) = 0;
-      for(int j = 0; j < num_of_items; j++)
-      {
-        tifMatrix(i, 0) = tifMatrix(i, 0) + output(i,j);
-      }
-    }
-   return tifMatrix;
-  }
-  return output;
-}
 
 //##############################################################################
 //########################### info_grm_bare_cpp ################################
@@ -122,12 +55,11 @@ double info_grm_bare_cpp(double theta, Rcpp::S4 item)
   // This function calculates the expected information for one item and one
   // theta for Graded Response Model.
   // Calculations use formula on Baker and Kim (2004) p. 226, Eq. 8.23.
-  Rcpp::List parList = as<List>(item.slot("parameters"));
   // Item difficulty
-  Rcpp::NumericVector b = parList["b"];
+  Rcpp::NumericVector b = as<Rcpp::NumericVector>(item.slot("b"));
   // Item discrimination
-  double a = as<double>(parList["a"]);
-  double D = as<double>(parList["D"]);
+  double a = as<double>(item.slot("a"));
+  double D = as<double>(item.slot("D"));
   // Set the  number of choices
   int no_choices = b.size() + 1;
   double prob_cdf1, prob_cdf2;
@@ -136,16 +68,16 @@ double info_grm_bare_cpp(double theta, Rcpp::S4 item)
   for(int i = 0; i < no_choices - 1; i++)
   {
     prob_cdf2 = 1 / (1 + exp(-D * a * (theta - b[i])));
-    info = info + D*D * a*a * (prob_cdf1 * 
-      (1-prob_cdf1) - prob_cdf2 * (1-prob_cdf2)) * 
-      (prob_cdf1 * (1-prob_cdf1) - prob_cdf2 * (1-prob_cdf2)) / 
+    info = info + D*D * a*a * (prob_cdf1 *
+      (1-prob_cdf1) - prob_cdf2 * (1-prob_cdf2)) *
+      (prob_cdf1 * (1-prob_cdf1) - prob_cdf2 * (1-prob_cdf2)) /
       (prob_cdf1-prob_cdf2);
     // info = info + pow(D, 2) * pow(a, 2) * pow(prob_cdf1 * (1-prob_cdf1) -
     //   prob_cdf2 * (1-prob_cdf2), 2) / (prob_cdf1-prob_cdf2);
     // Rprintf("%d: %f\n", i, info);
     prob_cdf1 = prob_cdf2;
   }
-  info = info + D*D * a*a * (prob_cdf1 * (1-prob_cdf1) - 0 * (1-0)) * 
+  info = info + D*D * a*a * (prob_cdf1 * (1-prob_cdf1) - 0 * (1-0)) *
     (prob_cdf1 * (1-prob_cdf1) - 0 * (1-0)) / (prob_cdf1-0);
   // info = info + D*D * a*a * pow(prob_cdf1 * (1-prob_cdf1) - 0
   //                                             * (1-0), 2) / (prob_cdf1-0);
@@ -162,49 +94,27 @@ double info_gpcm_bare_cpp(double theta, Rcpp::S4 item)
   // This function calculates the expected information for one item and one
   // theta for Generalized Partial Credit Model.
   // Calculations use formula Donoghue (1994), p.299, Eq.4.
-  Rcpp::List parList = as<List>(item.slot("parameters"));
-  std::string model = as<std::string>(item.slot("model"));
-  
+  std::string model = as<std::string>(item.attr("class"));
+
   // Item discrimination, if PCM, set them to 1, else if GPCM get them
   double a = 1;
   double D = 1;
   // Item difficulty
   Rcpp::NumericVector b;
-  //unsigned int no_choices;
+
   if (model == "GPCM2") {
-    b = as<Rcpp::NumericVector>(parList["d"]);
-  } else { // "GPCM" or "PCM" 
-    b = as<Rcpp::NumericVector>(parList["b"]);
+    b = as<double>(item.slot("b")) - as<Rcpp::NumericVector>(item.slot("d"));
+  } else {
+    b = as<Rcpp::NumericVector>(item.slot("b"));
   }
-  unsigned int no_choices = b.size() + 1;
-  // if (model == "GPCM2") {
-  //   //Rcpp::NumericVector d = as<Rcpp::NumericVector>(parList["d"]);
-  //   //no_choices = d.size() + 1;
-  //   b = as<Rcpp::NumericVector>(parList["d"]);
-  //   no_choices = b.size() + 1;
-  //   double b_loc = as<double>(parList["b"]);
-  //   // b = clone(d);
-  //   for (unsigned int i = 0; i < no_choices; i++)
-  //     // b[i] = b_loc - d[i];
-  //     b[i] = b_loc - b[i];
-  // } else { // "GPCM" or "PCM"
-  //   b = as<Rcpp::NumericVector>(parList["b"]);
-  //   no_choices = b.size() + 1;
-  // }
-  
+
+  unsigned int no_choices = b.size() + 1; // Number of categories
+
   if (model == "GPCM" || model == "GPCM2") {
-    a = as<double>(parList["a"]);
-    D = as<double>(parList["D"]);
-  } 
-  
-  // // Item difficulty
-  // Rcpp::NumericVector b = parList["b"];
-  // // Item discrimination
-  // double a = as<double>(parList["a"]);
-  // double D = as<double>(parList["D"]);
-  // // Set the  number of choices
-  // int no_choices = b.size() + 1;
-  
+    a = as<double>(item.slot("a"));
+    D = as<double>(item.slot("D"));
+  }
+
   Rcpp::NumericVector P = prob_gpcm_bare_cpp(theta, item, 0);
   double lambda1 = 0;
   double lambda2 = 0;
@@ -222,12 +132,12 @@ double info_gpcm_bare_cpp(double theta, Rcpp::S4 item)
 //##############################################################################
 
 // [[Rcpp::export]]
-double info_item_bare_cpp(double theta, Rcpp::S4 item, bool observed, 
+double info_item_bare_cpp(double theta, Rcpp::S4 item, bool observed,
                           double resp)
 {
   // This function calculates the information of a single item for single theta.
   if (Rcpp::NumericVector::is_na(resp)) return NA_REAL;
-  std::string model(as<std::string>(as<Rcpp::S4>(item).slot("model")));
+  std::string model = as<std::string>(item.attr("class"));
   if (model == "GRM") {
     // TODO: for "GRM" both observed and expected information is the same.
     if (observed) {
@@ -279,7 +189,6 @@ double info_testlet_bare_cpp(
   for (int i = 0; i < num_of_items; i++) {
     item = as<Rcpp::S4>(item_list(i));
     if (Rf_isNull(resp)  || !NumericVector::is_na(as<NumericVector>(resp)[i])) {
-      //Rcout << "resp_i[i] is not null. i = " << i << " and  resp[i] = " << resp_i[i] << std::endl;
       output = output + info_item_bare_cpp(theta, item, false, 0);
       return_na = false;
     }
@@ -310,7 +219,8 @@ Rcpp::NumericVector info_item_cpp(
     // See: https://stackoverflow.com/a/43391979/2275286
     Rcpp::NumericVector resp_(resp.get());
     if (num_of_theta != resp_.size()) {
-      throw std::invalid_argument("The size of the 'resp' vector should be equal to the size of theta.");
+      throw std::invalid_argument("The size of the 'resp' vector should be "
+                                    "equal to the size of theta.");
     }
     for(int i = 0; i < num_of_theta; i++) {
       output[i] = info_item_bare_cpp(theta[i], item, true, resp_[i]);
@@ -337,34 +247,36 @@ Rcpp::NumericVector info_itempool_bare_cpp(
   // This function calculates the information of multiple items for a single
   // thetas.
   Rcpp::List item_list = as<List>(ip.slot("item_list"));
-  IntegerVector ip_size = get_itempool_size(ip);
+  Rcpp::IntegerVector ip_size = get_itempool_size(ip);
   int num_of_items = ip_size["elements"];
   unsigned int testlet_size;
-  S4 item;
+  Rcpp::S4 item;
   NumericVector output(num_of_items);
   // an index that tracts the column number to read for the resp vector
 
   if (Rf_isNull(resp)) {
     for (int i = 0; i < num_of_items; i++) {
       item = as<Rcpp::S4>(item_list(i));
-      if (item.inherits("Item")) {
-        output[i] = info_item_bare_cpp(theta, item, false, 0);
-      } else if (item.inherits("Testlet")) {
+      if (item.inherits("Testlet")) {
         output[i] = info_testlet_bare_cpp(theta, item, false, R_NilValue);
+        // if (item.inherits("Item")) {
+      } else  {
+        output[i] = info_item_bare_cpp(theta, item, false, 0);
       }
     }
   } else {  // Use resp to calculate info, if resp is NA return NA otherwise calculate info
     int resp_index = 0;
     for (int i = 0; i < num_of_items; i++) {
       item = as<Rcpp::S4>(item_list(i));
-      if (item.inherits("Item")) {
-        output[i] = info_item_bare_cpp(theta, item, false, as<NumericVector>(resp)[resp_index]);
-        resp_index += 1;
-      } else if (item.inherits("Testlet")) {
+
+      if (item.inherits("Testlet")) {
         testlet_size = as<List>(as<S4>(item.slot("item_list")).slot("item_list")).size();
         NumericVector resp_ = Rcpp::as<NumericVector>(resp)[Rcpp::Range(resp_index, resp_index + testlet_size - 1)];
         output[i] = info_testlet_bare_cpp(theta, item, false, resp_);
         resp_index += testlet_size;
+      } else { // if (item.inherits("Item")) {
+        output[i] = info_item_bare_cpp(theta, item, false, as<NumericVector>(resp)[resp_index]);
+        resp_index += 1;
       }
     }
   }
@@ -381,7 +293,7 @@ Rcpp::NumericVector info_itempool_bare_cpp(
 
 
 //##############################################################################
-//########################### info_itempool_cpp ###############################
+//########################### info_itempool_cpp ################################
 //##############################################################################
 
 // [[Rcpp::export]]
@@ -394,19 +306,118 @@ Rcpp::NumericMatrix info_itempool_cpp(
   int num_of_cols = as<List>(ip.slot("item_list")).size();
   int num_of_theta = theta.size();
   if (tif) num_of_cols = 1;
-  NumericMatrix output(num_of_theta, num_of_cols);
+  Rcpp::NumericMatrix output(num_of_theta, num_of_cols);
   if (Rf_isNull(resp)) {
     for(int i = 0; i < num_of_theta; i++)
       output(i, Rcpp::_) = info_itempool_bare_cpp(theta[i], ip, tif, false,
-                                                   R_NilValue);
+                                                  R_NilValue);
   } else {
-    NumericMatrix resp_ = Rcpp::as<NumericMatrix>(resp);
-    NumericVector resp_row;
+    Rcpp::NumericMatrix resp_ = Rcpp::as<NumericMatrix>(resp);
+    Rcpp::NumericVector resp_row;
     for(int i = 0; i < num_of_theta; i++) {
       resp_row = resp_(i, Rcpp::_);
       output(i, Rcpp::_) = info_itempool_bare_cpp(theta[i], ip, tif, false,
                                                    resp_row);
     }
   }
+  // // Consider Testlets etc.
+  // // Set the column names to the item ids
+  // if (!tif)
+  //   colnames(output) = (as<Rcpp::List>(ip.slot("item_list"))).names();
+
   return output;
+}
+
+
+//##############################################################################
+//########################### info_response_cpp ################################
+//##############################################################################
+// This function is only used when resp is not NULL and resp is a Response
+// object.
+
+// [[Rcpp::export]]
+Rcpp::NumericVector info_response_cpp(
+  double theta,
+  Rcpp::List ip_list,
+  bool tif,
+  bool observed,
+  Rcpp::S4 resp)
+{
+  if (!resp.inherits("Response"))
+    stop("Invalid 'resp'. 'resp' should be a 'Response' object.");
+
+  Rcpp::NumericVector scores = as<Rcpp::NumericVector>(resp.slot("score"));
+  Rcpp::StringVector item_ids = as<Rcpp::StringVector>(resp.slot("item_id"));
+  Rcpp::StringVector ip_item_ids = ip_list.names();
+  int num_of_items_ip = ip_list.size();
+  int num_of_items = scores.size();
+  Rcpp::NumericVector output(num_of_items_ip, NA_REAL);
+  output.attr("names") = ip_item_ids;
+  Rcpp::NumericVector output_tif(1);
+
+
+  Rcpp::S4 item; // This will be item
+  std::string item_id;
+  for (int i = 0; i < num_of_items; i++) {
+    item_id = item_ids[i];
+    item = as<Rcpp::S4>(ip_list[item_id]);
+    output[item_id] = info_item_bare_cpp(theta, item, observed, scores[i]);
+    output_tif[0] = output_tif[0] + output[item_id];
+  }
+  if (tif) {
+    // for (int i = 0; i < num_of_items; i++) {
+    //   output_tif[0] = output_tif[0] + output[i];
+    // }
+    output_tif.attr("names") = "TIF";
+    return output_tif;
+  }
+  return output;
+}
+
+
+
+//##############################################################################
+//########################### info_response_set_cpp ############################
+//##############################################################################
+
+// [[Rcpp::export]]
+Rcpp::NumericMatrix info_response_set_cpp(
+    Rcpp::NumericVector theta,
+    Rcpp::S4 ip,
+    Rcpp::S4 resp_set,
+    bool tif = false,
+    bool observed = false)
+{
+  // Make sure resp_set and ip are valid and compatible
+  check_validity_response_set_cpp(resp_set, ip);
+  Rcpp::List ip_list = flatten_itempool_cpp(ip);
+  int num_of_items = 1;
+  if (!tif) num_of_items = ip_list.size();
+  // Rcpp::StringVector ip_item_ids(num_of_items);
+  // for (int i = 0; i < num_of_items; i++) {
+  //   ip_item_ids[i] = as<Rcpp::S4>(ip_list[i])
+  // }
+
+  Rcpp::List resp_list = as<Rcpp::List>(resp_set.slot("response_list"));
+  int num_of_resp = resp_list.size();
+
+  if (theta.size() != num_of_resp)
+    stop("Incompatible 'theta' and 'resp_set'. Their length should be equal.");
+
+  Rcpp::NumericMatrix output(num_of_resp, num_of_items);
+  Rcpp::S4 temp_resp;
+  for (int i = 0; i < num_of_resp; i++) {
+    temp_resp = as<Rcpp::S4>(resp_list[i]);
+    output(i, Rcpp::_) = info_response_cpp(theta[i], ip_list, tif, observed,
+                                           temp_resp);
+  }
+  if (tif) {
+    colnames(output) = Rcpp::StringVector::create("TIF");
+  } else {
+    colnames(output) = as<Rcpp::StringVector>(ip_list.names());
+  }
+
+  rownames(output) = get_examinee_id_response_set_cpp(resp_set);
+  return output;
+
 }

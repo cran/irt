@@ -2,11 +2,11 @@
 % Please edit documentation in R/ability_estimation.R
 \name{est_ability}
 \alias{est_ability}
-\title{Ability Estimation of an examinee}
+\title{Estimate Ability of Examinees}
 \usage{
 est_ability(
-  ip,
   resp,
+  ip = NULL,
   method = "eap",
   ...,
   prior_dist = "norm",
@@ -17,11 +17,15 @@ est_ability(
 )
 }
 \arguments{
-\item{ip}{An \code{\link{Item-class}}, \code{\link{Itempool-class}} or a
-\code{\link{Testlet-class}} object.}
-
-\item{resp}{A vector containing examinee responses. If there are missing
+\item{resp}{A \code{\link{Response_set-class}}, \code{matrix} or a
+\code{data.frame} object that holds responses. If there are missing
 responses, they will not be included in the ability estimation.}
+
+\item{ip}{An \code{\link{Item-class}}, \code{\link{Itempool-class}} or a
+\code{\link{Testlet-class}} object. The default value is \code{NULL}. If
+the value is \code{NULL}, \code{resp} should be a
+\code{\link{Response_set-class}} object with a valid
+\code{\link{Itempool-class}}.}
 
 \item{method}{The method that will be used to estimate the ability.
   The default value is \code{"eap"}.
@@ -37,14 +41,25 @@ responses, they will not be included in the ability estimation.}
 
       Formulas were implemented in Owen (1975) and Vale (1977).  Original
       formulation does not contain D parameter. If \code{D = 1} original
-      solution will be obtained. If \code{D = 1.7}  the \code{a} parameter
+      solution will be obtained. If \code{D = 1.7} the \code{a} parameter
       will be multiplied with this number.
 
+      User needs to supply prior parameters, i.e. \code{prior_pars}. Prior
+      parameters should be a numeric vector of length two. The first
+      component is prior mean and the second component is prior standard
+      deviation (note that it is NOT prior variance). So, for example,
+      if the prior mean is 0.1 and prior variance is 4, set the prior
+      parameters as \code{prior_pars = c(0.1, 2)}.
       }
     \item{\strong{\code{'ml'}}}{Maximum Likelihood Ability Estimation
       via Newton-Raphson Algorithm}
     \item{\strong{\code{'eap'}}}{Expected-a-Posteriori Ability
       Estimation}
+    \item{\strong{\code{'map'}}}{Maximum-a-Posteriori Ability
+      Estimation (or Bayes Modal estimation.). Prior information must be
+      provided for this function. Currently only \code{'norm'} prior
+      distribution is available.
+      }
   }}
 
 \item{...}{Additional arguments passed to specific methods}
@@ -88,34 +103,49 @@ estimates will be rounded to remove the precision that is smaller than the
 
 \code{se} The standard error(s) of the ability estimate(s). For
   \code{"sum_score"} method, all of the standard errors will be \code{NA}.
+  For Bayesian methods (like EAP or Owen's) this value is the square root
+  of the posterior variance.
 }
 \description{
-\code{est_ability} estimates ability using on various methods such as
+\code{est_ability} estimates ability using various methods such as
 Owen's Bayesian estimation, Maximum Likelihood estimation,
 Expected-a-Posteriori.
 }
 \examples{
-ip <- generate_ip()
-resp <- sim_resp(ip, theta = rnorm(1))
+ip <- generate_ip(n = 7)
+resp <- sim_resp(ip, theta = rnorm(3))
 
-# EAP estimation
-est_ability(ip, resp)
-est_ability(ip, resp, number_of_quads = 81)
-est_ability(ip, resp, prior_pars = c(0, 3))
-est_ability(ip, resp, prior_dist = 'unif',  prior_pars = c(-3, 3))
-est_ability(ip, resp, prior_dist = 't',  prior_pars = 3)
-est_ability(ip, resp, prior_dist = 'cauchy',  prior_pars = c(0, 1))
+### EAP estimation ###
+est_ability(resp, ip)
+est_ability(resp, ip, number_of_quads = 81)
+# The default prior_dist is 'norm'. prior_pars = c(mean, sd)
+est_ability(resp, ip, prior_pars = c(0, 3))
+# prior_pars = c(min, max)
+est_ability(resp, ip, prior_dist = 'unif',  prior_pars = c(-3, 3))
+# prior_pars = c(df)
+est_ability(resp, ip, prior_dist = 't',  prior_pars = 3)
+# prior_pars = c(location, scale)
+est_ability(resp, ip, prior_dist = 'cauchy',  prior_pars = c(0, 1))
 
-# Maximum Likelihood estimation
-est_ability(ip, resp, method = 'ml')
-est_ability(ip, resp, method = 'ml', tol = 1e-8)
-est_ability(ip, resp = rep(1, length(ip)), method = 'ml')
-est_ability(ip, resp = rep(1, length(ip)), method = 'ml',
+
+### MAP estimation (Bayes Modal estimation) ###
+est_ability(resp, ip, method = "map")
+# The default prior_dist is 'norm'. prior_pars = c(mean, sd)
+est_ability(resp, ip, method = "map", prior_pars = c(0, 2))
+
+
+### Maximum Likelihood estimation ###
+est_ability(resp, ip, method = 'ml')
+est_ability(resp, ip, method = 'ml', tol = 1e-8)
+est_ability(resp = rep(1, length(ip)), ip, method = 'ml')
+est_ability(resp = rep(1, length(ip)), ip, method = 'ml',
             theta_range = c(-3, 3))
 
-# Owen's Bayesian ability estimation
-est_ability(ip, resp, method = 'owen')
-est_ability(ip, resp, method = 'owen', prior_pars = c(0, 3))
+### Owen's Bayesian ability estimation ###
+est_ability(resp, ip, method = 'owen')
+est_ability(resp, ip, method = 'owen', prior_pars = c(0, 3))
+
+
 
 }
 \references{

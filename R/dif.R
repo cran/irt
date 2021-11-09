@@ -17,20 +17,20 @@
 #'
 #' @return A data.frame of DIF values.
 #'
-#' @include Item-class.R
-#' @include Itempool-class.R
-#' @include Item-class-methods.R
-#' @include Itempool-class-methods.R
+#' @include item-class.R
+#' @include itempool-class.R
+#' @include item-class-methods.R
+#' @include itempool-class-methods.R
 #'
 #' @author Emre Gonulates
 #'
-#' @export
+#' 
 #'
 dif <- function(resp, group, focal_name, ip = NULL, type = "mh") {
   if (type == "mh") {
-    result <- data.frame(id = paste0("Item", 1:ncol(resp)), mh_statistic = NA,
+    result <- data.frame(item_id = paste0("Item", 1:ncol(resp)), mh_statistic = NA,
                          chisq = NA, p_value = NA, ETS = NA, ETS_class= NA)
-    if (!is.null(colnames(resp))) result$id <- colnames(resp)
+    if (!is.null(colnames(resp))) result$item_id <- colnames(resp)
     total_score <- rowSums(resp, na.rm = TRUE)
     K <- sort(unique(total_score))
     group[group == focal_name] <- "focal"

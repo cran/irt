@@ -2,20 +2,30 @@
 
 #' Item Analysis Function
 #'
-#' @param resp A \code{matrix} or \code{data.frame} containing the item
-#'   responses.
+#' @param resp A \code{\link{Response_set-class}} object, \code{matrix} or
+#'   \code{data.frame} containing the item responses.
 #' @param criterion Provide a continuous criterion variable such as a total
 #'   raw score, or theta score that will be used in the calculation of
 #'   correlation calculations. If this value is \code{NULL}, the total score
 #'   will be used.
+#' @param ip An \code{\link{Itempool-class}} object. This will help function
+#'   in two ways. First, if the \code{resp} is
+#'   a \code{\link{Response_set-class}} object, the function will help the
+#'   responses to be arranged in the same order as \code{ip}. Second, if there
+#'   are polytomous items in the data, \code{ip} will help finding the maximum
+#'   values of each item. Otherwise, the maximum values each item can take
+#'   will be calculated using data, which may be fallible.
 #' @param suppress_output If \code{TRUE}, the function will suppress
 #'   console output. Default value is \code{FALSE}
 #'
 #' @return A list of
 #'   \describe{
-#'     \item{'id'}{Item ID.}
+#'     \item{'item_id'}{Item ID.}
 #'     \item{'n'}{Number of examinees responded this item.}
-#'     \item{'pval'}{p-value, proportion of examinees correctly answered items.}
+#'     \item{'pval'}{p-value, proportion of examinees correctly answered items.
+#'       If there are polytomous items in the data, p-value will be calculated
+#'       by dividing the mean of the scores for the item by the maximum
+#'       possible score of the item. }
 #'     \item{'pbis'}{Point biserial correlation.}
 #'     \item{'bis'}{Biserial correlation.}
 #'     \item{'pbis_adj'}{Point biserial correlation between item and total score
@@ -37,16 +47,43 @@
 #' # Item analysis based on theta scores
 #' item_analysis(resp, criterion = theta)
 #'
-item_analysis <- function(resp, criterion = NULL, suppress_output = FALSE) {
+item_analysis <- function(resp, criterion = NULL, ip = NULL,
+                          suppress_output = FALSE) {
+  if (is(resp, "Response_set"))
+    resp <- as.matrix(resp, ip = ip, output = "score")
+  # Check compatibility of item pool and
+  if (!is.null(ip)) {
+    if (!is(ip, "Itempool")) {
+      stop("Invalid 'ip'. 'ip' should be an 'Itempool' object.")
+    }
+    if (ncol(resp) != ip$n$items) {
+      stop("Invalid 'ip'. 'ip' should have the same number of elements as ",
+           "the 'resp'.")
+    }
+    if (!is.null(colnames(resp)) && !all(ip$resp_id == colnames(resp))) {
+      stop("Invalid 'ip'. The order of responses in 'resp' and item order in ",
+           "are not matching.")
+    }
+  }
+  if (is.null(ip)) {
+    # Note that the following method is fallible and assumes at least one
+    # data point is the maximum possible score.
+    max_scores <- apply(resp, 2, max, na.rm = TRUE)
+    # If the scores of an item is all 0s, then the maximum score will be 1
+    # by default.
+    max_scores <- sapply(max_scores, max, 1)
+  } else {
+    max_scores <- max_score(ip, sum = FALSE)
+  }
   # Calculate the number of non-missing responses
   output <- data.frame(row.names = paste0(1:ncol(resp)))
   # Add item ids
-  if (is.null(colnames(resp))) output$id <- rep(NA, ncol(resp)) else
-    output$id <- colnames(resp)
+  if (is.null(colnames(resp))) output$item_id <- rep(NA, ncol(resp)) else
+    output$item_id <- colnames(resp)
   # Add number of
   output$n <- colSums(!is.na(resp))
   # Calculate the p-value
-  output$pval <- colMeans(resp, na.rm = TRUE)
+  output$pval <- colMeans(resp, na.rm = TRUE) / max_scores
 
   if (is.null(criterion)) theta <- rowSums(resp, na.rm = TRUE) else
     theta <- criterion
@@ -59,13 +96,17 @@ item_analysis <- function(resp, criterion = NULL, suppress_output = FALSE) {
     # Calculate corrected point-biserial correlation, i.e. remove the item from
     # the calculation of the total score.
     output$pbis_adj <- sapply(1:ncol(resp), function(i)
-      biserial(score = resp[, i], total_score = rowSums(resp[, -i], na.rm = TRUE),
+      biserial(score = resp[, i],
+               criterion = rowSums(resp[, -i], na.rm = TRUE),
                method = "point-biserial"))
     output$bis_adj <- sapply(1:ncol(resp), function(i)
-      biserial(score = resp[, i], total_score = rowSums(resp[, -i], na.rm = TRUE),
+      biserial(score = resp[, i],
+               criterion = rowSums(resp[, -i], na.rm = TRUE),
                method = "default"))
   }
-  return(output)
+  if (requireNamespace("tibble")) {
+    return(tibble::as_tibble(output))
+  } else return(output)
 }
 
 
@@ -73,7 +114,7 @@ item_analysis <- function(resp, criterion = NULL, suppress_output = FALSE) {
 #'
 #' @param score Item scores of each examinee for which point-biserial
 #'   correlation will be calculated
-#' @param total_score Total score of each examinee
+#' @param criterion Total score of each examinee
 #'
 #' @return Point-biserial correlation value
 #'
@@ -81,27 +122,27 @@ item_analysis <- function(resp, criterion = NULL, suppress_output = FALSE) {
 #'
 #' @author Emre Gonulates
 #'
-point_biserial <- function(score, total_score) {
+point_biserial <- function(score, criterion) {
   # Only use the complete observations
-  complete_obs <- !(is.na(score) | is.na(total_score))
+  complete_obs <- !(is.na(score) | is.na(criterion))
   score <- score[complete_obs]
-  total_score <- total_score[complete_obs]
+  criterion <- criterion[complete_obs]
   # Mean of total scores of  examinees who correctly answered the item
-  mu_correct <- mean(total_score[score == 1], na.rm = TRUE)
-  mu_all <- mean(total_score, na.rm = TRUE)
+  mu_correct <- mean(criterion[score == 1], na.rm = TRUE)
+  mu_all <- mean(criterion, na.rm = TRUE)
   # Item difficulty
   p <- mean(score, na.rm = TRUE)
   # Use n instead of (n-1) for the calculation of standard deviation
-  # sigma <- stats::sd(total_score, na.rm = TRUE)
-  sigma <- sqrt(sum((total_score - mean(total_score))^2)/length(total_score))
-  return((mu_correct - mu_all) * sqrt(p/(1-p)) / sigma)
+  # sigma <- stats::sd(criterion, na.rm = TRUE)
+  sigma <- sqrt(sum((criterion - mean(criterion))^2)/length(criterion))
+  return((mu_correct - mu_all) * sqrt(p/(1 - p)) / sigma)
 }
 
 #' Calculate biserial correlation
 #'
 #' @param score Item scores of each examinee for which biserial correlation will
 #'   be calculated
-#' @param total_score Total score of each examinee
+#' @param criterion Total score of each examinee
 #' @param method Type of the biserial correlation calculation method.
 #'   \describe{
 #'     \item{\strong{"default"}}{The most common way to calculate biserial
@@ -155,14 +196,14 @@ point_biserial <- function(score, total_score) {
 #' # Calculate modified biserial correlation (Clemans-Lord)
 #' biserial(score, total_score, method = "clemans-lord")
 #'
-biserial <- function(score, total_score, method = "default") {
+biserial <- function(score, criterion, method = "default") {
   if (method == "point-biserial")
-    return(stats::cor(score, total_score, use = "pairwise.complete.obs"))
+    return(stats::cor(score, criterion, use = "pairwise.complete.obs"))
 
   # Only use the complete observations
-  complete_obs <- !(is.na(score) | is.na(total_score))
+  complete_obs <- !(is.na(score) | is.na(criterion))
   score <- score[complete_obs]
-  total_score <- total_score[complete_obs]
+  criterion <- criterion[complete_obs]
 
   # n <- sum(!is.na(score))
   n <- as.double(length(score))
@@ -171,11 +212,11 @@ biserial <- function(score, total_score, method = "default") {
     # Kraemer pointed out that Cureton's (1958, 1964) rank biserial correlation
     # coefficient "essentially replaces observations with their ranks and then
     # applies Brogden's approach. " (p.280)
-    total_score <- rank(total_score)
+    criterion <- rank(criterion)
     method <- "brogden"
   }
   if (method == "clemans-lord") {
-    dev <- total_score - mean(total_score)
+    dev <- criterion - mean(criterion)
     num <- sum(score * dev)
     if (num < 0)
       return(-(num / sum((1 - sort(score, decreasing = TRUE)) * dev)))
@@ -183,23 +224,22 @@ biserial <- function(score, total_score, method = "default") {
     return(sum(score * dev) /  sum(sort(score, decreasing = TRUE) * dev))
   }
   if (method == "brogden") {
-    dev <- total_score - mean(total_score)
+    dev <- criterion - mean(criterion)
     return(sum(score * dev) /  sum(sort(score, decreasing = TRUE) * dev))
   }
 
-
   # Mean of total scores of  examinees who correctly answered the item
-  mu1 <- mean(total_score[score == 1], na.rm = TRUE)
-  mu0 <- mean(total_score[score == 0], na.rm = TRUE)
+  mu1 <- mean(criterion[score == 1], na.rm = TRUE)
+  mu0 <- mean(criterion[score == 0], na.rm = TRUE)
   n1 <- as.double(sum(score == 1, na.rm = TRUE))
   n0 <- as.double(sum(score == 0, na.rm = TRUE))
   # # The following is also valid calculation but the above one is shorter.
   # if (method == "brogden") {
-  #   ranked <- sort(total_score, decreasing = TRUE)
+  #   ranked <- sort(criterion, decreasing = TRUE)
   #   D <-  mean(ranked[1:n1]) - mean(ranked[(n1+1):(n0+n1)])
   #   return((mu1 - mu0) / D)
   # }
-  sigma <- stats::sd(total_score, na.rm = TRUE)
+  sigma <- stats::sd(criterion, na.rm = TRUE)
   u <- stats::dnorm(stats::qnorm(n1/n))
   return(((mu1 - mu0) / sigma) * (n1 * n0 / (u * n^2)))
 }
@@ -208,25 +248,37 @@ biserial <- function(score, total_score, method = "default") {
 
 #' Distractor Analysis Function
 #'
-#' @param raw_resp A \code{matrix} or \code{data.frame} containing the item
-#'   responses.
-#' @param key The answer key for the responses
+#' @param resp It can be either a \code{\link{Response_set-class}} object with
+#'   valid raw responses; or, a \code{matrix} or \code{data.frame} containing
+#'   the raw item responses.
+#' @param key The answer key for the responses. Keys can also be provided via
+#'   \code{ip} argument.
+#' @param ip An \code{\link{Itempool-class}} object that contains the keys of
+#'   the items. The program will look check whether a \code{ip$misc$key} is
+#'   specified for all items. Valid keys should be provided via \code{ip} if
+#'   \code{key} argument is \code{NULL}.
 #' @param criterion Provide a continuous criterion variable such as a total
 #'   raw score, or theta score that will be used in the calculation of
 #'   correlation calculations. If this value is \code{NULL}, the total score
 #'   will be used.
-#' @param adjusted If \code{TRUE}, the biserial will be calculated using the
-#'   total score that is calculated using all of the items except the item
-#'   that biserial is calculated for.
-#' @param suppress_output If \code{TRUE}, the function will suppress
-#'   console output. Default value is \code{FALSE}
 #'
-#' @return A list of
+#' @return A data.frame with following columns
 #'   \describe{
-#'     \item{'prop'}{Observed proportions of each choice.}
-#'     \item{'biserial'}{Biserial correlation between the examinees selected
+#'     \item{'item_id'}{Item identifier}
+#'     \item{'key'}{Answer key}
+#'     \item{'option'}{The selected option}
+#'     \item{'n'}{Number of subjects/examinees answered this item}
+#'     \item{'prop'}{Observed proportions of the choice.}
+#'     \item{'bis'}{Biserial correlation between the examinees selected
 #'           the choice and the total scores.}
-#'     \item{'score'}{Scored response matrix.}
+#'     \item{'pbis'}{Point-biserial correlation between the
+#'           examinees selected the choice and the total scores.}
+#'     \item{'bis_adj'}{Biserial correlation between item and total score
+#'       without this item. Sum scores will be used in the calculation of
+#'       'bis_adj' even 'criterion' is provided. }
+#'     \item{'pbis_adj'}{Point-biserial correlation between item and total score
+#'       without this item. Sum scores will be used in the calculation of
+#'       'bis_adj' even 'criterion' is provided.}
 #'   }
 #'
 #' @export
@@ -246,21 +298,60 @@ biserial <- function(score, total_score, method = "default") {
 #' key <- sample(LETTERS[1:4], n_item, replace = TRUE)
 #'
 #' # Run distractor analysis:
-#' da <- distractor_analysis(raw_resp = raw_resp, key = key)
+#' da <- distractor_analysis(resp = raw_resp, key = key)
 #'
-distractor_analysis <- function(raw_resp, key, criterion = NULL,
-                                adjusted = FALSE, suppress_output = FALSE) {
+#'
+distractor_analysis <- function(resp, key = NULL, ip = NULL, criterion = NULL) {
+  if (inherits(resp, "matrix")) {
+    raw_resp <- as.data.frame(resp)
+  } else if (inherits(resp, "date.frame")) {
+    raw_resp <- resp
+  } else if (is(resp, "Response_set")) {
+    raw_resp <- data.frame(as.matrix(resp, ip = ip, output = "raw_response"),
+                           check.names = FALSE)
+    if (all(is.na(raw_resp)))
+      stop("'resp' object do not have any raw responses.")
+  }
+
+  # Determine the item IDs
+  if (!is.null(colnames(raw_resp))) {
+    item_ids <- colnames(raw_resp)
+  } else if (!is.null(ip)) {
+    # Here it is assumed that the item order of ip is the same as the column
+    # order or raw_resp or resp
+    item_ids <- ip$resp_id
+    if (ncol(raw_resp) != length(item_ids)) {
+      stop("Invalid 'ip' or 'resp'. The number of items 'ip' and the number ",
+           "of columns in 'resp' are not equal.")
+    }
+    colnames(raw_resp) <- item_ids
+  } else  {
+    item_ids <- paste0("Item_", sapply(
+      1:ncol(raw_resp), sprintf,
+      fmt = paste0("%0", floor(log10(ncol(raw_resp))) + 1, "d")))
+    colnames(raw_resp) <- item_ids
+  }
+
+
+  if (is.null(key)) {
+    if (is.null(ip) || is.null(ip$key) || length(ip$key) != ip$n$items)
+      stop("Please provide a valid key either via 'key' argument or via ",
+           "'ip' argument.")
+    key <- ip$key
+  }
+  #   stop("Invalid 'raw_resp'. Please provide a matrix or a data.frame")
+
   # possible_options <- unique(as.vector(unlist(raw_resp))) # Very very slow
   # possible_options <- unique(as.vector(apply(raw_resp, 2, unique))) # Slow
-  if (inherits(raw_resp, "matrix")) raw_resp <- as.data.frame(raw_resp)
-  #   stop("Invalid 'raw_resp'. Please provide a matrix or a data.frame")
   possible_options <- unique(rapply(raw_resp, unique, how = "unlist"))
   possible_options <- sort(possible_options[!is.na(possible_options)])
 
   ### Calculate the observed proportion of each choice option
   choice_props <- t(sapply(lapply(raw_resp, factor, levels = possible_options),
                            function(x) prop.table(table(x))))
-  choice_props <- cbind.data.frame(n = colSums(!is.na(raw_resp)), choice_props)
+  choice_props <- cbind.data.frame(item_id = item_ids,
+                                   n = as.integer(colSums(!is.na(raw_resp))),
+                                   key = key, choice_props)
 
   # ### Calculate the observed proportion of each choice option
   # choice_props <- t(apply(raw_resp, 2, function(x) prop.table(table(x))))
@@ -270,27 +361,83 @@ distractor_analysis <- function(raw_resp, key, criterion = NULL,
 
   ### Calculate the biserial correlation of each choice option.
   # Calculate the score matrix
-  resp <- score_raw_resp(raw_resp, key)
-  choice_bis <- data.frame(key = key, row.names = colnames(raw_resp))
+  if (is(resp, "Response_set") && !is.null(resp$score)) {
+    scores <- as.matrix(resp, output = "score", ip = ip)
+  } else scores <- score_raw_resp(raw_resp, key)
+  choice_bis <- data.frame(item_id = item_ids, key = key,
+                           # row.names = colnames(raw_resp),
+                           check.names = FALSE)
+  choice_pbis <- data.frame(item_id = item_ids, key = key,
+                            # row.names = colnames(raw_resp),
+                           check.names = FALSE)
+  choice_bis_adj <- data.frame(item_id = item_ids, key = key,
+                               # row.names = colnames(raw_resp),
+                               check.names = FALSE)
+  choice_pbis_adj <- data.frame(item_id = item_ids, key = key,
+                                # row.names = colnames(raw_resp),
+                                check.names = FALSE)
 
   # If not adjusted use the same total_score for all items
-  if (is.null(criterion)) total_score <- rowSums(resp, na.rm = TRUE) else
-    total_score <- criterion
-  if (adjusted && is.null(criterion)) {
-    total_score <- matrix(total_score, ncol = ncol(resp), nrow = nrow(resp))
-    total_score <- ifelse(is.na(raw_resp), total_score, total_score - resp)
-    for (po in possible_options)
-      choice_bis[[po]] <- sapply(1:ncol(raw_resp), function(i) biserial(
-        score = (raw_resp[, i] == po) * 1, total_score = total_score[, i]))
-  } else {
-    for (po in possible_options)
-      choice_bis[[po]] <- apply((raw_resp == po) * 1, 2, biserial, total_score)
-  }
-  output <- list(prop = choice_props, biserial = choice_bis)
-  if (!suppress_output) print(output)
-  output$scores <- resp
+  sum_score <- rowSums(scores, na.rm = TRUE)
+  if (is.null(criterion)) total_score <- sum_score else total_score <- criterion
 
-  return(invisible(output))
+  for (po in possible_options) {
+    choice_bis[[po]] <- apply((raw_resp == po) * 1, 2, biserial, total_score)
+    choice_pbis[[po]] <- apply((raw_resp == po) * 1, 2, point_biserial,
+                               total_score)
+  }
+
+  total_score <- sum_score
+  total_score <- matrix(total_score, ncol = ncol(scores), nrow = nrow(scores))
+  total_score <- ifelse(is.na(raw_resp), total_score, total_score - scores)
+  for (po in possible_options) {
+    choice_bis_adj[[po]] <- sapply(1:ncol(raw_resp), function(i) biserial(
+      score = (raw_resp[, i] == po) * 1, criterion = total_score[, i]))
+    choice_pbis_adj[[po]] <- sapply(1:ncol(raw_resp), function(i)
+      point_biserial(score = (raw_resp[, i] == po) * 1,
+                     criterion = total_score[, i]))
+  }
+
+  output <- stats::reshape(
+    choice_props,
+    direction = "long",
+    varying = list(setdiff(colnames(choice_props), c("item_id", "n", "key"))),
+    v.names = "prop",
+    idvar = c("item_id", "n", "key"),
+    timevar = "option",
+    times = setdiff(colnames(choice_props), c("item_id", "n", "key"))
+  )
+  for (df in c("bis", "pbis", "bis_adj", "pbis_adj")) {
+    temp_df <- get(paste0("choice_", df))
+    temp <- stats::reshape(
+      temp_df,
+      direction = "long",
+      varying = list(setdiff(colnames(temp_df), c("item_id", "key"))),
+      v.names = df,
+      idvar = c("item_id", "key"),
+      timevar = "option",
+      times = setdiff(colnames(temp_df), c("item_id", "key"))
+    )
+    output <- merge(x = output, y = temp, by = c("item_id", "key", "option"),
+                    sort = FALSE)
+  }
+
+  # Sort columns first based on item_id, then for options
+  output <- output[order(match(output$item_id, item_ids),
+                         match(output$option, possible_options)), ]
+  if (requireNamespace("tibble")) {
+    return(tibble::as_tibble(output))
+  } else {
+    rownames(output) <- NULL
+    return(output)
+  }
+
+  # output <- list(prop = choice_props, biserial = choice_bis,
+  #                point_biserial = choice_pbis)
+  # if (!suppress_output) print(output)
+  # output$scores <- scores
+  #
+  # return(invisible(output))
 }
 
 
@@ -311,4 +458,77 @@ score_raw_resp <- function(raw_resp, key) {
   output <- t(apply(raw_resp, 1, function(x) as.integer(x == key)))
   colnames(output) <- colnames(raw_resp)
   return(output)
+}
+
+
+
+
+
+###############################################################################@
+############################# marginal_reliability #############################
+###############################################################################@
+#' Calculate Marginal Reliability Empirically
+#'
+#' @param ts_var A single numeric value representing the true score variance
+#'   of theta.
+#' @param se A vector of standard error of ability estimates or conditional
+#'   standard error of measurement values corresponding to each \code{theta}
+#'   value.
+#' @param theta A vector of theta values.
+#' @param ip An \code{\link{Itempool-class}} object. If \code{se = NULL} but
+#'   a valid \code{theta} vector is provided, the \code{se} values will be
+#'   estimated using \code{ip} and \code{theta} via \code{se = 1/sqrt(info)}.
+#'
+#'
+#' @author Emre Gonulates
+#'
+#' @noRd
+#'
+marginal_reliability_empirical <- function(ts_var = NULL, se = NULL,
+                                           theta = NULL, ip = NULL)
+{
+
+  if (!is.null(ts_var) && !is.null(se)) {
+    return((ts_var - mean(se^2, na.rm = TRUE)) / ts_var)
+  } else if (!is.null(theta) && !is.null(se)) {
+    return(marginal_reliability_empirical(ts_var = var(theta, na.rm = TRUE),
+                                          se =  se))
+  } else if (!is.null(ip) && !is.null(theta)) {
+    se <- 1/sqrt(info(ip = ip, theta = theta, tif = TRUE)[, 1])
+    return(marginal_reliability_empirical(ts_var = var(theta, na.rm = TRUE),
+                                          se = se))
+  } else
+    stop("Invalid inputs. Please provide either one of the following ",
+         "argument sets: (se and ts_var) or (se and theta) or (theta and ip).")
+}
+
+
+#' Calculate Marginal Reliability
+#'
+#' @description This function calculates marginal reliability of a given test.
+#'
+#' @param ts_var A single numeric value representing the true score variance
+#'   of theta.
+#' @param se A vector of standard error of ability estimates or conditional
+#'   standard error of measurement values corresponding to each \code{theta}
+#'   value.
+#' @param theta A vector of theta values.
+#' @param ip An \code{\link{Itempool-class}} object. If \code{se = NULL} but
+#'   a valid \code{theta} vector is provided, the \code{se} values will be
+#'   estimated using \code{ip} and \code{theta} via \code{se = 1/sqrt(info)}.
+#' @param method The method for calculating empirical reliability. Currently,
+#'   only \code{theoretical} is available.
+#'
+#'
+#' @author Emre Gonulates
+#'
+#' @noRd
+#'
+
+marginal_reliability <- function(ip = NULL, theta = NULL, se = NULL,
+                                 ts_var = NULL, method = "empirical") {
+  if (method == "empirical") {
+    return(marginal_reliability_empirical(ts_var = ts_var, se = se,
+                                          theta = theta, ip = ip))
+  } else stop("Invalid 'method'. This method has not been implemented yet.")
 }

@@ -36,7 +36,7 @@ Return a list depending on the method:
           of \code{ip2} to the standard deviation of \code{ip1}.}
         \item{\code{output$a$robust_z}}{Robust-z statistic values for each
           item discrimination parameter.}
-        \item{\code{output$a$unstable}}{Item id's which were flagged if
+        \item{\code{output$a$unstable}}{Item ID's which were flagged if
           robust z statistic value for a parameters is larger than the
           absolute value of  the critical value
           (i.e. \code{qnorm(1-alphe/2)}).}
@@ -44,7 +44,7 @@ Return a list depending on the method:
           item difficulty or threshold parameter. If an item has threshold
           parameters, robust z statistic will be calculated for each
           threshold.}
-        \item{\code{output$b$unstable}}{Item id's which were flagged if
+        \item{\code{output$b$unstable}}{Item ID's which were flagged if
           robust z statistic for difficulty/threshold parameters are larger
           than the absolute value of the critical value (i.e.
           \code{qnorm(1-alphe/2)}).}
@@ -103,7 +103,7 @@ ipd(ip1, ip2)
 Huynh, Huynh and Meyer, Patrick (2010) "Use of Robust z in Detecting
 Unstable Items in Item Response Theory Models,"
 \emph{Practical Assessment, Research, and Evaluation}: Vol. 15 , Article 2.
-DOI: \url{https://doi.org/10.7275/ycx6-e864}
+DOI:  <doi:10.7275/ycx6-e864>
 Available at: \url{https://scholarworks.umass.edu/pare/vol15/iss1/2/}
 }
 \author{

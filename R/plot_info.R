@@ -6,10 +6,10 @@
 #'
 #' @noRd
 get_data_plot_info <- function(ip, theta_range = c(-5, 5),
-                               tif = FALSE) {
+                               separate_testlet = TRUE, tif = FALSE) {
   # in case there are testlets
-  ip <- itempool(flatten_itempool_cpp(ip))
-  item_ids <- ip$resp_id
+  if (separate_testlet) ip <- itempool(flatten_itempool_cpp(ip))
+  item_ids <- ip$id
 
   theta_range <- process_theta_range(theta_range, n_theta = 301)
   theta <- theta_range$theta
@@ -18,7 +18,7 @@ get_data_plot_info <- function(ip, theta_range = c(-5, 5),
   info_data <- info(ip = ip, theta = theta, tif = tif)
   if (tif) colnames(info_data) <- "info" else
     colnames(info_data) <- item_ids
-  info_data <- data.frame(cbind(theta = theta, info_data))
+  info_data <- data.frame(cbind(theta = theta, info_data), check.names = FALSE)
   if (!tif)
     info_data <- reshape(data = info_data,
                          direction = "long",
@@ -51,7 +51,8 @@ get_data_plot_info <- function(ip, theta_range = c(-5, 5),
 #' @param focus_item If one or more items information graphs needed to be
 #'   focused whereas rest of the items' information functions needed to be on
 #'   the background, provide item numbers or item ID's to be focused.
-#' @param title Title of the plot
+#' @param title Title of the plot. If the value is \code{NULL},
+#'   the plot title will be suppressed.
 #' @param base_r_graph If \code{TRUE} function will plot graphs using base R
 #'   graphics. If \code{FALSE} the function will check whether 'ggplot2' package
 #'   is installed. If it is installed, it will use 'ggplot2' package for the
@@ -59,6 +60,11 @@ get_data_plot_info <- function(ip, theta_range = c(-5, 5),
 #' @param suppress_plot If \code{FALSE} the function will print the plot. If
 #'          \code{TRUE}, function will return the plot object. Default value is
 #'          \code{FALSE}.
+#' @param separate_testlet A logical value indicating whether to separate
+#'   items within testlets or not. If \code{TRUE}, information values of all
+#'   items within the testlet are plotted separately. if \code{FALSE},
+#'   information functions of items within testlets are combined (like test
+#'   information function) and plotted that way along with standalone items.
 #' @param ... Extra parameters that will pass to \code{geom_line}.
 #'
 #' @return Depending on the value of \code{suppress_plot} function either prints
@@ -100,9 +106,21 @@ get_data_plot_info <- function(ip, theta_range = c(-5, 5),
 #'
 #' plot_info(ip, focus_item = "Item_3", color = "green", base_r_graph = TRUE)
 #'
+#'
+#' # Information Plots with Testlets
+#' ip <- c(testlet(itempool(b = c(-1, 1), item_id = c("t1-i1", "t1-i2"),
+#'                          D = 1.702), testlet_id = "t1"),
+#'         testlet(itempool(b = c(-2, 0, 2),
+#'                          item_id = c("t2-i1", "t2-i2", "t2-i3"),
+#'                          D = 1.702), testlet_id = "t2"),
+#'         item(b = -1.5, item_id = "i1", D = 1.702),
+#'         item(b = 0.25, item_id = "i2", D = 1.702),
+#'         item(b = 1.5, item_id = "i3", D = 1.702))
+#' plot_info(ip)
+#' plot_info(ip, separate_testlet = FALSE)
 plot_info <- function(ip, tif = FALSE, theta_range = c(-5,5), focus_item = NULL,
                       title = "", suppress_plot = FALSE, base_r_graph = FALSE,
-                      ...)
+                      separate_testlet = TRUE, ...)
 {
   args <- list(...)
   # Convert ip to Itempool object
@@ -121,7 +139,7 @@ plot_info <- function(ip, tif = FALSE, theta_range = c(-5,5), focus_item = NULL,
   }
 
   # Set default title
-  if (title == "")
+  if (!is.null(title) && title == "")
     title = ifelse(
       tif, "Test Information Function",
       paste0("Item Information Function",
@@ -133,11 +151,12 @@ plot_info <- function(ip, tif = FALSE, theta_range = c(-5,5), focus_item = NULL,
   theta_range <- process_theta_range(theta_range, n_theta = 501)
   theta <- theta_range$theta
   theta_range <- theta_range$range
-  info_data <- get_data_plot_info(ip = ip, theta_range = theta, tif = tif)
+  info_data <- get_data_plot_info(ip = ip, theta_range = theta, tif = tif,
+                                  separate_testlet = separate_testlet)
 
   x_label <- expression("Theta ("*theta*")")
   y_label <- ifelse(tif, "Test Information", "Information")
-  legend_title <- "Item ID"
+  legend_title <- ifelse(separate_testlet, "Item ID", "ID")
 
   ### ggplot2 ###
   if (!base_r_graph && requireNamespace("ggplot2", quietly = TRUE)) {

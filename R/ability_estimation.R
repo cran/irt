@@ -32,7 +32,9 @@
 #'     \item{\strong{\code{'owen'}}}{Owen's Bayesian Ability Estimation.
 #'
 #'       This estimation method can be used only for dichotomous IRT
-#'       models, 'Rasch', '1PL', '2PL', '3PL' and '4PL'.
+#'       models, 'Rasch', '1PL', '2PL', '3PL' and '4PL'. Testlets groupings
+#'       will be ignored and items within testlets will be treated as if they
+#'       are standalone items.
 #'
 #'       Formulas were implemented in Owen (1975) and Vale (1977).  Original
 #'       formulation does not contain D parameter. If \code{D = 1} original
@@ -50,8 +52,8 @@
 #'       via Newton-Raphson Algorithm}
 #'     \item{\strong{\code{'eap'}}}{Expected-a-Posteriori Ability
 #'       Estimation}
-#'     \item{\strong{\code{'map'}}}{Maximum-a-Posteriori Ability
-#'       Estimation (or Bayes Modal estimation.). Prior information must be
+#'     \item{\strong{\code{'map'} or \code{'bm'}}}{Maximum-a-Posteriori Ability
+#'       Estimation (or Bayes Modal estimation.) Prior information must be
 #'       provided for this function. Currently only \code{'norm'} prior
 #'       distribution is available.
 #'       }
@@ -85,6 +87,19 @@
 #' @param tol The precision level of ability estimate. The final ability
 #'   estimates will be rounded to remove the precision that is smaller than the
 #'   \code{tol} value. The default value is \code{1e-06}.
+#' @param output_type A string that specifies the output type of the function.
+#'   The default value is \code{"list"}.
+#'   Available options are:
+#'   \describe{
+#'     \item{"list"}{Function returns a \code{list} object with elements
+#'       \code{est} and \code{se}.}
+#'     \item{"data.frame"}{Function returns a \code{data.frame} object with
+#'       columns \code{examinee_id}, \code{est} and \code{se}}
+#'     \item{"tibble"}{If the \code{tibble} package is available, the function
+#'           returns a \code{tibble} object with columns \code{examinee_id},
+#'           \code{est} and \code{se}.}
+#'   }
+#'
 #'
 #' @return \code{est} The ability estimated. If the response vector for a
 #'   subject contains all \code{NA}s, then, in order to differentiate all
@@ -141,17 +156,26 @@
 #'
 #'
 #'
-est_ability <- function(resp,
-                        ip = NULL,
-                        method = "eap",
-                        ...,
-                        prior_dist = "norm",
-                        prior_pars = c(0, 1),
-                        theta_range = c(-5, 5),
-                        number_of_quads = 41,
-                        tol = 1e-6) {
+est_ability <- function(
+    resp,
+    ip = NULL,
+    method = c("eap", "ml", "map", "bm", "owen", "sum_score"),
+    ...,
+    prior_dist = c("norm", "unif", "lnorm", "gamma", "t", "cauchy"),
+    prior_pars = c(0, 1),
+    theta_range = c(-5, 5),
+    number_of_quads = 41,
+    tol = 1e-6,
+    output_type = c("list", "data.frame", "tibble")) {
   # args <- list(...)
+  method <- tolower(method)
+  method <- match.arg(method)
 
+  prior_dist <- tolower(prior_dist)
+  prior_dist <- match.arg(prior_dist)
+
+  output_type <- tolower(output_type)
+  output_type <- match.arg(output_type)
   # Check item pool:
   if (!is.null(ip) && !is(ip, "Itempool")) ip <- itempool(ip)
   if (is.null(ip) && method != "sum_score") {
@@ -163,7 +187,35 @@ est_ability <- function(resp,
   if (method == "sum_score" &&
       (is.matrix(resp) || inherits(resp, "data.frame"))) {
        resp_set <- resp
-  } else resp_set <- convert_to_resp_set(resp = resp, ip = ip, object_name = "resp")
+
+    # if the 'resp' satisfies this conditions, directly run cpp function
+  } else if (method == "eap" &&
+             (is.matrix(resp) || inherits(resp, "data.frame")) &&
+             (ncol(resp) == ip$n$items) &&
+             all(apply(resp, 2, is.numeric))
+             ) {
+    est <- est_ability_eap_cpp(
+      resp = as.matrix(resp), ip = ip, theta_range = theta_range,
+      no_of_quadrature = number_of_quads, prior_dist = prior_dist,
+      prior_par = prior_pars)
+
+    temp_row_names <- rownames(resp)
+    if (!is.null(temp_row_names)) {
+      est$est <- stats::setNames(est$est, temp_row_names)
+      est$se <- stats::setNames(est$se, temp_row_names)
+    }
+    se <- est$se
+    est <- est$est
+
+    # est$est <- round(est$est, floor(abs(log10(tol))))
+    # est$se <- round(est$se, floor(abs(log10(tol))))
+    # return(est)
+
+    method <- "eap_matrix" # to prevent getting into "switch" statement below
+    resp_set <- resp
+  } else {
+    resp_set <- convert_to_resp_set(resp = resp, ip = ip, object_name = "resp")
+  }
 
   switch(
     method,
@@ -173,12 +225,14 @@ est_ability <- function(resp,
       # When method = "sum_score" and resp is matrix/data.frame, resp was
       # previously assigned to resp_set.
       } else resp_matrix <- resp_set
-      se <- est <- rep(NA, nrow(resp_matrix))
+      se <- est <- setNames(rep(as.numeric(NA), nrow(resp_matrix)),
+                            rownames(resp_matrix))
       est <- rowSums(resp_matrix, na.rm = TRUE)
+
     },
     "owen" = {
       # This method cannot be used for models other than dichotomous IRT models.
-      if (!all(ip$model %in% UNIDIM_DICHO_MODELS))
+      if (!all(ip$item_model %in% UNIDIM_DICHO_MODELS))
         stop(paste0("Owen's Bayesian ability estimation method can only ",
                     "be used for dichotomous IRT models: ",
                     paste0(UNIDIM_DICHO_MODELS, collapse = ", "), "."))
@@ -192,12 +246,13 @@ est_ability <- function(resp,
     },
     "ml" = {
       # ip_list <- flatten_itempool_cpp(ip)
-      se <- est <- rep(NA, length(resp_set))
+      n_examinee <- length(resp_set)
+      se <- est <- rep(NA, n_examinee)
 
       est <- sapply(resp_set@response_list, function(r)
         stats::optimize(f = resp_loglik_response_cpp, resp = r, ip = ip,
                         lower = theta_range[1], upper = theta_range[2],
-                        tol = tol, maximum = TRUE)$maximum)
+                        tol = tol/10, maximum = TRUE)$maximum)
 
       # est <- sapply(resp_set@response_list, function(r)
       #   stats::optimize(f = function(x) resp_loglik_response_cpp(
@@ -207,15 +262,46 @@ est_ability <- function(resp,
       # For 3PL model `optimize` function sometimes finds the local maximum
       # instead of local minimum. The following piece tacles with this
       if ("3PL" %in% ip$item_model) {
-        n <- length(resp_set)
-        ll_lb <- resp_loglik_response_set_cpp(
-          resp_set = resp_set, theta = rep(theta_range[1], n), ip = ip)
-        ll_ub <- resp_loglik_response_set_cpp(
-          resp_set = resp_set, theta = rep(theta_range[2], n), ip = ip)
-        ll_est <- resp_loglik_response_set_cpp(
-          resp_set = resp_set, theta = est, ip = ip)
-        est <- ifelse(ll_est >= ll_ub & ll_est >= ll_lb, est,
-                      ifelse(ll_ub >= ll_est, theta_range[2], theta_range[1]))
+        theta_bins <- seq(from = theta_range[1], to = theta_range[2],
+                          by = min(.5, diff(theta_range)/2))
+        n_bin <- length(theta_bins)
+        # Log-likelihood value at the estimated theta
+        ll_est <- round(resp_loglik_response_set_cpp(
+          resp_set = resp_set, ip = ip, theta = est), 4)
+        # Log-likelihood at each bin value
+        ll_bins <- sapply(theta_bins, function(x) resp_loglik_response_set_cpp(
+          resp_set = resp_set, ip = ip, theta = rep(x, n_examinee)))
+        if (n_examinee == 1) ll_bins <- matrix(ll_bins, nrow = 1)
+        ll_flag <- apply(round(ll_bins, 4), 2, function(x) x > ll_est)
+        if (n_examinee == 1) ll_flag <- matrix(ll_flag, nrow = 1)
+        ll_flag <- apply(ll_flag, 1, which)
+        if (n_examinee == 1) ll_flag <- list(as.vector(ll_flag))
+        problematic_cases <- which(sapply(ll_flag, length) > 0)
+        if (length(problematic_cases) > 0) {
+          new_theta_ranges <- lapply(
+            ll_flag[problematic_cases], function(x)
+              c(theta_bins[max(1, min(x) - 1)],
+                theta_bins[min(n_bin, max(x) + 1)]))
+          est[problematic_cases] <- sapply(
+            seq_along(problematic_cases),
+            function(i)
+              stats::optimize(
+                f = resp_loglik_response_cpp,
+                resp = resp_set@response_list[[problematic_cases[i]]],
+                ip = ip,
+                lower = new_theta_ranges[[i]][1],
+                upper = new_theta_ranges[[i]][2],
+                tol = tol * .1, maximum = TRUE)$maximum)
+        }
+
+        # ll_lb <- resp_loglik_response_set_cpp(
+        #   resp_set = resp_set, theta = rep(theta_range[1], n), ip = ip)
+        # ll_ub <- resp_loglik_response_set_cpp(
+        #   resp_set = resp_set, theta = rep(theta_range[2], n), ip = ip)
+        # ll_est <- resp_loglik_response_set_cpp(
+        #   resp_set = resp_set, theta = est, ip = ip)
+        # est <- ifelse(ll_est >= ll_ub & ll_est >= ll_lb, est,
+        #               ifelse(ll_ub >= ll_est, theta_range[2], theta_range[1]))
       }
 
       # est <- stats::optim(par = 0,
@@ -278,6 +364,7 @@ est_ability <- function(resp,
       est <- output$est
       se <- output$se
     },
+    "bm" = ,  # Alternatively use "BM", Bayes Modal
     "map" = {
       if (prior_dist != "norm") {
         stop("Invalid 'prior_dist'. 'map' ability estimation method ",
@@ -292,23 +379,16 @@ est_ability <- function(resp,
              "('norm') should be a numeric vector of length two. The first ",
              "element should be the mean and second element should be the ",
              "standard deviation.")
-      mu <- prior_pars[1]
-      sigma <- prior_pars[2]
-      se <- est <- rep(NA, length(resp_set))
 
-      map_func <- function(theta, resp, ip, mu, sigma) {
-        resp_lik_response_cpp(theta = theta, resp = resp, ip = ip) *
-          stats::dnorm(x = theta, mean = mu, sd = sigma)
-      }
-      est <- sapply(resp_set@response_list, function(r)
-        stats::optimize(f = map_func, resp = r, ip = ip, mu = mu, sigma = sigma,
-                        lower = theta_range[1], upper = theta_range[2],
-                        tol = tol, maximum = TRUE)$maximum)
+      temp <- est_ability_map_response_set_cpp(
+        resp_set = resp_set, ip = ip, prior_dist = prior_dist,
+        prior_par = prior_pars, theta_range = theta_range)
+      est <- temp$est
+      se <- temp$se
 
-      se <- 1/sqrt(info_response_set_cpp(theta = est, resp_set = resp_set,
-                                         ip = ip, tif = TRUE)[, 1] + 1/sigma^2)
-    },
-    stop("This method has not been implemented yet.")
+    }
+    # ,
+    # stop("This method has not been implemented yet.")
     )
 
   # Round numbers up to tolerance
@@ -317,17 +397,26 @@ est_ability <- function(resp,
     se <- round(se, floor(abs(log10(tol))))
   }
 
+  # # Convert all NA response strings's est and se to NA
+  # all_na_rows <- apply(is.na(resp), 1, all)
+  # est[all_na_rows] <- NA
+  # se[all_na_rows] <- NA
+
   # Set examinee names
   if ((!is.atomic(resp) || is.matrix(resp)) && is(resp_set, "Response_set")) {
     est <- stats::setNames(est, resp_set$examinee_id)
     se <- stats::setNames(se, resp_set$examinee_id)
   }
+  if (output_type == "list") {
+    result <- list(est = est, se = se)
+  } else if (output_type %in% c("data.frame", "tibble")) {
+    result <- data.frame(examinee_id = NA, est = est, se = se)
+    result$examinee_id <- names(est)
+    if (output_type == "tibble" && requireNamespace("tibble")) {
+      result <- tibble::as_tibble(result)
+    }
+  }
 
-
-  # # Convert all NA response strings's est and se to NA
-  # all_na_rows <- apply(is.na(resp), 1, all)
-  # est[all_na_rows] <- NA
-  # se[all_na_rows] <- NA
-  return(list(est = est, se = se))
+  return(result)
 }
 

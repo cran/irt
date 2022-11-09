@@ -64,7 +64,14 @@ ip$content <- c("Geometry", "Algebra", "Algebra", "Geometry", "Geometry")
 
 # Add misc field to all items:
 ip$difficulty <- c("Easy", "Easy", "Hard", "Hard", "Hard")
+ip$difficulty
 
+# Add an overall misc field to itempool:
+ip$form_name <- "Frm8"
+
+# Remove the misc field from all items
+ip$difficulty <- NULL
+ip$difficulty
 
 }
 \author{

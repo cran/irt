@@ -32,9 +32,15 @@
 #' # Set content
 #' itempool(a = c(1, 1.4), b = c(-2, 1), content = c("Algebra", "Geometry"))
 #'
-#' # Create GRM (Graded Response Model) items
-#' # itempool(data.frame(a = rlnorm(10, 0, .3), b1 = rnorm(10), b2 = rnorm(10)),
-#' #          model = "GRM")
+#' # Create 3PL items from a data frame:
+#' ipdf <- data.frame(a = c(.9, .79, 1.26),
+#'                    b = c(-1, .43, -2.3),
+#'                    c = c(.2, .38, .25))
+#' itempool(ipdf)
+#'
+#' # Create GRM (Graded Response Model) items from a data frame
+#' ipdf <- data.frame(a = rlnorm(10, 0, .3), b1 = rnorm(10), b2 = rnorm(10))
+#' itempool(ipdf, model = "GRM")
 #'
 #' # Create a Rasch model item pool
 #' itempool(b = c(-1, 0.2, 1.1), model = "Rasch")
@@ -141,7 +147,7 @@ itempool <- function(...){
                "item_id" %in% tolower(colnames(x))) {
       for (id_name in c("item_id", "Item_ID", "ITEM_ID", "Item_Id", "item_ID"))
         if (id_name %in% colnames(args[[1]])) {
-          item_id <- args[[1]][, id_name]
+          item_id <- args[[1]][, id_name, drop = TRUE]
           break
         }
       if (is.null(item_id) && !is.null(rownames(args[[1]])))
@@ -439,9 +445,9 @@ itempool <- function(...){
       x <- cbind(x, model = args$model)
       args$model <- NULL
     }
-    # For each element of x_list, this function checks each element of for
-    # two conditions, either an element is not NA, or if the element is a list,
-    # it should not be a list with one NA element (like list(NA)).
+    # For each element of x_list, this function checks each element of x_list
+    # for two conditions, either an element is not NA, or if the element is a
+    # list, it should not be a list with one NA element (like list(NA)).
     # 'm' is an element of x_list, which can composed of single values or
     # list values (list values are misc fields)
     # m <- x_list[[1]]
@@ -453,8 +459,9 @@ itempool <- function(...){
     # 2 0.6650 -0.7706 -0.2641 0.3584     NA  GPCM
     # 3 1.0409 -0.6755 -0.3546 0.3088 1.4189  GPCM
     check_acceptable_elements <- function(m) {
-      m <- m[sapply(m , function(i) (!is.list(i) && !is.na(i)) ||
-                      !(length(i) == 1 && is.na(i[[1]])))]
+      m <- m[sapply(m , function(i)
+        (!is.list(i) && !is.na(i)) || !(length(i) == 1 && all(is.na(i[[1]])))
+        )]
       # unlist single element lists
       lapply(m, function(i) if (is.list(i) && length(i) == 1) unlist(i) else i)
     }
@@ -501,12 +508,12 @@ itempool <- function(...){
 ############################# name_items #######################################
 ###############################################################################@
 #' Give Item class elements a unique item_id.
-#' @description This function gives unique item_id's to elements of Item class. If
-#'   there is no item_id's specified for an \code{\link{Item-class}} object, a
-#'   default item_id will be given to that object. If some elements have item_id's
-#'   already, uniqueness of the names will be checked. If they are not unique,
-#'   an error will be issued. If some are unique and some are empty, a default
-#'   item_id will be given to the empty ones.
+#' @description This function gives unique item_id's to elements of Item
+#'   class. If there is no item_id's specified for an \code{\link{Item-class}}
+#'   object, a default item_id will be given to that object. If some elements
+#'   have item_id's already, uniqueness of the names will be checked. If they
+#'   are not unique, an error will be issued. If some are unique and some are
+#'   empty, a default item_id will be given to the empty ones.
 #' @param item_list A list consist of \code{\link{Item-class}} or
 #'   \code{\link{Testlet-class}} class objects.
 #'
@@ -914,7 +921,14 @@ setMethod("[[<-", signature = c("Itempool", "numeric", "missing"),
 #'
 #' # Add misc field to all items:
 #' ip$difficulty <- c("Easy", "Easy", "Hard", "Hard", "Hard")
+#' ip$difficulty
 #'
+#' # Add an overall misc field to itempool:
+#' ip$form_name <- "Frm8"
+#'
+#' # Remove the misc field from all items
+#' ip$difficulty <- NULL
+#' ip$difficulty
 #'
 setMethod(
   "$<-", "Itempool",
@@ -1012,7 +1026,9 @@ setMethod(
             for (i in seq_len(length(x))) slot(x[[i]], name) <- value[i]
           }
         }
+        # If 'name' is not a parameter name, then add it as a 'misc' field.
         if (!valid_slot_name) {
+
           # Function that adds misc field to an Item/Itempool/Testlet
           # object
           add_misc_field <- function(obj, val) {
@@ -1022,7 +1038,8 @@ setMethod(
           }
           # Add 'name' as misc value
           ip_size <- x$n
-          if (length(value) == ip_size$elements) { # Assign it to testlets/items
+          if (length(value) == ip_size$elements) { # Assign value to
+                                                   # testlets/items
             for (i in seq_len(length(x)))
               x[[i]] <- add_misc_field(x[[i]], value[[i]])
             # Assign value to standalone items and and items within testlets
@@ -1041,7 +1058,21 @@ setMethod(
               }
             }
           } else {
-             x <- add_misc_field(x, value)
+
+            # If the value is NULL, it means a misc field will need to be removed
+            # This will only remove an existing misc field.
+            if (is.null(value)) {
+              if (name %in% names(x@misc)) {
+                x <- add_misc_field(x, value)
+              } else  {
+                x@item_list <- lapply(x@item_list, function(itm) {
+                  itm@misc[[name]] <- NULL;
+                  if (length(itm@misc) == 0) itm@misc <- NULL;
+                  itm})
+              }
+            } else {
+              x <- add_misc_field(x, value)
+            }
           }
         }
       }
@@ -1056,9 +1087,10 @@ setMethod(
 ###############################################################################@
 ############################# $<- (Testlet) ####################################
 ###############################################################################@
-#' Set values to parameters or components of 'Item' class.
+
+#' Set values to parameters or components of \code{\link{Testlet-class}} object
 #'
-#' @param x A \code{\link{Testlet-class}} object.
+#' @param x An \code{\link{Testlet-class}} object.
 #' @param name Name of the parameter or component.
 #' @param value The new value that will be assigned.
 #'
@@ -1066,37 +1098,55 @@ setMethod(
 #'
 #' @export
 #'
+#' @importFrom methods new slot<-
+#'
 #' @author Emre Gonulates
 #'
 #' @include item-class.R
 #' @include item-class-methods.R
 #' @include itempool-class.R
 #'
+#' @examples
+#' tlt <- generate_testlet()
+#' tlt$testlet_id <- "New-Testlet-ID-111"
+#' tlt$content <- "Algebra"
+#' # Set all misc fields like this
+#' tlt$misc <- list(passage_text = "This is a reading passage.",
+#'                  passage_lexile = 450)
+#'
+#' tlt$passage_text
+#' # Add a misc field
+#' tlt$passage_language <- "En-US"
+#'
+#' # Remove a misc field
+#' tlt$passage_language <- NULL
+#'
 setMethod(
   "$<-", "Testlet",
   function(x, name, value) {
     switch(name,
-           'testlet_id' = {x@testlet_id <- value; return(x)},
-		   'id' = {x@testlet_id <- value; return(x)},
-           'content' = {x@content <- value; return(x)},
-           'misc' = {x@misc <- value; return(x)},
-           'item_list' = {
-             if (is(value, "Itempool")) {
-               x@item_list <- value
-               return(x)
-             }
-             },
-           # 'model'= x@model <- value,
-           'parameters' = {x@parameters <- value; return(x)},
-           'se_parameters' = {x@se_parameters <- value; return(x)}, {
-             if (name %in% names(x@parameters))
+           'id' = {x@testlet_id <- value},
+		       'testlet_id' = {x@testlet_id <- value},
+           'content' = {x@content <- value},
+           'misc' = {x@misc <- value},
+           'item_list' = {if (is(value, "Itempool")) x@item_list <- value},
+           # The default is checking item
+           if (name %in% slotNames(x)) {
+             warning("This parameter cannot be assigned by `$<-` operator.")
+             # slot(x, name) <- value
+           } else { # add/remove misc field
+             if (name %in% names(x@parameters)) {
                x@parameters[[name]] <- value
-             return(x)
+             } else {
+               if (is.null(x@misc)) x@misc <- list()
+               x@misc[[name]] <- value
+               if (length(x@misc) == 0) x@misc <- NULL;
+             }
            }
            )
+    if (validObject(x)) return(x)
   }
   )
-
 
 ###############################################################################@
 ############################# as.list (Itempool) ###############################
@@ -1313,7 +1363,8 @@ setMethod(f = "length", signature = "Itempool",
 #'            \item{\strong{\code{'model'}}}{Extract \code{model}'s of
 #'              all items and testlets.
 #'              This will not extract the \code{model}'s of items within the
-#'              testlet.}
+#'              testlet. Use \code{$item_model} to extract models of standalone
+#'              items.}
 #'            \item{\strong{\code{'misc'}}}{Extract \code{misc} parameters of
 #'              all items and testlets.
 #'              This will not extract the \code{misc} parameters of items
@@ -1348,7 +1399,8 @@ setMethod(f = "length", signature = "Itempool",
 #'            \item{\strong{\code{'item_id'} or \code{'resp_id'}}}{Extract
 #'              \code{item_id}'s of all standalone items and items within the
 #'              testlets. It will not return \code{testlet_id}'s. This is
-#'              mainly to get the \code{item_id}'s of items which has a response.
+#'              mainly to get the \code{item_id}'s of items which has a
+#'              response.
 #'              }
 #'            \item{\strong{\code{'testlet_id'}}}{Extract \code{testlet_id}'s
 #'              of all items within the testlets. If the item is a standalone
@@ -1448,13 +1500,13 @@ setMethod(
          return(result)
         },
       'max_score' = return(sum(x$item_max_score)),
-	  'item_id' = {
-	      return(get_item_ids_itempool_cpp(x))
-        # ids <- as.list(get_slot_itempool_cpp(ip = x, slotName = "id"))
-        # for (j in which(sapply(x, is, "Testlet")))
-        #   ids[[j]] <- x[[j]]@item_list$id
-        # return(unlist(ids))
-        },
+  	  'item_id' = {
+  	      return(get_item_ids_itempool_cpp(x))
+          # ids <- as.list(get_slot_itempool_cpp(ip = x, slotName = "id"))
+          # for (j in which(sapply(x, is, "Testlet")))
+          #   ids[[j]] <- x[[j]]@item_list$id
+          # return(unlist(ids))
+          },
       'resp_id' = return(x$item_id),
 	    'testlet_id' = return(get_testlet_ids_itempool_cpp(x)),
       'n' = {
@@ -1543,7 +1595,8 @@ setMethod(
 # @examples
 # (ip <- generate_ip(model = "3PL", n = 20))
 # (ip <- c(generate_ip(model = "3PL", n = 20),
-#          generate_testlet(testlet_id = "t1"), generate_testlet(testlet_id = "t2")))
+#          generate_testlet(testlet_id = "t1"),
+#          generate_testlet(testlet_id = "t2")))
 .print.Itempool <- function(x, ..., n = NULL, print_header = TRUE,
                             base_print = FALSE) {
   # Make sure the printed object is valid

@@ -40,7 +40,7 @@
 #'
 setGeneric("info", function(ip, theta, tif = FALSE, observed = FALSE,
                             resp = NULL)
-  {standardGeneric ("info")})
+  {standardGeneric("info")})
 
 
 ###############################################################################@
@@ -273,8 +273,14 @@ setMethod(
            "size do not match.")
   }
   if (test) {
-    return(info_itempool_cpp(theta = theta, ip = ip, tif = tif,
-                             observed = observed, resp = resp))
+	if (tif) {
+	  return(matrix(info_itempool_tif_cpp(theta = theta, ip = ip,
+	                                      observed = observed, resp = resp),
+	                ncol = 1, dimnames = list(NULL, "TIF")))
+	} else {
+	  return(info_itempool_cpp(theta = theta, ip = ip, observed = observed,
+	                           resp = resp))
+	}
   } else stop("This model is not implemented in 'info()' function.")
 }
 
@@ -403,7 +409,7 @@ setMethod(
 #' @references
 #' Chang, H.-H., & Ying, Z. (1996). A Global Information Approach to
 #' Computerized Adaptive Testing. Applied Psychological Measurement, 20(3),
-#' 213-229. doi: 10.1177/014662169602000303
+#' 213-229. <doi:10.1177/014662169602000303>
 #'
 #' #rdname info_kl
 #' @noRd

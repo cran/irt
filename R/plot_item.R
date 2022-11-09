@@ -15,7 +15,8 @@
 #' @param title Title of the plot. By default if the item is 1-4PM IRT model
 #'          then the title will be "Item Characteristic Curve" if the item
 #'          follows Graded Response Model the title will be
-#'          "Category Response Functions". Set it \code{NULL} to remove it.
+#'          "Category Response Functions". Set it to \code{NULL} to suppress the
+#'          title.
 #' @param suppress_plot If \code{FALSE} the function will print the plot. If
 #'          \code{TRUE}, function will return the plot object. Default value is
 #'          \code{FALSE}. Function cannot suppress plot when
@@ -92,14 +93,14 @@ plot.Item <- function(x, theta_range = c(-4,4), title = "",
       category_labels <- colnames(icc)
     } else category_labels <- category_names
 
-    if (title == "") title <- "Category Response Functions"
+    if (!is.null(title) && title == "") title <- "Category Response Functions"
     y_label <- "Probability of Response"
     if (is.null(legend_title)) legend_title <- "Category"
   } else if (x$model %in% UNIDIM_DICHO_MODELS) {
     icc <- data.frame(theta = theta, p = prob(ip = x, theta = theta)[, 2])
 
     y_label <- "Probability of Correct Response"
-    if (title == "") title <- "Item Characteristic Curve"
+    if (!is.null(title) && title == "") title <- "Item Characteristic Curve"
   } else stop("This model has not been implemented yet.", call. = FALSE)
 
 

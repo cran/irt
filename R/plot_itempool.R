@@ -93,7 +93,7 @@ get_data_plot_itempool_tcc <- function(ip, theta_range = c(-4,4),
                                        tcc_prop_corr = FALSE) {
   theta_range <- process_theta_range(theta_range, n_theta = 501)
   theta <- theta_range$theta
-  # If there is testlets, ignore them and only plot items within testlets
+  # If there are testlets, ignore them and only plot items within testlets
   ip <- itempool(flatten_itempool_cpp(ip = ip))
   p <- mean(ip, theta = theta)
   tcc <- data.frame(theta = theta, p = rowSums(p))
@@ -113,16 +113,17 @@ plot_itempool_tcc <- function(ip,
                               tcc_prop_corr = FALSE,
                               suppress_plot = FALSE,
                               base_r_graph = FALSE,
+                              y_lim = NULL,
                               ...) {
   args <- list(...)
 
-  if (!all(ip$model %in% c(UNIDIM_DICHO_MODELS, UNIDIM_POLY_MODELS))) {
+  if (!all(ip$item_model %in% c(UNIDIM_DICHO_MODELS, UNIDIM_POLY_MODELS))) {
     stop(paste0("'tcc' type plot cannot be used for this model: ",
                 paste0(unique(ip$model[!ip$model %in% c(UNIDIM_DICHO_MODELS,
                                                         UNIDIM_POLY_MODELS)]),
                        collapse = ", ")))
   }
-  if (title == "") title <- "Test Characteristic Curve"
+  if (!is.null(title) && title == "") title <- "Test Characteristic Curve"
   y_label <- ifelse(tcc_prop_corr, "Expected Proportion Correct",
                    "Expected Score")
 
@@ -131,8 +132,8 @@ plot_itempool_tcc <- function(ip,
   theta_range <- theta_range$range
 
   ymax <- ifelse(tcc_prop_corr, 1, max_score(ip))
+  if (is.null(y_lim)) y_lim <- c(0, ymax)
   x_label <- expression("Theta ("*theta*")")
-
   gd <- get_data_plot_itempool_tcc(ip = ip, theta_range = theta,
                                    tcc_prop_corr = tcc_prop_corr)
   ### ggplot2 ###
@@ -140,9 +141,12 @@ plot_itempool_tcc <- function(ip,
     p <- ggplot2::ggplot(data = gd, ggplot2::aes_string(x = "theta", y = "p")) +
       ggplot2::geom_line(...) +
       ggplot2::labs(x = x_label, y = y_label, title = title) +
-      ggplot2::ylim(c(0, ymax)) +
-      ggplot2::scale_x_continuous(breaks = seq(from = ceiling(theta_range[1]),
-                                               to = floor(theta_range[2]), 1)) +
+      ggplot2::ylim(y_lim)
+    if (theta_range[2] - theta_range[1] > 2) {
+      p <- p + ggplot2::scale_x_continuous(breaks = seq(
+        ceiling(theta_range[1]),floor(theta_range[2]), by = 1))
+    }
+    p <- p +
       ggplot2::theme(text = ggplot2::element_text(size = 18)) +
       ggplot2::theme_bw()
     if (suppress_plot) return(p) else print(p)
@@ -155,7 +159,7 @@ plot_itempool_tcc <- function(ip,
          ylab = y_label,
          xlab = x_label,
          main = title,
-         ylim = c(0, max_score(ip)),
+         ylim = y_lim,
          type = "l",
          lty = 1,
          panel.first = graphics::grid())
@@ -206,10 +210,11 @@ plot_itempool_icc <- function(ip,
                               legend_title = NULL,
                               suppress_plot = FALSE,
                               base_r_graph = FALSE,
+                              y_lim = NULL,
                               ...) {
   args <- list(...)
 
-  if (!all(ip$model %in% c(UNIDIM_DICHO_MODELS, UNIDIM_POLY_MODELS))) {
+  if (!all(ip$item_model %in% c(UNIDIM_DICHO_MODELS, UNIDIM_POLY_MODELS))) {
     stop(paste0("'icc' type plot cannot be used for this model: ",
                 paste0(unique(ip$model[!ip$model %in% c(UNIDIM_DICHO_MODELS,
                                                         UNIDIM_POLY_MODELS)]),
@@ -227,10 +232,10 @@ plot_itempool_icc <- function(ip,
   x_label <- expression("Theta ("*theta*")")
   if (is.null(legend_title)) legend_title <- "Item ID"
 
-  y_lim <- c(0, max(max_score(ip, sum = FALSE)))
+  if (is.null(y_lim)) y_lim <- c(0, max(max_score(ip, sum = FALSE)))
   focus_item <- check_focus_item(focus_item, ip = ip)
 
-  if (title == "")
+  if (!is.null(title) && title == "")
     title <- ifelse(is.null(focus_item), "Item Characteristic Curve",
                     paste0("Item Characteristic Curve for '", focus_item, "'"))
 
@@ -261,10 +266,12 @@ plot_itempool_icc <- function(ip,
     p <- p +
       ggplot2::ylim(y_lim) +
       ggplot2::labs(x = x_label, y = y_label, title = title,
-                    color = legend_title) +
-      ggplot2::scale_x_continuous(breaks = seq(from = ceiling(theta_range[1]),
-                                               to = floor(theta_range[2]), 1)) +
-      ggplot2::guides(colour = ggplot2::guide_legend(
+                    color = legend_title)
+      if (theta_range[2] - theta_range[1] > 2) {
+        p <- p + ggplot2::scale_x_continuous(breaks = seq(
+          ceiling(theta_range[1]),floor(theta_range[2]), by = 1))
+      }
+      p <- p + ggplot2::guides(colour = ggplot2::guide_legend(
         override.aes = list(alpha = 1, size = 4))) +
       ggplot2::theme(text = ggplot2::element_text(size = 18)) +
       ggplot2::theme_bw()
@@ -334,6 +341,8 @@ plot_itempool_icc <- function(ip,
 #'
 #' @noRd
 get_data_plot_itempool_pars <- function(ip) {
+  # If there are testlets, ignore them and only plot items within testlets
+  ip <- itempool(flatten_itempool_cpp(ip = ip))
   ip_df <- as.data.frame(ip)
   col_names <- setdiff(unique(unlist(sapply(ip$item_list, get_slot_names_item,
                                             type = "pars_df"))), "D")
@@ -373,7 +382,7 @@ plot_itempool_pars <- function(ip,
   ip_df <- get_data_plot_itempool_pars(ip)
   multi_model <- any(ip$model != ip$model[1])
 
-  if (title == "") {
+  if (!is.null(title) && title == "") {
     title <- ifelse(is.null(focus_item), "Parameter Values",
                     paste0("Parameter Values for Item '", focus_item, "'"))
   }
@@ -466,9 +475,7 @@ plot_itempool_hist <- function(ip,
   ip_df <- get_data_plot_itempool_pars(ip)
   multi_model <- any(ip$model != ip$model[1])
 
-  if (title == "") {
-    title <- "Parameter Values"
-  }
+  if (!is.null(title) && title == "") title <- "Parameter Values"
 
   # First try ggplot2:
   if (!base_r_graph && requireNamespace("ggplot2", quietly = TRUE)) {
@@ -544,9 +551,13 @@ plot_itempool_hist <- function(ip,
 #' @param focus_item A character string of the 'item_id' of the item to be
 #'   focused. If \code{type = "pars"}, this item will be shown with a
 #'   red dot to distinguish it from others.
-#' @param title Title of the plot. Default is \code{NULL}. If \code{tcc} is
-#'          \code{TRUE} it will be 'Test Characteristic Curve', if \code{FALSE}
-#'          it will be 'Item Characteristic Curve'.
+#' @param title Title of the plot. Set \code{title = NULL} to suppress the plot
+#'   title. The default is \code{""}.
+#'   If \code{type = "tcc"} and \code{title = ""}, title will be 'Test
+#'   Characteristic Curve'. If \code{type = "icc"} and \code{title = ""}, title
+#'   will be 'Item Characteristic Curve'. If \code{type = "hist"} or
+#'   \code{type = "pars"} and \code{title = ""}, title will be
+#'   'Parameter Values'.
 #' @param suppress_plot If \code{FALSE} the function will print the plot. If
 #'          \code{TRUE}, function will return the plot object. Default value is
 #'          \code{FALSE}.
@@ -555,6 +566,8 @@ plot_itempool_hist <- function(ip,
 #'   graphics. If \code{FALSE} the function will check whether 'ggplot2' package
 #'   is installed. If it is installed, it will use 'ggplot2' package for the
 #'   plot. The default value is \code{FALSE}.
+#' @param y_lim A numeric vector of length two representing the lower and
+#'   upper bound of y-axis.
 #' @param ... Additional arguments that will be passed to \code{geom_line}
 #'
 #' @return Depending on the value of \code{suppress_plot} function either prints
@@ -612,6 +625,7 @@ plot.Itempool <- function(x,
                           suppress_plot = FALSE,
                           legend_title = NULL,
                           base_r_graph = FALSE,
+                          y_lim = NULL,
                           ...) {
   if (type == "pars") {
     plot_itempool_pars(ip = x, title = title,
@@ -625,7 +639,7 @@ plot.Itempool <- function(x,
     plot_itempool_tcc(ip = x, theta_range = theta_range, title = title,
                       tcc_prop_corr = tcc_prop_corr,
                       suppress_plot = suppress_plot,
-                      base_r_graph = base_r_graph, ...)
+                      base_r_graph = base_r_graph, y_lim = y_lim, ...)
   } else if (type == "icc") {
     plot_itempool_icc(ip = x,
                       focus_item = focus_item,
@@ -634,6 +648,7 @@ plot.Itempool <- function(x,
                       legend_title = legend_title,
                       suppress_plot = suppress_plot,
                       base_r_graph = base_r_graph,
+                      y_lim = y_lim,
                       ...)
   } else {
     stop("Invalid 'type' value. Please choose one of the following: ",

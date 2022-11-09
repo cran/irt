@@ -7,13 +7,14 @@
 est_ability(
   resp,
   ip = NULL,
-  method = "eap",
+  method = c("eap", "ml", "map", "bm", "owen", "sum_score"),
   ...,
-  prior_dist = "norm",
+  prior_dist = c("norm", "unif", "lnorm", "gamma", "t", "cauchy"),
   prior_pars = c(0, 1),
   theta_range = c(-5, 5),
   number_of_quads = 41,
-  tol = 1e-06
+  tol = 1e-06,
+  output_type = c("list", "data.frame", "tibble")
 )
 }
 \arguments{
@@ -37,7 +38,9 @@ the value is \code{NULL}, \code{resp} should be a
     \item{\strong{\code{'owen'}}}{Owen's Bayesian Ability Estimation.
 
       This estimation method can be used only for dichotomous IRT
-      models, 'Rasch', '1PL', '2PL', '3PL' and '4PL'.
+      models, 'Rasch', '1PL', '2PL', '3PL' and '4PL'. Testlets groupings
+      will be ignored and items within testlets will be treated as if they
+      are standalone items.
 
       Formulas were implemented in Owen (1975) and Vale (1977).  Original
       formulation does not contain D parameter. If \code{D = 1} original
@@ -55,8 +58,8 @@ the value is \code{NULL}, \code{resp} should be a
       via Newton-Raphson Algorithm}
     \item{\strong{\code{'eap'}}}{Expected-a-Posteriori Ability
       Estimation}
-    \item{\strong{\code{'map'}}}{Maximum-a-Posteriori Ability
-      Estimation (or Bayes Modal estimation.). Prior information must be
+    \item{\strong{\code{'map'} or \code{'bm'}}}{Maximum-a-Posteriori Ability
+      Estimation (or Bayes Modal estimation.) Prior information must be
       provided for this function. Currently only \code{'norm'} prior
       distribution is available.
       }
@@ -95,6 +98,19 @@ The default value is \code{41}.}
 \item{tol}{The precision level of ability estimate. The final ability
 estimates will be rounded to remove the precision that is smaller than the
 \code{tol} value. The default value is \code{1e-06}.}
+
+\item{output_type}{A string that specifies the output type of the function.
+The default value is \code{"list"}.
+Available options are:
+\describe{
+  \item{"list"}{Function returns a \code{list} object with elements
+    \code{est} and \code{se}.}
+  \item{"data.frame"}{Function returns a \code{data.frame} object with
+    columns \code{examinee_id}, \code{est} and \code{se}}
+  \item{"tibble"}{If the \code{tibble} package is available, the function
+        returns a \code{tibble} object with columns \code{examinee_id},
+        \code{est} and \code{se}.}
+}}
 }
 \value{
 \code{est} The ability estimated. If the response vector for a

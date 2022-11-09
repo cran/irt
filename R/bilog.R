@@ -43,11 +43,11 @@
 #' @examples
 #' \dontrun{
 #' resp <- sim_resp(generate_ip(n = 15), rnorm(200), prop_missing = .2)
-#' create_bilog_datafile(x = resp)
-#' create_bilog_datafile(x = resp, items = paste0("Item-", 1:7))
+#' bilog_create_datafile(x = resp)
+#' bilog_create_datafile(x = resp, items = paste0("Item-", 1:7))
 #' }
 #'
-create_bilog_datafile <- function(
+bilog_create_datafile <- function(
   x,
   items = NULL,
   examinee_id_var = NULL,
@@ -161,6 +161,7 @@ create_bilog_datafile <- function(
          "be a character vector of column names of the 'x'. All elements ",
          "should be unique.", call. = FALSE)
 
+
   ### Prepare responses ###
   resp <- apply(x[, items], 2, as.character)
   # Check if the responses are valid:
@@ -176,7 +177,7 @@ create_bilog_datafile <- function(
   ### Group ###
   # group: In BILOG-MG, "the group identifier has to be a single digit
   # (integer), starting with 1."
-  group_info <- create_group_info(x = x, group_var = group_var,
+  group_info <- bilog_create_group_info(x = x, group_var = group_var,
                                   reference_group = reference_group)
 
   # # group: In BILOG-MG, "the group identifier has to be a single digit
@@ -287,7 +288,7 @@ create_bilog_datafile <- function(
 #' @author Emre Gonulates
 #'
 #' @noRd
-create_group_info <- function(x = NULL, group_var = NULL,
+bilog_create_group_info <- function(x = NULL, group_var = NULL,
                               reference_group = NULL) {
   group <- NULL
   group_info <- NULL
@@ -385,7 +386,7 @@ create_group_info <- function(x = NULL, group_var = NULL,
 #'
 #' @noRd
 #'
-read_bilog_pars <- function(
+bilog_read_pars <- function(
   par_file,
   ph1_file,
   items = NULL,
@@ -493,7 +494,7 @@ read_bilog_pars <- function(
 #' @param row The row number to start reading from 'text'
 #'
 #' @noRd
-read_ctt_table <- function(text, row) {
+bilog_read_ctt_table <- function(text, row) {
   sub_text <- text[row:length(text)]
   sub_text <- sub_text[6:(which(grepl(paste0(
     "^ ", paste0(rep("-", 73), collapse = "")), sub_text))[2] - 1)]
@@ -522,7 +523,7 @@ read_ctt_table <- function(text, row) {
 #'   Overall statistics for the whole group is at \code{$overall}.
 #'
 #' @noRd
-read_bilog_ctt <- function(ph1_file) {
+bilog_read_ctt <- function(ph1_file) {
   text <- readLines(ph1_file)
   result <- list(overall = NULL)
   # Check whether there is a group
@@ -533,15 +534,15 @@ read_bilog_ctt <- function(ph1_file) {
     for (i in which(grepl("ITEM STATISTICS FOR GROUP:", text))) {
       group_name <- sub("( )*$", "", text[i])
       group_name <- sub("^(.*) ", "", group_name)
-      result$group[[group_name]] <- read_ctt_table(text, i)
+      result$group[[group_name]] <- bilog_read_ctt_table(text, i)
     }
     # Read the CTT statistics for the overall test
     i <- which(grepl("ITEM STATISTICS FOR MULTIPLE GROUPS", text))
-    result$overall <- read_ctt_table(text, i)
+    result$overall <- bilog_read_ctt_table(text, i)
   } else if (any(grepl("ITEM STATISTICS FOR SUBTEST", text))) {
     ### Single-Group ###
     i <- which(grepl("ITEM STATISTICS FOR SUBTEST", text))
-    result$overall <- read_ctt_table(text, i)
+    result$overall <- bilog_read_ctt_table(text, i)
   }
   if (is.null(result$group)) return(result$overall)
   return(result)
@@ -558,7 +559,7 @@ read_bilog_ctt <- function(ph1_file) {
 #' @return A data frame for posterior points and weights
 #'
 #' @noRd
-read_posterior_dist <- function(ph2_file, group_info = NULL) {
+bilog_read_posterior_dist <- function(ph2_file, group_info = NULL) {
   main_text <- readLines(ph2_file, skipNul = TRUE)
   row <- which(grepl(
     pattern = "QUADRATURE POINTS, POSTERIOR WEIGHTS, MEAN AND S\\.D\\.:",
@@ -602,7 +603,7 @@ read_posterior_dist <- function(ph2_file, group_info = NULL) {
 #' @return Group means
 #'
 #' @noRd
-read_bilog_group_means <- function(ph3_file, group_info) {
+bilog_read_group_means <- function(ph3_file, group_info) {
   main_text <- readLines(ph3_file, skipNul = TRUE)
   result <- group_info
   row <- which(grepl(pattern = "PRIOR MEANS AND STANDARD DEVIATIONS",
@@ -649,24 +650,35 @@ read_bilog_group_means <- function(ph3_file, group_info) {
 #' @return A data frame consist of scores.
 #'
 #' @noRd
-read_bilog_scores <- function(score_file, x, examinee_id_var = NULL,
+bilog_read_scores <- function(score_file, x, examinee_id_var = NULL,
                               group_var = NULL) {
 
   text <- readLines(score_file)
   # Remove first two lines which does not contain any information
   text <- text[-c(1:2)]
-  # Get the width of the first line that contains group number and item_id
-  # widths <- c(3, nchar(text[1])-2, 6, 11, 3, 5, 10, 12, 12, 11, 10)
-  n <- 1:(length(text)/2)
-  # text <- paste(text[2*n-1], text[2*n])
-  text <- text[2*n]
 
-  scores <- utils::read.fwf(
-    textConnection(text),
-    widths = c(6, 11, 3, 5, 10, 12, 12, 11, 10),
-    col.names = c("weight", "test", "tried", "right", "percent",
-                  "ability", "se", "prob", "unknown1")
-                            )
+  if (nrow(x) == length(text)) {
+    scores <- utils::read.delim(textConnection(text), sep = "|", header = FALSE)
+    scores <- utils::read.fwf(
+      textConnection(scores[, 2]),
+      widths = c(6 + 1, 11, 3, 5, 10, 12, 12, 11, 10),
+      col.names = c("weight", "test", "tried", "right", "percent",
+                    "ability", "se", "prob", "unknown1")
+      )
+  } else if (nrow(x) == (length(text) / 2)) {
+    # Get the width of the first line that contains group number and item_id
+    # widths <- c(3, nchar(text[1])-2, 6, 11, 3, 5, 10, 12, 12, 11, 10)
+    n <- 1:(length(text)/2)
+    # text <- paste(text[2*n-1], text[2*n])
+    text <- text[2*n]
+
+    scores <- utils::read.fwf(
+      textConnection(text),
+      widths = c(6, 11, 3, 5, 10, 12, 12, 11, 10),
+      col.names = c("weight", "test", "tried", "right", "percent",
+                    "ability", "se", "prob", "unknown1")
+                              )
+  }
   scores <- scores[, c("tried", "right", "ability", "se", "prob")]
   # Add group info
   if (!is.null(group_var) && group_var %in% names(x)) {
@@ -697,7 +709,7 @@ read_bilog_scores <- function(score_file, x, examinee_id_var = NULL,
 #'
 #' @return TRUE if convergence reached, FALSE if not.
 #' @noRd
-determine_convergence <- function(par_file, ph2_file, ph3_file) {
+check_bilog_convergence <- function(par_file, ph2_file, ph3_file) {
   converged <- FALSE
 
   if (file.exists(ph2_file)) {
@@ -730,7 +742,7 @@ determine_convergence <- function(par_file, ph2_file, ph3_file) {
 #'
 #' @param t text
 #' @param width total width of the line
-#' @param whether to add 'tab' string to the beginning of each text, usual
+#' @param tab whether to add 'tab' string to the beginning of each text, usual
 #'        'tab = "    "'.
 #' @param skip_tab do not put tab to these lines
 #'
@@ -757,7 +769,7 @@ wrap_text <- function(t, width = 80, tab = NULL, skip_tab = 0) {
 
 
 
-#' Run BILOG-MG in batch mode
+#' Item Calibration via BILOG-MG
 #'
 #' @description \code{est_bilog} runs BILOG-MG in batch mode or reads BILOG-MG
 #'   output generated by BILOG-MG program. In the first case, this function
@@ -934,14 +946,15 @@ wrap_text <- function(t, width = 80, tab = NULL, skip_tab = 0) {
 #'   order to specify priors, a list of one or more of the following elements
 #'   needs to be provided:
 #'   \describe{
-#'     \item{"ALPHA"}{"'alpha' parameters for the beta prior distribution of
-#'       lower asymptote (guessing) parameters"}
-#'     \item{"BETA"}{"'beta' parameters for the beta prior distribution of
-#'       lower asymptote (guessing) parameters."}
-#'     \item{"SMU"}{prior means for slope parameters}
-#'     \item{"SSIGMA"}{prior standard deviations for slope parameters}
-#'     \item{"TMU"}{prior means for threshold parameters}
-#'     \item{"TSIGMA"}{prior standard deviations for threshold parameters}
+#'     \item{\code{"ALPHA"}}{"'alpha' parameters for the beta prior distribution
+#'       of lower asymptote (guessing) parameters"}
+#'     \item{\code{"BETA"}}{"'beta' parameters for the beta prior distribution
+#'       of lower asymptote (guessing) parameters."}
+#'     \item{\code{"SMU"}}{prior means for slope parameters}
+#'     \item{\code{"SSIGMA"}}{prior standard deviations for slope parameters}
+#'     \item{\code{"TMU"}}{prior means for threshold parameters}
+#'     \item{\code{"TSIGMA"}}{prior standard deviations for threshold
+#'       parameters}
 #'     }
 #'   Quoted descriptions were taken from BILOG-MG manual.
 #'
@@ -962,10 +975,10 @@ wrap_text <- function(t, width = 80, tab = NULL, skip_tab = 0) {
 #'
 #'   \deqn{mode = \frac{\alpha - 1}{\alpha + \beta - 2}}
 #'
-#'   Also, one can set SSIGMA or TSIGMA to a very small value to effectively
-#'   fix the item parameters, for example set \code{TSIGMA = 0.005} or
-#'   \code{SSIGMA = 0.001} to effectively fix those item parameters. Note that
-#'   there might be convergence issues with these restrictions.
+#'   Also, one can set \code{SSIGMA} or \code{TSIGMA} to a very small value to
+#'   effectively fix the item parameters, for example set \code{TSIGMA = 0.005}
+#'   or \code{SSIGMA = 0.001} to effectively fix those item parameters. Note
+#'   that there might be convergence issues with these restrictions.
 #'
 #'   Note that a non-null \code{prior_ip} value will automatically add
 #'   \code{READPRIOR} option to \code{CALIB} section.
@@ -1065,6 +1078,7 @@ wrap_text <- function(t, width = 80, tab = NULL, skip_tab = 0) {
 #' plot(true_ip$b, bilog_calib$ip$b, xlab = "True 'b'", ylab = "Estimated 'b'")
 #' abline(a = 0, b = 1, col = "red", lty = 2)
 #'
+#' # Note that Bilog-MG centers the ability at mean 0.
 #' mean(bilog_calib$score$ability)
 #'
 #' # Quadrature points and posterior weights:
@@ -1522,7 +1536,7 @@ est_bilog <- function(
         file.path(target_dir, paste0(analysis_name, ".", extensions))))
     }
     # Create the data file:
-    data_output <- create_bilog_datafile(
+    data_output <- bilog_create_datafile(
       x = x,
       items = items,
       examinee_id_var = examinee_id_var,
@@ -1539,7 +1553,7 @@ est_bilog <- function(
     # in case x is Response_set, make sure x is matrix after this point.
     x <- data_output$x
     #########################################@###
-    ################### GLOBAL ##################
+    ################### GLOBAL ##############@###
     #########################################@###
     temp_text <- wrap_text(paste0(
       ">GLOBAL DFNAME='", data_output$data_file_path, "',\n"))
@@ -1563,7 +1577,7 @@ est_bilog <- function(
     text <- c(text, temp_text)
 
     ########################################@###
-    ################### SAVE ###################
+    ################### SAVE ###############@###
     ########################################@###
     temp_text <- paste0(">SAVE ")
     tab <- paste0(rep(" ", nchar("SAVE") + 2), collapse = "")
@@ -1592,14 +1606,14 @@ est_bilog <- function(
     text <- c(text, temp_text)
 
     ##########################################@###
-    ################### LENGTH ###################
+    ################### LENGTH ###############@###
     ##########################################@###
     temp_text <- paste0(">LENGTH NITEMS = (", data_output$num_of_items, ");\n")
 
     text <- c(text, temp_text)
 
     #########################################@###
-    ################### INPUT ###################
+    ################### INPUT ###############@###
     #########################################@###
     # This section provides information that describes the raw data file.
     temp_text <- paste0(">INPUT NTOTAL = ", data_output$num_of_items)
@@ -1626,11 +1640,18 @@ est_bilog <- function(
     text <- c(text, temp_text)
 
     #########################################@###
-    ################### ITEMS ###################
+    ################### ITEMS ###############@###
     #########################################@###
     # Setup the items to be printed.
     if (is.null(items)) {
       items <- colnames(x)
+
+      # Make sure 'items' is valid, i.e. each item is 8 character or less:
+      if (!is.null(items) && any(nchar(items) > 8)) {
+        stop("Invalid item IDs. Bilog-MG do not accept item IDs that are ",
+             "longer than eight characters.")
+      }
+
       # Make sure to remove examinee_id_var
       if (!is.null(examinee_id_var)) {
         if (examinee_id_var %in% items) {
@@ -1653,6 +1674,10 @@ est_bilog <- function(
     if (is.null(items)) {
       text <- c(text, paste0(">ITEMS ;\n"))
     } else {
+      if (any(nchar(items) > 8)) {
+        stop("Invalid item IDs. Bilog-MG do not accept item IDs that are ",
+             "longer than eight characters.")
+      }
       # temp_text <- wrap_text(paste0(
       #   ">ITEMS INAMES=(", paste0("'", items, "'", collapse = ","), ");\n"))
       temp_text <- paste0(wrap_text(paste0(
@@ -1663,7 +1688,7 @@ est_bilog <- function(
     }
 
     ########################################@###
-    ################### TEST ###################
+    ################### TEST ###############@###
     ########################################@###
     # This section provides information that describes the raw data file.
     temp_text <- paste0(">TEST1 TNAME = 'TEST01'")
@@ -1733,7 +1758,7 @@ est_bilog <- function(
     text <- c(text, temp_text)
 
     ##########################################@###
-    ################### GROUPS ###################
+    ################### GROUPS ###############@###
     ##########################################@###
     temp_text <- ""
     for (g in seq_len(num_of_groups)) {
@@ -1751,7 +1776,7 @@ est_bilog <- function(
     text <- c(text, paste0(data_output$formal_statement, "\n"))
 
     #########################################@###
-    ################### CALIB ###################
+    ################### CALIB ###############@###
     #########################################@###
     temp_text <- paste0(">CALIB ")
     tab <- paste0(rep(" ", nchar("CALIB") + 2), collapse = "")
@@ -1814,7 +1839,7 @@ est_bilog <- function(
     text <- c(text, temp_text)
 
     #########################################@###
-    ################### QUADS (for CALIB) #######
+    ################### QUADS (for CALIB) ###@###
     #########################################@###
 
     if (!is.null(prior_ability) &&
@@ -1880,7 +1905,7 @@ est_bilog <- function(
     }
 
     #########################################@###
-    ################### PRIORS ##################
+    ################### PRIORS ##############@###
     #########################################@###
     if (!is.null(prior_ip)) {
       if (!is.list(prior_ip) || is.null(names(prior_ip)) ||
@@ -1915,7 +1940,7 @@ est_bilog <- function(
     }
 
     #########################################@###
-    ################### SCORE ###################
+    ################### SCORE ###############@###
     #########################################@###
     if (!is.null(scoring_options) && length(scoring_options) > 0) {
       temp_text <- paste0(">SCORE ")
@@ -1929,7 +1954,7 @@ est_bilog <- function(
     }
 
     ########################################################################@###
-    ################### RUN CALIBRATION ########################################
+    ################### RUN CALIBRATION ####################################@###
     ########################################################################@###
     result$syntax <- paste0(text, collapse = "\n")
     command <- paste0(
@@ -1960,7 +1985,7 @@ est_bilog <- function(
       if (show_output_on_console) cat("\n")
     }
   } else if (file.exists(target_path)) {
-    group_info <- create_group_info(x = x, group_var = group_var)
+    group_info <- bilog_create_group_info(x = x, group_var = group_var)
     num_of_groups <- group_info$num_of_groups
     group_info <- group_info$group_info
     result$syntax <- paste0(readLines(con = target_path, skipNul = TRUE),
@@ -1968,9 +1993,9 @@ est_bilog <- function(
   }
 
   # Determine whether the model converged or not:
-  result$converged <- determine_convergence(par_file = par_file,
-                                            ph2_file = ph2_file,
-                                            ph3_file = ph3_file)
+  result$converged <- check_bilog_convergence(par_file = par_file,
+                                              ph2_file = ph2_file,
+                                              ph3_file = ph3_file)
   if (file.exists(ph2_file)) {
     ph2_content <- readLines(con = ph2_file)
     temp_pattern <- paste0(
@@ -1991,7 +2016,7 @@ est_bilog <- function(
                                            ph2_content)],1)))
 
       # Get posterior quadrature points and weights:
-      result$posterior_dist <- read_posterior_dist(
+      result$posterior_dist <- bilog_read_posterior_dist(
         ph2_file = ph2_file, group_info = group_info)
     } else result$neg_2_log_likelihood <- NULL
   }
@@ -2000,7 +2025,7 @@ est_bilog <- function(
     result <- result[-which(names(result) %in%
                               c("ip", "converged", "failed_items", "score"))]
   } else {
-    par_results <- read_bilog_pars(
+    par_results <- bilog_read_pars(
       par_file = par_file,
       ph1_file = ph1_file,
       items = items,
@@ -2011,23 +2036,23 @@ est_bilog <- function(
     result$failed_items <- par_results$failed_items
   }
 
-  result$ctt <- read_bilog_ctt(ph1_file)
+  result$ctt <- bilog_read_ctt(ph1_file)
 
   # Check if there is valid group means
   if (model != "CTT" && file.exists(ph3_file) && result$converged) {
     if (num_of_groups > 1) {
-      result$group_info <- read_bilog_group_means(
+      result$group_info <- bilog_read_group_means(
         ph3_file, group_info = group_info)
     # In case reading directly from the Bilog output and data is not available
     } else if (!is.null(result$ctt$group)) {
-      result$group_info <- read_bilog_group_means(
+      result$group_info <- bilog_read_group_means(
         ph3_file, group_info = NULL)
     }
   }
 
   if (model != "CTT" && !is.null(scoring_options) &&
       (length(scoring_options) > 0) && result$converged) {
-    result$score <- read_bilog_scores(score_file, x = x,
+    result$score <- bilog_read_scores(score_file, x = x,
                                       examinee_id_var = examinee_id_var,
                                       group_var = group_var)
   }

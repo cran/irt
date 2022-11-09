@@ -1,4 +1,25 @@
 
+# irt 0.2.6
+
+* Plot functions can now suppress plot titles by setting `title = NULL`. 
+* `item_analysis()` function now has a new argument `stats` where only selected
+  item analysis statistics can be calculated. 
+* `item_analysis()` function can now calculate `pval_unadj` which is simply the 
+  mean of item scores. `pval` is still the mean of item scores divided by each
+  item's maximum possible score. 
+* Added `area_between_icc()` function to calculate the area between two item 
+  characteristic curves of two unidimensional dichotomous items. The function 
+  can calculate either exact area (except when 3PL with different 
+  pseudo-guessing parameters) or area between two theta values. 
+* `cat_sim()` function can use MAP (maximum-a-posteriori or Bayes Modal) and 
+  MAP + ML (i.e. MAP until an imperfect response string and ML after) ability
+  estimation methods. 
+* Responses, items administered, administered item IDs, estimates before or 
+  after the administration of an item can be extracted from the individual 
+  CAT output. For details, see "?`$.cat_output`". 
+* Added `output_type` argument to `est_ability(, output_type = )` function with
+  available following output types: `"list"`, `"data.frame"`, `"tibble"`. 
+  Previously, the output was only a "list".
 
 # irt 0.1.4
 

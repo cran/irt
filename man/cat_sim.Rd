@@ -60,6 +60,15 @@ ip <- generate_ip(n = 50)
 # Check the default:
 cd <- create_cat_design(ip = ip)
 cat_sim(true_ability = rnorm(1), cd = cd)
+
+# Multiple theta, optionally set names to the the vector to give examinee IDs
+true_theta <- setNames(c(-2, 0.4, 1.5), c("Jimmy", "Ali", "Mirabel"))
+cd <- create_cat_design(
+  ip = ip,
+  ability_est_rule = 'ml',
+  termination_rule = c('min_item', 'min_se', 'max_item'),
+  termination_par = list(min_item = 10, min_se = .33, max_item = 20))
+cat_sim(true_ability = true_theta, cd = cd)
 }
 \seealso{
 \code{\link{create_cat_design}}

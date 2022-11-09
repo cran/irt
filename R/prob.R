@@ -457,6 +457,10 @@ setMethod(
 #' prob(ip, theta_n, derivative = 1)
 #' prob(ip, theta_n, derivative = 2)
 #'
+#' # Extract probabilities of correct response (i.e. response is "1")
+#' sapply(prob(ip, theta_n), `[`, TRUE, "1")
+#' # Probabilities of incorrect response
+#' sapply(prob(ip, theta_n), `[`, TRUE, "0")
 #'
 #' # Probability of each response category for Generalized Partial Credit Model
 #' ip <- generate_ip(model = "GPCM", n = 4, n_categories = c(3, 4, 6, 5))
@@ -472,6 +476,12 @@ setMethod(
 #' ip <- generate_ip(model = c("GPCM", "2PL", "3PL", "GPCM"),
 #'                   n_categories = c(4, 2, 2, 3))
 #' prob(ip, theta)
+#'
+#' # Multiple theta
+#' prob(ip, theta_n)
+#'
+#' # Extract probabilities of score "2" for each theta value
+#' sapply(prob(ip, theta_n), `[`, TRUE, "2")
 #'
 setMethod(
   f = "prob", signature = c(ip = "Itempool"),

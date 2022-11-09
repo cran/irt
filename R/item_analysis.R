@@ -15,23 +15,35 @@
 #'   are polytomous items in the data, \code{ip} will help finding the maximum
 #'   values of each item. Otherwise, the maximum values each item can take
 #'   will be calculated using data, which may be fallible.
+#' @param stats A vector of string containing the columns/statistics to be
+#'   calculated. \code{'item_id'} column will be added by default. Some or all
+#'   of the following columns can be added to the output:
+#'   \code{c("n", "pval", "pbis", "bis", "pbis_adj", "bis_adj")}.
+#'   Please see the 'value' section below to see the details of these columns.
+#'   By default, all of the columns above will be calculated.
 #' @param suppress_output If \code{TRUE}, the function will suppress
 #'   console output. Default value is \code{FALSE}
 #'
-#' @return A list of
+#' @return A data.frame with following columns:
 #'   \describe{
 #'     \item{'item_id'}{Item ID.}
 #'     \item{'n'}{Number of examinees responded this item.}
 #'     \item{'pval'}{p-value, proportion of examinees correctly answered items.
 #'       If there are polytomous items in the data, p-value will be calculated
 #'       by dividing the mean of the scores for the item by the maximum
-#'       possible score of the item. }
+#'       possible score of the item.}
+#'     \item{'pval_unadj'}{Unadjusted p-value, this is the mean of item scores
+#'       that is not adjusted for the maximum possible score as \code{'pval'}
+#'       column does. For dichotomous items, this will be the same as
+#'       \code{'pval'} column.}
 #'     \item{'pbis'}{Point biserial correlation.}
 #'     \item{'bis'}{Biserial correlation.}
 #'     \item{'pbis_adj'}{Point biserial correlation between item and total score
-#'       without this item.}
+#'       without this item. Note that this stat is only available when
+#'       criterion is \code{NULL}.}
 #'     \item{'bis_adj'}{Biserial correlation between item and total score
-#'       without this item.}
+#'       without this item. Note that this stat is only available when
+#'       criterion is \code{NULL}.}
 #'   }
 #'
 #' @export
@@ -48,7 +60,17 @@
 #' item_analysis(resp, criterion = theta)
 #'
 item_analysis <- function(resp, criterion = NULL, ip = NULL,
+                          stats = c("n", "pval", "pbis", "bis",
+                                     "pbis_adj", "bis_adj"),
                           suppress_output = FALSE) {
+  output_possible_values <- c("n", "pval", "pbis", "bis", "pbis_adj", "bis_adj",
+                              "pval_unadj")
+  if (!all(stats %in% output_possible_values)) {
+    stop("Invalid 'stats' value. Please only use one of the following ",
+         "values: ",
+         paste0("\"", output_possible_values, "\"", collapse = ", "))
+  }
+
   if (is(resp, "Response_set"))
     resp <- as.matrix(resp, ip = ip, output = "score")
   # Check compatibility of item pool and
@@ -81,28 +103,38 @@ item_analysis <- function(resp, criterion = NULL, ip = NULL,
   if (is.null(colnames(resp))) output$item_id <- rep(NA, ncol(resp)) else
     output$item_id <- colnames(resp)
   # Add number of
-  output$n <- colSums(!is.na(resp))
+  if ("n" %in% stats)
+    output$n <- colSums(!is.na(resp))
+  # Calculate unadjusted p-value
+  pval_unadj <- colMeans(resp, na.rm = TRUE)
+  if ("pval_unadj" %in% stats)  output$pval_unadj <- pval_unadj
+
   # Calculate the p-value
-  output$pval <- colMeans(resp, na.rm = TRUE) / max_scores
+  if ("pval" %in% stats) output$pval <- pval_unadj / max_scores
 
   if (is.null(criterion)) theta <- rowSums(resp, na.rm = TRUE) else
     theta <- criterion
   # Calculate point-biserial correlation
-  output$pbis <- apply(resp, 2, biserial, theta, "point-biserial")
+  if ("pbis" %in% stats)
+    output$pbis <- apply(resp, 2, biserial, theta, "point-biserial")
   # Calculate biserial correlation
-  output$bis <- apply(resp, 2, biserial, theta, "default")
+  if ("bis" %in% stats)
+    output$bis <- apply(resp, 2, biserial, theta, "default")
 
   if (is.null(criterion)) {
     # Calculate corrected point-biserial correlation, i.e. remove the item from
     # the calculation of the total score.
-    output$pbis_adj <- sapply(1:ncol(resp), function(i)
-      biserial(score = resp[, i],
-               criterion = rowSums(resp[, -i], na.rm = TRUE),
-               method = "point-biserial"))
-    output$bis_adj <- sapply(1:ncol(resp), function(i)
-      biserial(score = resp[, i],
-               criterion = rowSums(resp[, -i], na.rm = TRUE),
-               method = "default"))
+    if ("pbis_adj" %in% stats)
+      output$pbis_adj <- sapply(1:ncol(resp), function(i)
+        biserial(score = resp[, i],
+                 criterion = rowSums(resp[, -i], na.rm = TRUE),
+                 method = "point-biserial"))
+
+    if ("bis_adj" %in% stats)
+      output$bis_adj <- sapply(1:ncol(resp), function(i)
+        biserial(score = resp[, i],
+                 criterion = rowSums(resp[, -i], na.rm = TRUE),
+                 method = "default"))
   }
   if (requireNamespace("tibble")) {
     return(tibble::as_tibble(output))
@@ -487,9 +519,10 @@ score_raw_resp <- function(raw_resp, key) {
 marginal_reliability_empirical <- function(ts_var = NULL, se = NULL,
                                            theta = NULL, ip = NULL)
 {
-
   if (!is.null(ts_var) && !is.null(se)) {
-    return((ts_var - mean(se^2, na.rm = TRUE)) / ts_var)
+    # See Kim (2012), Eqn. 17
+    # Green, Bock et al. Eqn. 7
+    return((ts_var - mean(se, na.rm = TRUE)^2) / ts_var)
   } else if (!is.null(theta) && !is.null(se)) {
     return(marginal_reliability_empirical(ts_var = var(theta, na.rm = TRUE),
                                           se =  se))
@@ -524,6 +557,21 @@ marginal_reliability_empirical <- function(ts_var = NULL, se = NULL,
 #'
 #' @noRd
 #'
+#' @examples
+#' ip <- generate_ip(n = 30)
+#' true_theta <- rnorm(1000)
+#' resp_set <- generate_resp_set(ip = ip, theta = true_theta, prop_missing = .2)
+#' est <- est_ability(resp = resp_set, ip = ip, method = "ml")
+#' theta <- est$est
+#' se <- est$se
+#'
+#' # Use true Score variance (ts_var) and standard errors (se)
+#' marginal_reliability(ts_var = sd(true_theta)^2, se = se)
+#'
+#' # Use theta estimates and standard error:
+#' marginal_reliability(theta = theta, se = se)
+#'
+
 
 marginal_reliability <- function(ip = NULL, theta = NULL, se = NULL,
                                  ts_var = NULL, method = "empirical") {

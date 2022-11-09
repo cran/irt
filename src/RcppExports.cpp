@@ -10,136 +10,56 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// est_ability_4pm_nr_itempool_cpp
-double est_ability_4pm_nr_itempool_cpp(Rcpp::NumericVector resp, Rcpp::S4 ip, Rcpp::NumericVector theta_range, double criterion, Rcpp::Nullable<Rcpp::NumericVector> initial_estimates);
-RcppExport SEXP _irt_est_ability_4pm_nr_itempool_cpp(SEXP respSEXP, SEXP ipSEXP, SEXP theta_rangeSEXP, SEXP criterionSEXP, SEXP initial_estimatesSEXP) {
+// find_icc_intersect_cpp
+Rcpp::NumericVector find_icc_intersect_cpp(Rcpp::S4 item_1, Rcpp::S4 item_2, Rcpp::NumericVector theta_range);
+RcppExport SEXP _irt_find_icc_intersect_cpp(SEXP item_1SEXP, SEXP item_2SEXP, SEXP theta_rangeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type resp(respSEXP);
-    Rcpp::traits::input_parameter< Rcpp::S4 >::type ip(ipSEXP);
+    Rcpp::traits::input_parameter< Rcpp::S4 >::type item_1(item_1SEXP);
+    Rcpp::traits::input_parameter< Rcpp::S4 >::type item_2(item_2SEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type theta_range(theta_rangeSEXP);
-    Rcpp::traits::input_parameter< double >::type criterion(criterionSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericVector> >::type initial_estimates(initial_estimatesSEXP);
-    rcpp_result_gen = Rcpp::wrap(est_ability_4pm_nr_itempool_cpp(resp, ip, theta_range, criterion, initial_estimates));
+    rcpp_result_gen = Rcpp::wrap(find_icc_intersect_cpp(item_1, item_2, theta_range));
     return rcpp_result_gen;
 END_RCPP
 }
-// est_ability_4pm_nr_response_cpp
-double est_ability_4pm_nr_response_cpp(Rcpp::S4 resp, Rcpp::S4 ip, Rcpp::NumericVector theta_range, double criterion, Rcpp::Nullable<Rcpp::NumericVector> initial_estimates);
-RcppExport SEXP _irt_est_ability_4pm_nr_response_cpp(SEXP respSEXP, SEXP ipSEXP, SEXP theta_rangeSEXP, SEXP criterionSEXP, SEXP initial_estimatesSEXP) {
+// area_between_icc_exact_cpp
+double area_between_icc_exact_cpp(Rcpp::S4 item_1, Rcpp::S4 item_2, bool signed_area);
+RcppExport SEXP _irt_area_between_icc_exact_cpp(SEXP item_1SEXP, SEXP item_2SEXP, SEXP signed_areaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::S4 >::type resp(respSEXP);
-    Rcpp::traits::input_parameter< Rcpp::S4 >::type ip(ipSEXP);
+    Rcpp::traits::input_parameter< Rcpp::S4 >::type item_1(item_1SEXP);
+    Rcpp::traits::input_parameter< Rcpp::S4 >::type item_2(item_2SEXP);
+    Rcpp::traits::input_parameter< bool >::type signed_area(signed_areaSEXP);
+    rcpp_result_gen = Rcpp::wrap(area_between_icc_exact_cpp(item_1, item_2, signed_area));
+    return rcpp_result_gen;
+END_RCPP
+}
+// area_between_icc_closed_cpp
+double area_between_icc_closed_cpp(Rcpp::S4 item_1, Rcpp::S4 item_2, bool signed_area, Rcpp::NumericVector theta_range);
+RcppExport SEXP _irt_area_between_icc_closed_cpp(SEXP item_1SEXP, SEXP item_2SEXP, SEXP signed_areaSEXP, SEXP theta_rangeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::S4 >::type item_1(item_1SEXP);
+    Rcpp::traits::input_parameter< Rcpp::S4 >::type item_2(item_2SEXP);
+    Rcpp::traits::input_parameter< bool >::type signed_area(signed_areaSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type theta_range(theta_rangeSEXP);
-    Rcpp::traits::input_parameter< double >::type criterion(criterionSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericVector> >::type initial_estimates(initial_estimatesSEXP);
-    rcpp_result_gen = Rcpp::wrap(est_ability_4pm_nr_response_cpp(resp, ip, theta_range, criterion, initial_estimates));
+    rcpp_result_gen = Rcpp::wrap(area_between_icc_closed_cpp(item_1, item_2, signed_area, theta_range));
     return rcpp_result_gen;
 END_RCPP
 }
-// est_ability_eap_single_examinee_cpp
-Rcpp::List est_ability_eap_single_examinee_cpp(Rcpp::NumericVector resp, Rcpp::S4 ip, Rcpp::NumericVector theta_range, int no_of_quadrature, Rcpp::String prior_dist, Rcpp::NumericVector prior_par);
-RcppExport SEXP _irt_est_ability_eap_single_examinee_cpp(SEXP respSEXP, SEXP ipSEXP, SEXP theta_rangeSEXP, SEXP no_of_quadratureSEXP, SEXP prior_distSEXP, SEXP prior_parSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type resp(respSEXP);
-    Rcpp::traits::input_parameter< Rcpp::S4 >::type ip(ipSEXP);
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type theta_range(theta_rangeSEXP);
-    Rcpp::traits::input_parameter< int >::type no_of_quadrature(no_of_quadratureSEXP);
-    Rcpp::traits::input_parameter< Rcpp::String >::type prior_dist(prior_distSEXP);
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type prior_par(prior_parSEXP);
-    rcpp_result_gen = Rcpp::wrap(est_ability_eap_single_examinee_cpp(resp, ip, theta_range, no_of_quadrature, prior_dist, prior_par));
-    return rcpp_result_gen;
-END_RCPP
-}
-// est_ability_eap_cpp
-Rcpp::List est_ability_eap_cpp(Rcpp::NumericMatrix resp, Rcpp::S4 ip, Rcpp::NumericVector theta_range, int no_of_quadrature, Rcpp::String prior_dist, Rcpp::NumericVector prior_par);
-RcppExport SEXP _irt_est_ability_eap_cpp(SEXP respSEXP, SEXP ipSEXP, SEXP theta_rangeSEXP, SEXP no_of_quadratureSEXP, SEXP prior_distSEXP, SEXP prior_parSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type resp(respSEXP);
-    Rcpp::traits::input_parameter< Rcpp::S4 >::type ip(ipSEXP);
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type theta_range(theta_rangeSEXP);
-    Rcpp::traits::input_parameter< int >::type no_of_quadrature(no_of_quadratureSEXP);
-    Rcpp::traits::input_parameter< Rcpp::String >::type prior_dist(prior_distSEXP);
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type prior_par(prior_parSEXP);
-    rcpp_result_gen = Rcpp::wrap(est_ability_eap_cpp(resp, ip, theta_range, no_of_quadrature, prior_dist, prior_par));
-    return rcpp_result_gen;
-END_RCPP
-}
-// est_ability_eap_response_set_cpp
-Rcpp::List est_ability_eap_response_set_cpp(Rcpp::S4 resp_set, Rcpp::S4 ip, Rcpp::NumericVector theta_range, int no_of_quadrature, std::string prior_dist, Rcpp::NumericVector prior_par);
-RcppExport SEXP _irt_est_ability_eap_response_set_cpp(SEXP resp_setSEXP, SEXP ipSEXP, SEXP theta_rangeSEXP, SEXP no_of_quadratureSEXP, SEXP prior_distSEXP, SEXP prior_parSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::S4 >::type resp_set(resp_setSEXP);
-    Rcpp::traits::input_parameter< Rcpp::S4 >::type ip(ipSEXP);
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type theta_range(theta_rangeSEXP);
-    Rcpp::traits::input_parameter< int >::type no_of_quadrature(no_of_quadratureSEXP);
-    Rcpp::traits::input_parameter< std::string >::type prior_dist(prior_distSEXP);
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type prior_par(prior_parSEXP);
-    rcpp_result_gen = Rcpp::wrap(est_ability_eap_response_set_cpp(resp_set, ip, theta_range, no_of_quadrature, prior_dist, prior_par));
-    return rcpp_result_gen;
-END_RCPP
-}
-// est_ability_owen_item_cpp
-Rcpp::List est_ability_owen_item_cpp(Rcpp::S4 item, int resp, double m0, double v0);
-RcppExport SEXP _irt_est_ability_owen_item_cpp(SEXP itemSEXP, SEXP respSEXP, SEXP m0SEXP, SEXP v0SEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::S4 >::type item(itemSEXP);
-    Rcpp::traits::input_parameter< int >::type resp(respSEXP);
-    Rcpp::traits::input_parameter< double >::type m0(m0SEXP);
-    Rcpp::traits::input_parameter< double >::type v0(v0SEXP);
-    rcpp_result_gen = Rcpp::wrap(est_ability_owen_item_cpp(item, resp, m0, v0));
-    return rcpp_result_gen;
-END_RCPP
-}
-// est_ability_owen_cpp
-Rcpp::List est_ability_owen_cpp(Rcpp::S4 ip, Rcpp::NumericVector resp, double m0, double v0);
-RcppExport SEXP _irt_est_ability_owen_cpp(SEXP ipSEXP, SEXP respSEXP, SEXP m0SEXP, SEXP v0SEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::S4 >::type ip(ipSEXP);
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type resp(respSEXP);
-    Rcpp::traits::input_parameter< double >::type m0(m0SEXP);
-    Rcpp::traits::input_parameter< double >::type v0(v0SEXP);
-    rcpp_result_gen = Rcpp::wrap(est_ability_owen_cpp(ip, resp, m0, v0));
-    return rcpp_result_gen;
-END_RCPP
-}
-// est_ability_optim_response_cpp
-double est_ability_optim_response_cpp(Rcpp::S4 resp, Rcpp::List ip_list, Rcpp::NumericVector theta_range, double tol);
-RcppExport SEXP _irt_est_ability_optim_response_cpp(SEXP respSEXP, SEXP ip_listSEXP, SEXP theta_rangeSEXP, SEXP tolSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::S4 >::type resp(respSEXP);
-    Rcpp::traits::input_parameter< Rcpp::List >::type ip_list(ip_listSEXP);
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type theta_range(theta_rangeSEXP);
-    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    rcpp_result_gen = Rcpp::wrap(est_ability_optim_response_cpp(resp, ip_list, theta_range, tol));
-    return rcpp_result_gen;
-END_RCPP
-}
-// get_remaining_items
-Rcpp::S4 get_remaining_items(Rcpp::List cd, Rcpp::List est_history, Rcpp::List additional_args);
-RcppExport SEXP _irt_get_remaining_items(SEXP cdSEXP, SEXP est_historySEXP, SEXP additional_argsSEXP) {
+// get_remaining_items_cpp
+Rcpp::S4 get_remaining_items_cpp(Rcpp::List cd, Rcpp::List est_history, Rcpp::List additional_args);
+RcppExport SEXP _irt_get_remaining_items_cpp(SEXP cdSEXP, SEXP est_historySEXP, SEXP additional_argsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::List >::type cd(cdSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type est_history(est_historySEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type additional_args(additional_argsSEXP);
-    rcpp_result_gen = Rcpp::wrap(get_remaining_items(cd, est_history, additional_args));
+    rcpp_result_gen = Rcpp::wrap(get_remaining_items_cpp(cd, est_history, additional_args));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -154,27 +74,16 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// get_response_categories
-Rcpp::IntegerVector get_response_categories(Rcpp::S4 item);
-RcppExport SEXP _irt_get_response_categories(SEXP itemSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::S4 >::type item(itemSEXP);
-    rcpp_result_gen = Rcpp::wrap(get_response_categories(item));
-    return rcpp_result_gen;
-END_RCPP
-}
-// loglik_est_history
-double loglik_est_history(Rcpp::List est_history, double theta, bool calculate_loglik);
-RcppExport SEXP _irt_loglik_est_history(SEXP est_historySEXP, SEXP thetaSEXP, SEXP calculate_loglikSEXP) {
+// loglik_est_history_cpp
+double loglik_est_history_cpp(Rcpp::List est_history, double theta, bool calculate_loglik);
+RcppExport SEXP _irt_loglik_est_history_cpp(SEXP est_historySEXP, SEXP thetaSEXP, SEXP calculate_loglikSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::List >::type est_history(est_historySEXP);
     Rcpp::traits::input_parameter< double >::type theta(thetaSEXP);
     Rcpp::traits::input_parameter< bool >::type calculate_loglik(calculate_loglikSEXP);
-    rcpp_result_gen = Rcpp::wrap(loglik_est_history(est_history, theta, calculate_loglik));
+    rcpp_result_gen = Rcpp::wrap(loglik_est_history_cpp(est_history, theta, calculate_loglik));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -191,61 +100,68 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// select_next_item_fmi_cpp
-Rcpp::S4 select_next_item_fmi_cpp(double theta, Rcpp::S4 ip, int randomesqueN);
-RcppExport SEXP _irt_select_next_item_fmi_cpp(SEXP thetaSEXP, SEXP ipSEXP, SEXP randomesqueNSEXP) {
+// get_unadministered_testlet_items_cpp
+Rcpp::List get_unadministered_testlet_items_cpp(Rcpp::S4 testlet, Rcpp::List est_history);
+RcppExport SEXP _irt_get_unadministered_testlet_items_cpp(SEXP testletSEXP, SEXP est_historySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type theta(thetaSEXP);
-    Rcpp::traits::input_parameter< Rcpp::S4 >::type ip(ipSEXP);
-    Rcpp::traits::input_parameter< int >::type randomesqueN(randomesqueNSEXP);
-    rcpp_result_gen = Rcpp::wrap(select_next_item_fmi_cpp(theta, ip, randomesqueN));
+    Rcpp::traits::input_parameter< Rcpp::S4 >::type testlet(testletSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type est_history(est_historySEXP);
+    rcpp_result_gen = Rcpp::wrap(get_unadministered_testlet_items_cpp(testlet, est_history));
     return rcpp_result_gen;
 END_RCPP
 }
-// calculate_epv_cpp
-double calculate_epv_cpp(std::string var_calc_method, NumericVector current_resp, Rcpp::NumericVector previous_resp, double current_ability_est, Rcpp::S4 candidate_item, Rcpp::S4 administered_ip, double prior_mean, double prior_var);
-RcppExport SEXP _irt_calculate_epv_cpp(SEXP var_calc_methodSEXP, SEXP current_respSEXP, SEXP previous_respSEXP, SEXP current_ability_estSEXP, SEXP candidate_itemSEXP, SEXP administered_ipSEXP, SEXP prior_meanSEXP, SEXP prior_varSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::string >::type var_calc_method(var_calc_methodSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type current_resp(current_respSEXP);
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type previous_resp(previous_respSEXP);
-    Rcpp::traits::input_parameter< double >::type current_ability_est(current_ability_estSEXP);
-    Rcpp::traits::input_parameter< Rcpp::S4 >::type candidate_item(candidate_itemSEXP);
-    Rcpp::traits::input_parameter< Rcpp::S4 >::type administered_ip(administered_ipSEXP);
-    Rcpp::traits::input_parameter< double >::type prior_mean(prior_meanSEXP);
-    Rcpp::traits::input_parameter< double >::type prior_var(prior_varSEXP);
-    rcpp_result_gen = Rcpp::wrap(calculate_epv_cpp(var_calc_method, current_resp, previous_resp, current_ability_est, candidate_item, administered_ip, prior_mean, prior_var));
-    return rcpp_result_gen;
-END_RCPP
-}
-// select_next_item_mepv_cpp
-Rcpp::List select_next_item_mepv_cpp(Rcpp::List cd, Rcpp::List est_history, Rcpp::List additional_args);
-RcppExport SEXP _irt_select_next_item_mepv_cpp(SEXP cdSEXP, SEXP est_historySEXP, SEXP additional_argsSEXP) {
+// select_next_testlet_item_none_cpp
+Rcpp::List select_next_testlet_item_none_cpp(Rcpp::List cd, Rcpp::List est_history, Rcpp::List additional_args);
+RcppExport SEXP _irt_select_next_testlet_item_none_cpp(SEXP cdSEXP, SEXP est_historySEXP, SEXP additional_argsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::List >::type cd(cdSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type est_history(est_historySEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type additional_args(additional_argsSEXP);
-    rcpp_result_gen = Rcpp::wrap(select_next_item_mepv_cpp(cd, est_history, additional_args));
+    rcpp_result_gen = Rcpp::wrap(select_next_testlet_item_none_cpp(cd, est_history, additional_args));
     return rcpp_result_gen;
 END_RCPP
 }
-// apply_exposure_control_cpp
-Rcpp::List apply_exposure_control_cpp(Rcpp::List cd, Rcpp::List est_history, Rcpp::List remaining_ip_list, Rcpp::List additional_args);
-RcppExport SEXP _irt_apply_exposure_control_cpp(SEXP cdSEXP, SEXP est_historySEXP, SEXP remaining_ip_listSEXP, SEXP additional_argsSEXP) {
+// select_next_testlet_item_mfi_cpp
+Rcpp::List select_next_testlet_item_mfi_cpp(Rcpp::List cd, Rcpp::List est_history, Rcpp::List additional_args);
+RcppExport SEXP _irt_select_next_testlet_item_mfi_cpp(SEXP cdSEXP, SEXP est_historySEXP, SEXP additional_argsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::List >::type cd(cdSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type est_history(est_historySEXP);
-    Rcpp::traits::input_parameter< Rcpp::List >::type remaining_ip_list(remaining_ip_listSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type additional_args(additional_argsSEXP);
-    rcpp_result_gen = Rcpp::wrap(apply_exposure_control_cpp(cd, est_history, remaining_ip_list, additional_args));
+    rcpp_result_gen = Rcpp::wrap(select_next_testlet_item_mfi_cpp(cd, est_history, additional_args));
+    return rcpp_result_gen;
+END_RCPP
+}
+// terminate_testlet_cat_cpp
+bool terminate_testlet_cat_cpp(Rcpp::S4 testlet, Rcpp::List cd, Rcpp::List est_history, Rcpp::List additional_args);
+RcppExport SEXP _irt_terminate_testlet_cat_cpp(SEXP testletSEXP, SEXP cdSEXP, SEXP est_historySEXP, SEXP additional_argsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::S4 >::type testlet(testletSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type cd(cdSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type est_history(est_historySEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type additional_args(additional_argsSEXP);
+    rcpp_result_gen = Rcpp::wrap(terminate_testlet_cat_cpp(testlet, cd, est_history, additional_args));
+    return rcpp_result_gen;
+END_RCPP
+}
+// process_testlet_cat_cpp
+Rcpp::List process_testlet_cat_cpp(Rcpp::List cd, Rcpp::List est_history, Rcpp::List additional_args);
+RcppExport SEXP _irt_process_testlet_cat_cpp(SEXP cdSEXP, SEXP est_historySEXP, SEXP additional_argsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type cd(cdSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type est_history(est_historySEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type additional_args(additional_argsSEXP);
+    rcpp_result_gen = Rcpp::wrap(process_testlet_cat_cpp(cd, est_history, additional_args));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -263,14 +179,15 @@ BEGIN_RCPP
 END_RCPP
 }
 // cat_sim_single_cpp
-Rcpp::List cat_sim_single_cpp(Rcpp::List true_ability, Rcpp::List cd);
-RcppExport SEXP _irt_cat_sim_single_cpp(SEXP true_abilitySEXP, SEXP cdSEXP) {
+Rcpp::List cat_sim_single_cpp(Rcpp::List true_ability, Rcpp::List cd, Rcpp::String examinee_id);
+RcppExport SEXP _irt_cat_sim_single_cpp(SEXP true_abilitySEXP, SEXP cdSEXP, SEXP examinee_idSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::List >::type true_ability(true_abilitySEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type cd(cdSEXP);
-    rcpp_result_gen = Rcpp::wrap(cat_sim_single_cpp(true_ability, cd));
+    Rcpp::traits::input_parameter< Rcpp::String >::type examinee_id(examinee_idSEXP);
+    rcpp_result_gen = Rcpp::wrap(cat_sim_single_cpp(true_ability, cd, examinee_id));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -354,6 +271,204 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// est_ability_eap_single_examinee_cpp
+Rcpp::List est_ability_eap_single_examinee_cpp(Rcpp::NumericVector resp, Rcpp::S4 ip, Rcpp::NumericVector theta_range, int no_of_quadrature, std::string prior_dist, Rcpp::NumericVector prior_par);
+RcppExport SEXP _irt_est_ability_eap_single_examinee_cpp(SEXP respSEXP, SEXP ipSEXP, SEXP theta_rangeSEXP, SEXP no_of_quadratureSEXP, SEXP prior_distSEXP, SEXP prior_parSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type resp(respSEXP);
+    Rcpp::traits::input_parameter< Rcpp::S4 >::type ip(ipSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type theta_range(theta_rangeSEXP);
+    Rcpp::traits::input_parameter< int >::type no_of_quadrature(no_of_quadratureSEXP);
+    Rcpp::traits::input_parameter< std::string >::type prior_dist(prior_distSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type prior_par(prior_parSEXP);
+    rcpp_result_gen = Rcpp::wrap(est_ability_eap_single_examinee_cpp(resp, ip, theta_range, no_of_quadrature, prior_dist, prior_par));
+    return rcpp_result_gen;
+END_RCPP
+}
+// est_ability_eap_cpp
+Rcpp::List est_ability_eap_cpp(Rcpp::NumericMatrix resp, Rcpp::S4 ip, Rcpp::NumericVector theta_range, int no_of_quadrature, std::string prior_dist, Rcpp::NumericVector prior_par);
+RcppExport SEXP _irt_est_ability_eap_cpp(SEXP respSEXP, SEXP ipSEXP, SEXP theta_rangeSEXP, SEXP no_of_quadratureSEXP, SEXP prior_distSEXP, SEXP prior_parSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type resp(respSEXP);
+    Rcpp::traits::input_parameter< Rcpp::S4 >::type ip(ipSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type theta_range(theta_rangeSEXP);
+    Rcpp::traits::input_parameter< int >::type no_of_quadrature(no_of_quadratureSEXP);
+    Rcpp::traits::input_parameter< std::string >::type prior_dist(prior_distSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type prior_par(prior_parSEXP);
+    rcpp_result_gen = Rcpp::wrap(est_ability_eap_cpp(resp, ip, theta_range, no_of_quadrature, prior_dist, prior_par));
+    return rcpp_result_gen;
+END_RCPP
+}
+// est_ability_eap_response_cpp
+Rcpp::List est_ability_eap_response_cpp(Rcpp::S4 resp, Rcpp::S4 ip, Rcpp::NumericVector theta_range, int no_of_quadrature, std::string prior_dist, Rcpp::NumericVector prior_par);
+RcppExport SEXP _irt_est_ability_eap_response_cpp(SEXP respSEXP, SEXP ipSEXP, SEXP theta_rangeSEXP, SEXP no_of_quadratureSEXP, SEXP prior_distSEXP, SEXP prior_parSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::S4 >::type resp(respSEXP);
+    Rcpp::traits::input_parameter< Rcpp::S4 >::type ip(ipSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type theta_range(theta_rangeSEXP);
+    Rcpp::traits::input_parameter< int >::type no_of_quadrature(no_of_quadratureSEXP);
+    Rcpp::traits::input_parameter< std::string >::type prior_dist(prior_distSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type prior_par(prior_parSEXP);
+    rcpp_result_gen = Rcpp::wrap(est_ability_eap_response_cpp(resp, ip, theta_range, no_of_quadrature, prior_dist, prior_par));
+    return rcpp_result_gen;
+END_RCPP
+}
+// est_ability_eap_response_set_cpp
+Rcpp::List est_ability_eap_response_set_cpp(Rcpp::S4 resp_set, Rcpp::S4 ip, Rcpp::NumericVector theta_range, int no_of_quadrature, std::string prior_dist, Rcpp::NumericVector prior_par);
+RcppExport SEXP _irt_est_ability_eap_response_set_cpp(SEXP resp_setSEXP, SEXP ipSEXP, SEXP theta_rangeSEXP, SEXP no_of_quadratureSEXP, SEXP prior_distSEXP, SEXP prior_parSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::S4 >::type resp_set(resp_setSEXP);
+    Rcpp::traits::input_parameter< Rcpp::S4 >::type ip(ipSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type theta_range(theta_rangeSEXP);
+    Rcpp::traits::input_parameter< int >::type no_of_quadrature(no_of_quadratureSEXP);
+    Rcpp::traits::input_parameter< std::string >::type prior_dist(prior_distSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type prior_par(prior_parSEXP);
+    rcpp_result_gen = Rcpp::wrap(est_ability_eap_response_set_cpp(resp_set, ip, theta_range, no_of_quadrature, prior_dist, prior_par));
+    return rcpp_result_gen;
+END_RCPP
+}
+// est_ability_map_single_examinee_cpp
+Rcpp::List est_ability_map_single_examinee_cpp(Rcpp::NumericVector resp, Rcpp::S4 ip, std::string prior_dist, Rcpp::NumericVector prior_par, Rcpp::NumericVector theta_range, double initial_theta, double tol);
+RcppExport SEXP _irt_est_ability_map_single_examinee_cpp(SEXP respSEXP, SEXP ipSEXP, SEXP prior_distSEXP, SEXP prior_parSEXP, SEXP theta_rangeSEXP, SEXP initial_thetaSEXP, SEXP tolSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type resp(respSEXP);
+    Rcpp::traits::input_parameter< Rcpp::S4 >::type ip(ipSEXP);
+    Rcpp::traits::input_parameter< std::string >::type prior_dist(prior_distSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type prior_par(prior_parSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type theta_range(theta_rangeSEXP);
+    Rcpp::traits::input_parameter< double >::type initial_theta(initial_thetaSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    rcpp_result_gen = Rcpp::wrap(est_ability_map_single_examinee_cpp(resp, ip, prior_dist, prior_par, theta_range, initial_theta, tol));
+    return rcpp_result_gen;
+END_RCPP
+}
+// est_ability_map_response_cpp
+Rcpp::List est_ability_map_response_cpp(Rcpp::S4 resp, Rcpp::S4 ip, std::string prior_dist, Rcpp::NumericVector prior_par, Rcpp::NumericVector theta_range, double initial_theta, double tol);
+RcppExport SEXP _irt_est_ability_map_response_cpp(SEXP respSEXP, SEXP ipSEXP, SEXP prior_distSEXP, SEXP prior_parSEXP, SEXP theta_rangeSEXP, SEXP initial_thetaSEXP, SEXP tolSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::S4 >::type resp(respSEXP);
+    Rcpp::traits::input_parameter< Rcpp::S4 >::type ip(ipSEXP);
+    Rcpp::traits::input_parameter< std::string >::type prior_dist(prior_distSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type prior_par(prior_parSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type theta_range(theta_rangeSEXP);
+    Rcpp::traits::input_parameter< double >::type initial_theta(initial_thetaSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    rcpp_result_gen = Rcpp::wrap(est_ability_map_response_cpp(resp, ip, prior_dist, prior_par, theta_range, initial_theta, tol));
+    return rcpp_result_gen;
+END_RCPP
+}
+// est_ability_map_response_set_cpp
+Rcpp::List est_ability_map_response_set_cpp(Rcpp::S4 resp_set, Rcpp::S4 ip, std::string prior_dist, Rcpp::NumericVector prior_par, Rcpp::NumericVector theta_range, double initial_theta, double tol);
+RcppExport SEXP _irt_est_ability_map_response_set_cpp(SEXP resp_setSEXP, SEXP ipSEXP, SEXP prior_distSEXP, SEXP prior_parSEXP, SEXP theta_rangeSEXP, SEXP initial_thetaSEXP, SEXP tolSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::S4 >::type resp_set(resp_setSEXP);
+    Rcpp::traits::input_parameter< Rcpp::S4 >::type ip(ipSEXP);
+    Rcpp::traits::input_parameter< std::string >::type prior_dist(prior_distSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type prior_par(prior_parSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type theta_range(theta_rangeSEXP);
+    Rcpp::traits::input_parameter< double >::type initial_theta(initial_thetaSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    rcpp_result_gen = Rcpp::wrap(est_ability_map_response_set_cpp(resp_set, ip, prior_dist, prior_par, theta_range, initial_theta, tol));
+    return rcpp_result_gen;
+END_RCPP
+}
+// est_ability_4pm_nr_itempool_cpp
+double est_ability_4pm_nr_itempool_cpp(Rcpp::NumericVector resp, Rcpp::S4 ip, Rcpp::NumericVector theta_range, double criterion, Rcpp::Nullable<Rcpp::NumericVector> initial_estimates);
+RcppExport SEXP _irt_est_ability_4pm_nr_itempool_cpp(SEXP respSEXP, SEXP ipSEXP, SEXP theta_rangeSEXP, SEXP criterionSEXP, SEXP initial_estimatesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type resp(respSEXP);
+    Rcpp::traits::input_parameter< Rcpp::S4 >::type ip(ipSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type theta_range(theta_rangeSEXP);
+    Rcpp::traits::input_parameter< double >::type criterion(criterionSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericVector> >::type initial_estimates(initial_estimatesSEXP);
+    rcpp_result_gen = Rcpp::wrap(est_ability_4pm_nr_itempool_cpp(resp, ip, theta_range, criterion, initial_estimates));
+    return rcpp_result_gen;
+END_RCPP
+}
+// est_ability_4pm_nr_response_cpp
+double est_ability_4pm_nr_response_cpp(Rcpp::S4 resp, Rcpp::S4 ip, Rcpp::NumericVector theta_range, double criterion, Rcpp::Nullable<Rcpp::NumericVector> initial_estimates);
+RcppExport SEXP _irt_est_ability_4pm_nr_response_cpp(SEXP respSEXP, SEXP ipSEXP, SEXP theta_rangeSEXP, SEXP criterionSEXP, SEXP initial_estimatesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::S4 >::type resp(respSEXP);
+    Rcpp::traits::input_parameter< Rcpp::S4 >::type ip(ipSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type theta_range(theta_rangeSEXP);
+    Rcpp::traits::input_parameter< double >::type criterion(criterionSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericVector> >::type initial_estimates(initial_estimatesSEXP);
+    rcpp_result_gen = Rcpp::wrap(est_ability_4pm_nr_response_cpp(resp, ip, theta_range, criterion, initial_estimates));
+    return rcpp_result_gen;
+END_RCPP
+}
+// est_ability_optim_response_cpp
+double est_ability_optim_response_cpp(Rcpp::S4 resp, Rcpp::List ip_list, Rcpp::NumericVector theta_range, double tol);
+RcppExport SEXP _irt_est_ability_optim_response_cpp(SEXP respSEXP, SEXP ip_listSEXP, SEXP theta_rangeSEXP, SEXP tolSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::S4 >::type resp(respSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type ip_list(ip_listSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type theta_range(theta_rangeSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    rcpp_result_gen = Rcpp::wrap(est_ability_optim_response_cpp(resp, ip_list, theta_range, tol));
+    return rcpp_result_gen;
+END_RCPP
+}
+// est_ability_owen_item_cpp
+Rcpp::List est_ability_owen_item_cpp(Rcpp::S4 item, int resp, double m0, double v0);
+RcppExport SEXP _irt_est_ability_owen_item_cpp(SEXP itemSEXP, SEXP respSEXP, SEXP m0SEXP, SEXP v0SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::S4 >::type item(itemSEXP);
+    Rcpp::traits::input_parameter< int >::type resp(respSEXP);
+    Rcpp::traits::input_parameter< double >::type m0(m0SEXP);
+    Rcpp::traits::input_parameter< double >::type v0(v0SEXP);
+    rcpp_result_gen = Rcpp::wrap(est_ability_owen_item_cpp(item, resp, m0, v0));
+    return rcpp_result_gen;
+END_RCPP
+}
+// est_ability_owen_cpp
+Rcpp::List est_ability_owen_cpp(Rcpp::S4 ip, Rcpp::NumericVector resp, double m0, double v0);
+RcppExport SEXP _irt_est_ability_owen_cpp(SEXP ipSEXP, SEXP respSEXP, SEXP m0SEXP, SEXP v0SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::S4 >::type ip(ipSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type resp(respSEXP);
+    Rcpp::traits::input_parameter< double >::type m0(m0SEXP);
+    Rcpp::traits::input_parameter< double >::type v0(v0SEXP);
+    rcpp_result_gen = Rcpp::wrap(est_ability_owen_cpp(ip, resp, m0, v0));
+    return rcpp_result_gen;
+END_RCPP
+}
+// gauss_hermite
+Rcpp::List gauss_hermite(int n);
+RcppExport SEXP _irt_gauss_hermite(SEXP nSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    rcpp_result_gen = Rcpp::wrap(gauss_hermite(n));
+    return rcpp_result_gen;
+END_RCPP
+}
 // info_4pm_bare_cpp
 double info_4pm_bare_cpp(double theta, Rcpp::S4 item);
 RcppExport SEXP _irt_info_4pm_bare_cpp(SEXP thetaSEXP, SEXP itemSEXP) {
@@ -433,47 +548,86 @@ BEGIN_RCPP
 END_RCPP
 }
 // info_itempool_bare_cpp
-Rcpp::NumericVector info_itempool_bare_cpp(double theta, Rcpp::S4 ip, bool tif, bool observed, Rcpp::Nullable<Rcpp::NumericVector> resp);
-RcppExport SEXP _irt_info_itempool_bare_cpp(SEXP thetaSEXP, SEXP ipSEXP, SEXP tifSEXP, SEXP observedSEXP, SEXP respSEXP) {
+Rcpp::NumericVector info_itempool_bare_cpp(double theta, Rcpp::S4 ip, bool observed, Rcpp::Nullable<Rcpp::NumericVector> resp);
+RcppExport SEXP _irt_info_itempool_bare_cpp(SEXP thetaSEXP, SEXP ipSEXP, SEXP observedSEXP, SEXP respSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< double >::type theta(thetaSEXP);
     Rcpp::traits::input_parameter< Rcpp::S4 >::type ip(ipSEXP);
-    Rcpp::traits::input_parameter< bool >::type tif(tifSEXP);
     Rcpp::traits::input_parameter< bool >::type observed(observedSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericVector> >::type resp(respSEXP);
-    rcpp_result_gen = Rcpp::wrap(info_itempool_bare_cpp(theta, ip, tif, observed, resp));
+    rcpp_result_gen = Rcpp::wrap(info_itempool_bare_cpp(theta, ip, observed, resp));
+    return rcpp_result_gen;
+END_RCPP
+}
+// info_itempool_bare_tif_cpp
+double info_itempool_bare_tif_cpp(double theta, Rcpp::S4 ip, bool observed, Rcpp::Nullable<Rcpp::NumericVector> resp);
+RcppExport SEXP _irt_info_itempool_bare_tif_cpp(SEXP thetaSEXP, SEXP ipSEXP, SEXP observedSEXP, SEXP respSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< Rcpp::S4 >::type ip(ipSEXP);
+    Rcpp::traits::input_parameter< bool >::type observed(observedSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericVector> >::type resp(respSEXP);
+    rcpp_result_gen = Rcpp::wrap(info_itempool_bare_tif_cpp(theta, ip, observed, resp));
     return rcpp_result_gen;
 END_RCPP
 }
 // info_itempool_cpp
-Rcpp::NumericMatrix info_itempool_cpp(Rcpp::NumericVector theta, Rcpp::S4 ip, bool tif, bool observed, Rcpp::Nullable<Rcpp::NumericMatrix> resp);
-RcppExport SEXP _irt_info_itempool_cpp(SEXP thetaSEXP, SEXP ipSEXP, SEXP tifSEXP, SEXP observedSEXP, SEXP respSEXP) {
+Rcpp::NumericMatrix info_itempool_cpp(Rcpp::NumericVector theta, Rcpp::S4 ip, bool observed, Rcpp::Nullable<Rcpp::NumericMatrix> resp);
+RcppExport SEXP _irt_info_itempool_cpp(SEXP thetaSEXP, SEXP ipSEXP, SEXP observedSEXP, SEXP respSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type theta(thetaSEXP);
     Rcpp::traits::input_parameter< Rcpp::S4 >::type ip(ipSEXP);
-    Rcpp::traits::input_parameter< bool >::type tif(tifSEXP);
     Rcpp::traits::input_parameter< bool >::type observed(observedSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericMatrix> >::type resp(respSEXP);
-    rcpp_result_gen = Rcpp::wrap(info_itempool_cpp(theta, ip, tif, observed, resp));
+    rcpp_result_gen = Rcpp::wrap(info_itempool_cpp(theta, ip, observed, resp));
+    return rcpp_result_gen;
+END_RCPP
+}
+// info_itempool_tif_cpp
+Rcpp::NumericVector info_itempool_tif_cpp(Rcpp::NumericVector theta, Rcpp::S4 ip, bool observed, Rcpp::Nullable<Rcpp::NumericMatrix> resp);
+RcppExport SEXP _irt_info_itempool_tif_cpp(SEXP thetaSEXP, SEXP ipSEXP, SEXP observedSEXP, SEXP respSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< Rcpp::S4 >::type ip(ipSEXP);
+    Rcpp::traits::input_parameter< bool >::type observed(observedSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericMatrix> >::type resp(respSEXP);
+    rcpp_result_gen = Rcpp::wrap(info_itempool_tif_cpp(theta, ip, observed, resp));
     return rcpp_result_gen;
 END_RCPP
 }
 // info_response_cpp
-Rcpp::NumericVector info_response_cpp(double theta, Rcpp::List ip_list, bool tif, bool observed, Rcpp::S4 resp);
-RcppExport SEXP _irt_info_response_cpp(SEXP thetaSEXP, SEXP ip_listSEXP, SEXP tifSEXP, SEXP observedSEXP, SEXP respSEXP) {
+Rcpp::NumericVector info_response_cpp(double theta, Rcpp::S4 ip, Rcpp::S4 resp, bool observed);
+RcppExport SEXP _irt_info_response_cpp(SEXP thetaSEXP, SEXP ipSEXP, SEXP respSEXP, SEXP observedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< double >::type theta(thetaSEXP);
-    Rcpp::traits::input_parameter< Rcpp::List >::type ip_list(ip_listSEXP);
-    Rcpp::traits::input_parameter< bool >::type tif(tifSEXP);
-    Rcpp::traits::input_parameter< bool >::type observed(observedSEXP);
+    Rcpp::traits::input_parameter< Rcpp::S4 >::type ip(ipSEXP);
     Rcpp::traits::input_parameter< Rcpp::S4 >::type resp(respSEXP);
-    rcpp_result_gen = Rcpp::wrap(info_response_cpp(theta, ip_list, tif, observed, resp));
+    Rcpp::traits::input_parameter< bool >::type observed(observedSEXP);
+    rcpp_result_gen = Rcpp::wrap(info_response_cpp(theta, ip, resp, observed));
+    return rcpp_result_gen;
+END_RCPP
+}
+// info_response_tif_cpp
+double info_response_tif_cpp(double theta, Rcpp::S4 ip, Rcpp::S4 resp, bool observed);
+RcppExport SEXP _irt_info_response_tif_cpp(SEXP thetaSEXP, SEXP ipSEXP, SEXP respSEXP, SEXP observedSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< Rcpp::S4 >::type ip(ipSEXP);
+    Rcpp::traits::input_parameter< Rcpp::S4 >::type resp(respSEXP);
+    Rcpp::traits::input_parameter< bool >::type observed(observedSEXP);
+    rcpp_result_gen = Rcpp::wrap(info_response_tif_cpp(theta, ip, resp, observed));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -707,12 +861,12 @@ BEGIN_RCPP
 END_RCPP
 }
 // prob_4pm_item_cpp
-Rcpp::NumericVector prob_4pm_item_cpp(NumericVector theta, Rcpp::S4 item, int derivative);
+Rcpp::NumericVector prob_4pm_item_cpp(Rcpp::NumericVector theta, Rcpp::S4 item, int derivative);
 RcppExport SEXP _irt_prob_4pm_item_cpp(SEXP thetaSEXP, SEXP itemSEXP, SEXP derivativeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericVector >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type theta(thetaSEXP);
     Rcpp::traits::input_parameter< Rcpp::S4 >::type item(itemSEXP);
     Rcpp::traits::input_parameter< int >::type derivative(derivativeSEXP);
     rcpp_result_gen = Rcpp::wrap(prob_4pm_item_cpp(theta, item, derivative));
@@ -1176,40 +1330,51 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_irt_est_ability_4pm_nr_itempool_cpp", (DL_FUNC) &_irt_est_ability_4pm_nr_itempool_cpp, 5},
-    {"_irt_est_ability_4pm_nr_response_cpp", (DL_FUNC) &_irt_est_ability_4pm_nr_response_cpp, 5},
-    {"_irt_est_ability_eap_single_examinee_cpp", (DL_FUNC) &_irt_est_ability_eap_single_examinee_cpp, 6},
-    {"_irt_est_ability_eap_cpp", (DL_FUNC) &_irt_est_ability_eap_cpp, 6},
-    {"_irt_est_ability_eap_response_set_cpp", (DL_FUNC) &_irt_est_ability_eap_response_set_cpp, 6},
-    {"_irt_est_ability_owen_item_cpp", (DL_FUNC) &_irt_est_ability_owen_item_cpp, 4},
-    {"_irt_est_ability_owen_cpp", (DL_FUNC) &_irt_est_ability_owen_cpp, 4},
-    {"_irt_est_ability_optim_response_cpp", (DL_FUNC) &_irt_est_ability_optim_response_cpp, 4},
-    {"_irt_get_remaining_items", (DL_FUNC) &_irt_get_remaining_items, 3},
+    {"_irt_find_icc_intersect_cpp", (DL_FUNC) &_irt_find_icc_intersect_cpp, 3},
+    {"_irt_area_between_icc_exact_cpp", (DL_FUNC) &_irt_area_between_icc_exact_cpp, 3},
+    {"_irt_area_between_icc_closed_cpp", (DL_FUNC) &_irt_area_between_icc_closed_cpp, 4},
+    {"_irt_get_remaining_items_cpp", (DL_FUNC) &_irt_get_remaining_items_cpp, 3},
     {"_irt_get_administered_items_cpp", (DL_FUNC) &_irt_get_administered_items_cpp, 1},
-    {"_irt_get_response_categories", (DL_FUNC) &_irt_get_response_categories, 1},
-    {"_irt_loglik_est_history", (DL_FUNC) &_irt_loglik_est_history, 3},
+    {"_irt_loglik_est_history_cpp", (DL_FUNC) &_irt_loglik_est_history_cpp, 3},
     {"_irt_select_next_item_fisher_max_info_cpp", (DL_FUNC) &_irt_select_next_item_fisher_max_info_cpp, 3},
-    {"_irt_select_next_item_fmi_cpp", (DL_FUNC) &_irt_select_next_item_fmi_cpp, 3},
-    {"_irt_calculate_epv_cpp", (DL_FUNC) &_irt_calculate_epv_cpp, 8},
-    {"_irt_select_next_item_mepv_cpp", (DL_FUNC) &_irt_select_next_item_mepv_cpp, 3},
-    {"_irt_apply_exposure_control_cpp", (DL_FUNC) &_irt_apply_exposure_control_cpp, 4},
+    {"_irt_get_unadministered_testlet_items_cpp", (DL_FUNC) &_irt_get_unadministered_testlet_items_cpp, 2},
+    {"_irt_select_next_testlet_item_none_cpp", (DL_FUNC) &_irt_select_next_testlet_item_none_cpp, 3},
+    {"_irt_select_next_testlet_item_mfi_cpp", (DL_FUNC) &_irt_select_next_testlet_item_mfi_cpp, 3},
+    {"_irt_terminate_testlet_cat_cpp", (DL_FUNC) &_irt_terminate_testlet_cat_cpp, 4},
+    {"_irt_process_testlet_cat_cpp", (DL_FUNC) &_irt_process_testlet_cat_cpp, 3},
     {"_irt_select_next_item_cpp", (DL_FUNC) &_irt_select_next_item_cpp, 3},
-    {"_irt_cat_sim_single_cpp", (DL_FUNC) &_irt_cat_sim_single_cpp, 2},
+    {"_irt_cat_sim_single_cpp", (DL_FUNC) &_irt_cat_sim_single_cpp, 3},
     {"_irt_cat_sim_cpp", (DL_FUNC) &_irt_cat_sim_cpp, 3},
     {"_irt_generate_cat_resp_cpp", (DL_FUNC) &_irt_generate_cat_resp_cpp, 4},
     {"_irt_est_ability_cat_cpp", (DL_FUNC) &_irt_est_ability_cat_cpp, 5},
     {"_irt_terminate_cat_cpp", (DL_FUNC) &_irt_terminate_cat_cpp, 4},
     {"_irt_calculate_exposure_rates_cpp", (DL_FUNC) &_irt_calculate_exposure_rates_cpp, 2},
     {"_irt_calculate_overlap_rates_cpp", (DL_FUNC) &_irt_calculate_overlap_rates_cpp, 2},
+    {"_irt_est_ability_eap_single_examinee_cpp", (DL_FUNC) &_irt_est_ability_eap_single_examinee_cpp, 6},
+    {"_irt_est_ability_eap_cpp", (DL_FUNC) &_irt_est_ability_eap_cpp, 6},
+    {"_irt_est_ability_eap_response_cpp", (DL_FUNC) &_irt_est_ability_eap_response_cpp, 6},
+    {"_irt_est_ability_eap_response_set_cpp", (DL_FUNC) &_irt_est_ability_eap_response_set_cpp, 6},
+    {"_irt_est_ability_map_single_examinee_cpp", (DL_FUNC) &_irt_est_ability_map_single_examinee_cpp, 7},
+    {"_irt_est_ability_map_response_cpp", (DL_FUNC) &_irt_est_ability_map_response_cpp, 7},
+    {"_irt_est_ability_map_response_set_cpp", (DL_FUNC) &_irt_est_ability_map_response_set_cpp, 7},
+    {"_irt_est_ability_4pm_nr_itempool_cpp", (DL_FUNC) &_irt_est_ability_4pm_nr_itempool_cpp, 5},
+    {"_irt_est_ability_4pm_nr_response_cpp", (DL_FUNC) &_irt_est_ability_4pm_nr_response_cpp, 5},
+    {"_irt_est_ability_optim_response_cpp", (DL_FUNC) &_irt_est_ability_optim_response_cpp, 4},
+    {"_irt_est_ability_owen_item_cpp", (DL_FUNC) &_irt_est_ability_owen_item_cpp, 4},
+    {"_irt_est_ability_owen_cpp", (DL_FUNC) &_irt_est_ability_owen_cpp, 4},
+    {"_irt_gauss_hermite", (DL_FUNC) &_irt_gauss_hermite, 1},
     {"_irt_info_4pm_bare_cpp", (DL_FUNC) &_irt_info_4pm_bare_cpp, 2},
     {"_irt_info_grm_bare_cpp", (DL_FUNC) &_irt_info_grm_bare_cpp, 2},
     {"_irt_info_gpcm_bare_cpp", (DL_FUNC) &_irt_info_gpcm_bare_cpp, 2},
     {"_irt_info_item_bare_cpp", (DL_FUNC) &_irt_info_item_bare_cpp, 4},
     {"_irt_info_testlet_bare_cpp", (DL_FUNC) &_irt_info_testlet_bare_cpp, 4},
     {"_irt_info_item_cpp", (DL_FUNC) &_irt_info_item_cpp, 4},
-    {"_irt_info_itempool_bare_cpp", (DL_FUNC) &_irt_info_itempool_bare_cpp, 5},
-    {"_irt_info_itempool_cpp", (DL_FUNC) &_irt_info_itempool_cpp, 5},
-    {"_irt_info_response_cpp", (DL_FUNC) &_irt_info_response_cpp, 5},
+    {"_irt_info_itempool_bare_cpp", (DL_FUNC) &_irt_info_itempool_bare_cpp, 4},
+    {"_irt_info_itempool_bare_tif_cpp", (DL_FUNC) &_irt_info_itempool_bare_tif_cpp, 4},
+    {"_irt_info_itempool_cpp", (DL_FUNC) &_irt_info_itempool_cpp, 4},
+    {"_irt_info_itempool_tif_cpp", (DL_FUNC) &_irt_info_itempool_tif_cpp, 4},
+    {"_irt_info_response_cpp", (DL_FUNC) &_irt_info_response_cpp, 4},
+    {"_irt_info_response_tif_cpp", (DL_FUNC) &_irt_info_response_tif_cpp, 4},
     {"_irt_info_response_set_cpp", (DL_FUNC) &_irt_info_response_set_cpp, 5},
     {"_irt_info_kl_item_bare_cpp", (DL_FUNC) &_irt_info_kl_item_bare_cpp, 3},
     {"_irt_avg_rank", (DL_FUNC) &_irt_avg_rank, 1},

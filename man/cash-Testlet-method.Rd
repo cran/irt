@@ -23,6 +23,8 @@ Available values:
     items within the testlet.}
   \item{\strong{\code{'item_id'}}}{Get the \code{item_id}s of the
     items within the testlet.}
+  \item{\strong{\code{'misc'}}}{Get the \code{misc} field of the
+    testlet.}
   \item{\strong{\code{'parameters'}}}{Get the \code{parameters} of
     the testlet.}
   \item{\strong{\code{'se_parameters'}}}{Get the
@@ -41,7 +43,9 @@ This operation will return the desired slot.
 Access slots of a \code{\link{Testlet-class}} object
 }
 \examples{
-t1 <- testlet(generate_ip(n = 3), testlet_id = "my-testlet", content = "Algebra")
+t1 <- testlet(generate_ip(n = 3), testlet_id = "my-testlet",
+              content = "Reading",
+              misc = list(paragraph_text = "This is a paragraph."))
 t1$model
 t1$testlet_id
 t1$item_list
@@ -49,4 +53,7 @@ t1$item_models
 t1$item_id
 t1$content
 t1$item_models
+t1$misc
+t1$paragraph_text
+
 }

@@ -8,7 +8,7 @@
   x,
   item_no,
   ip = NULL,
-  title = NULL,
+  title = "",
   ci = 0.95,
   base_r_graph = FALSE,
   suppress_plot = FALSE,
@@ -24,7 +24,8 @@ the function will run much faster.}
 \item{ip}{An \code{\link{Itempool-class}} or \code{\link{Item-class}}
 object if expected probabilities are plotted.}
 
-\item{title}{Title of the plot}
+\item{title}{Title of the plot. If the value is \code{NULL},
+the plot title will be suppressed.}
 
 \item{ci}{It is either a number indicating the confidence interval that will
 be plotted around the item fit line or \code{NULL} if no confidence

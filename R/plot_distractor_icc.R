@@ -177,7 +177,8 @@ get_data_plot_distractor_icc <- function(raw_resp, item, key = NULL, bins = 10,
 #' @param add_icc If \code{TRUE}, adds item characteristic curve to the plot.
 #'   Only available if a valid item pool object (\code{ip}) is provided and
 #'   \code{x_axis_scale = "criterion"}. The default value is \code{FALSE}.
-#' @param title Title of the plot
+#' @param title Title of the plot. If the value is \code{NULL}, the plot title
+#'   will be suppressed.
 #' @param n_dodge The number of lines the x-axis tick labels should be written
 #'   to. This is especially useful if the x-axis tick labels overlap with each
 #'   other. The default value is \code{1}, which means all of the labels are
@@ -236,7 +237,7 @@ plot_distractor_icc <- function(raw_resp, item, key = NULL,
     x_axis_scale = x_axis_scale, ip = ip, criterion = criterion)
 
   # Set the graph title:
-  if (title == "")
+  if (!is.null(title) && title == "")
     title <- paste0("Trace Lines for ", ifelse(
       is.numeric(gd$item_id), paste0("Item ", gd$item_id[1]),
       paste0("'", gd$item_id[1], "'")))

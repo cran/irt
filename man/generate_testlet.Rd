@@ -55,7 +55,7 @@ generate_testlet(item_model = "4PL")
 generate_testlet(item_model = "GRM") # Graded Response Model
 generate_testlet(item_model = "GPCM") # Generalized Partial Credit Model
 generate_testlet(item_model = "PCM") # Partial Credit Model
-generate_testlet(item_model = "GPCM2") # Reparametrized GPCM
+generate_testlet(item_model = "GPCM2") # Reparameterized GPCM
 # Mixture of models
 generate_testlet(item_models = c("4PL", "Rasch"))
 generate_testlet(model = c("2PL", "GRM", "Rasch"), n = 11)

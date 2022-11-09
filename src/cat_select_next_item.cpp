@@ -4,9 +4,24 @@
 #include "info.h"
 #include "resp_lik.h"
 #include "resp_loglik.h"
-#include "ability_estimation.h"
+#include "est_ability_eap.h"
+#include "est_ability_map.h"
+#include "est_ability_ml.h"
+#include "est_ability_owen.h"
 //#include <Rcpp/Benchmark/Timer.h>
 using namespace Rcpp;
+
+
+// Forward Declarations
+Rcpp::List return_select_next_item_output(Rcpp::List cd, Rcpp::List est_history,
+                                          Rcpp::List remaining_ip_list,
+                                          Rcpp::List additional_args);
+Rcpp::List process_testlet_cat_cpp(Rcpp::List cd, Rcpp::List est_history,
+                                   Rcpp::List additional_args);
+bool terminate_testlet_cat_cpp(Rcpp::S4 testlet,
+                               Rcpp::List cd,
+                               Rcpp::List est_history,
+                               Rcpp::List additional_args);
 
 
 class CompareDecr
@@ -58,22 +73,22 @@ std::string get_s4_id(Rcpp::S4 element) {
 
 
 //#############################################################################@
-//########################### get_remaining_items ##############################
+//########################### get_remaining_items_cpp ##########################
 //#############################################################################@
 //' Extract the remaining items in the item pool.
 //'
-//' @description This function returns an item pool object of the remaining items in the
-//' item pool after removing all of the items that has been administered.
-//' It receives, as an input, items in the item pool (ip) and the estimate
-//' history (est_history) and returns an Itempool object of the remaining objects.
-//' "est_history" is a list of estimation history and the last element assumed to not
-//' have an $item, i.e. the last element's 'item' field is null.
+//' @description This function returns an Itempool object of the remaining items
+//' in the item pool after removing all of the items that has been administered.
+//' It receives, as an input, CatDesign object which involves an Itempool
+//' object (ip) and the estimate history (est_history) and returns an
+//' Itempool object of the remaining objects. "est_history" is a list of
+//' estimation history and the last element assumed to not have an $item,
+//' i.e. the last element's 'item' field is null.
 //'
-//' If an item from a testlet has been administered, this function will still
-//' return that testlet until all of it's items has been administered. Within that
-//' testlet none of the administered items will be removed to protect the integrity
-//' of the testlet.
-//'
+//' If an item from a testlet has been administered, this function will not
+//' return that testlet. Consequently, even the non-administered items within
+//' the testlet are not included in the output.
+//' 
 //' @param cd  A \code{cat_design} object that holds the test specifications
 //'   of the CAT.
 //' @param est_history is a \code{List} that holds each step of the adaptive
@@ -103,10 +118,9 @@ std::string get_s4_id(Rcpp::S4 element) {
 //' @noRd
 //'
 // [[Rcpp::export]]
-Rcpp::S4 get_remaining_items(Rcpp::List cd, Rcpp::List est_history,
+Rcpp::S4 get_remaining_items_cpp(Rcpp::List cd, Rcpp::List est_history,
                              Rcpp::List additional_args) {
-
-  // Rcout << "get_remaining_items 1  " << std::endl;
+  // Rcout << "get_remaining_items_cpp 1  " << std::endl;
   // Get the item pool
   Rcpp::S4 ip = cd("ip");
   Rcpp::List aa = clone(additional_args);
@@ -148,7 +162,7 @@ Rcpp::S4 get_remaining_items(Rcpp::List cd, Rcpp::List est_history,
     current_element = as<S4>(ip_list[i]); // This can be Testlet or independent item
     // TODO FIX THIS: currently working only for item_ids
     std::string current_element_id = get_s4_id(current_element);
-    
+
     // Check whether current_element is in set_aside_item_list
     if (no_of_set_aside_item_list > 0) {
       std::string temp_id;
@@ -165,8 +179,8 @@ Rcpp::S4 get_remaining_items(Rcpp::List cd, Rcpp::List est_history,
     // if true, it means that item is in set_aside_item_list, so cannot be added to remaining items list
     if (element_administered) continue;
 
-    // Rcout << "  get_remaining_items 2.1 - current_element ID = "
-    // << as<std::string>(current_element.slot("item_id")) << std::endl;
+    // Rcout << "  get_remaining_items_cpp 2.1 - current_element ID = "
+    //  << current_element_id << std::endl;
     if (current_element.inherits("Testlet")) { // current element is Testlet
       // Check whether this testlet is in "testlet" elements of estimate
       // history. If it is then check whether all elements of it is administered.
@@ -174,76 +188,90 @@ Rcpp::S4 get_remaining_items(Rcpp::List cd, Rcpp::List est_history,
       // it will not be added to remaining_ip, if at least one item of the
       // testlet has not been administered, then the current testlet will be
       // added to the remaining_ip.
-      // Rcout << "  get_remaining_items 2.1.1  - current element is testlet" << std::endl;
-      for (int step = 0; step < est_history_size; step++) { // iterate through the steps of est_history
-        // Rcout << "    get_remaining_items 2.1.1.1  - step = " << step << std::endl;
+      // Rcout << "  get_remaining_items_cpp 2.1.1  - current element is testlet" << std::endl;
+
+      // iterate through the steps of est_history
+      for (int step = 0; step < est_history_size; step++) { 
         est_history_step = est_history[step];
-        // check whether the testlet of this estimate history step is NULL,
-        // if yes, go to the next step
-        if (Rf_isNull(est_history_step["testlet"])) {
-          // Rcout << "      get_remaining_items 2.1.1.1.1  - testlet of this step is NULL" << std::endl;
-          continue;
-        } else {
-          // if it is not NULL check whether it the same as current_element
-          // if it is not same, then move to the next estimate history step.
-
-          eh_testlet = as<S4>(est_history_step["testlet"]);
-          // Rcout << "      get_remaining_items 2.1.1.1.2  - testlet of " <<
-          // "this step is NOT NULL. eh_testlet_id = "
-          // << as<std::string>(eh_testlet.slot("testlet_id")) << " ; current_element_id = "
-          // << as<std::string>(current_element.slot("item_id")) << std::endl;
-          if (as<std::string>(eh_testlet.slot("testlet_id")) == current_element_id) {
-            // This means that at least one item from this testlet has been
-            // administered. Now, check whether all of the items in this
-            // testlet has been administered or not. If all of them
-            // administered, then set "element_administered" to "true" and
-            // break the loop of step and move to the next "i". If not
-            // of the items has been administered, then, add this testlet
-            // to the remaining_ip.
-
-            // Count how many times does this "testlet" occurred in
-            // "est_history["testlet"]". If the number of occurrences is equal
-            // to the number of items in the testlet, then it means this
-            // testlet has been administered. Starting at "step", because
-            // until this step this testlet has not been seen.
-            int count_testlet_items = 0;
-            // Rcout << "        get_remaining_items 2.1.1.1.2.1  - "
-            // << "current_element is equal to eh_testlet;  count_testlet_items = "
-            // << count_testlet_items << std::endl;
-            for (int j = step; j < est_history_size; j++) {
-              // Rcout << "          get_remaining_items 2.1.1.1.2.1.1  - sub-step = " << j << std::endl;
-              temp_est_history_step = est_history[j];
-              if (!Rf_isNull(temp_est_history_step["testlet"])) {
-                temp_testlet = as<S4>(temp_est_history_step["testlet"]);
-                if (as<std::string>(temp_testlet.slot("testlet_id")) == current_element_id)
-                  count_testlet_items++;
-              }
-            }
-            // Get the number of items of the testlet
-            temp_list = current_element.slot("item_list");
-            // Rcout << "      get_remaining_items 2.1.1.1.4 -- temp_list size =  "
-            // << temp_list.size() << "  ; count_testlet_items = " << count_testlet_items << std::endl;
-            if (count_testlet_items == temp_list.size()) {
-              // it means that all of the items in the testlet has been administered
-              // Rcout << "      get_remaining_items 2.1.1.1.4.1 element has been administered " << std::endl;
-              element_administered = true;
-            }
-            break;
-          } else continue; // step's testlet is not equal to current_testlet, move to the next step.
+        if (Rf_isNull(est_history_step["testlet"])) continue;
+        eh_testlet = as<S4>(est_history_step["testlet"]);
+        // if true, this means item has been administered
+        if (as<std::string>(eh_testlet.slot("testlet_id")) == current_element_id) {
+          // Rcout << "    get_remaining_items_cpp 2.1.1.1  - current testlet is administered!" << std::endl;
+          element_administered = true;
+          break;
         }
       }
+
+      // for (int step = 0; step < est_history_size; step++) { // iterate through the steps of est_history
+      //   // Rcout << "    get_remaining_items_cpp 2.1.1.1  - step = " << step << std::endl;
+      //   est_history_step = est_history[step];
+      //   // check whether the testlet of this estimate history step is NULL,
+      //   // if yes, go to the next step
+      //   if (Rf_isNull(est_history_step["testlet"])) {
+      //     // Rcout << "      get_remaining_items_cpp 2.1.1.1.1  - testlet of this step is NULL" << std::endl;
+      //     continue;
+      //   } else {
+      //     // if it is not NULL check whether it the same as current_element
+      //     // if it is not same, then move to the next estimate history step.
+      //
+      //     eh_testlet = as<S4>(est_history_step["testlet"]);
+      //     // Rcout << "      get_remaining_items_cpp 2.1.1.1.2  - testlet of " <<
+      //     // "this step is NOT NULL. eh_testlet_id = "
+      //     // << as<std::string>(eh_testlet.slot("testlet_id")) << " ; current_element_id = "
+      //     // << as<std::string>(current_element.slot("item_id")) << std::endl;
+      //     if (as<std::string>(eh_testlet.slot("testlet_id")) == current_element_id) {
+      //       // This means that at least one item from this testlet has been
+      //       // administered. Now, check whether all of the items in this
+      //       // testlet has been administered or not. If all of them
+      //       // administered, then set "element_administered" to "true" and
+      //       // break the loop of step and move to the next "i". If not
+      //       // of the items has been administered, then, add this testlet
+      //       // to the remaining_ip.
+      //
+      //       // Count how many times does this "testlet" occurred in
+      //       // "est_history["testlet"]". If the number of occurrences is equal
+      //       // to the number of items in the testlet, then it means this
+      //       // testlet has been administered. Starting at "step", because
+      //       // until this step this testlet has not been seen.
+      //       int count_testlet_items = 0;
+      //       // Rcout << "        get_remaining_items_cpp 2.1.1.1.2.1  - "
+      //       // << "current_element is equal to eh_testlet;  count_testlet_items = "
+      //       // << count_testlet_items << std::endl;
+      //       for (int j = step; j < est_history_size; j++) {
+      //         // Rcout << "          get_remaining_items_cpp 2.1.1.1.2.1.1  - sub-step = " << j << std::endl;
+      //         temp_est_history_step = est_history[j];
+      //         if (!Rf_isNull(temp_est_history_step["testlet"])) {
+      //           temp_testlet = as<S4>(temp_est_history_step["testlet"]);
+      //           if (as<std::string>(temp_testlet.slot("testlet_id")) == current_element_id)
+      //             count_testlet_items++;
+      //         }
+      //       }
+      //       // Get the number of items of the testlet
+      //       temp_list = current_element.slot("item_list");
+      //       // Rcout << "      get_remaining_items_cpp 2.1.1.1.4 -- temp_list size =  "
+      //       // << temp_list.size() << "  ; count_testlet_items = " << count_testlet_items << std::endl;
+      //       if (count_testlet_items == temp_list.size()) {
+      //         // it means that all of the items in the testlet has been administered
+      //         // Rcout << "      get_remaining_items_cpp 2.1.1.1.4.1 element has been administered " << std::endl;
+      //         element_administered = true;
+      //       }
+      //       break;
+      //     } else continue; // step's testlet is not equal to current_testlet, move to the next step.
+      //   }
+      // }
     } else { // current element is 'Item' object
     // } else if (current_element.inherits("Item")) { // current element is 'Item' object
       // Check the "item" elements of "est_history" steps. If the item has
       // not been administered (i.e. not in est_history), then add it to the
       // remaining_ip.
-      // Rcout << "  get_remaining_items 2.1.1  - current element is item" << std::endl;
+      // Rcout << "  get_remaining_items_cpp 2.2.1  - current element is item" << std::endl;
       for (int step = 0; step < est_history_size; step++) { // iterate through the steps of est_history
         est_history_step = est_history[step];
         eh_item = as<S4>(est_history_step["item"]);
         // if true, this means item has been administered
         if (as<std::string>(eh_item.slot("item_id")) == current_element_id) {
-          // Rcout << "    get_remaining_items 2.1.1.1  - current element is administered!" << std::endl;
+          // Rcout << "    get_remaining_items_cpp 2.2.1.1  - current element is administered!" << std::endl;
           element_administered = true;
           break;
         }
@@ -251,7 +279,7 @@ Rcpp::S4 get_remaining_items(Rcpp::List cd, Rcpp::List est_history,
     }
     if (!element_administered) { // if element has not been administered, add it to the remaining_ip_list
       // item_ids.push_back(as<std::string>(current_element.slot("item_id")));
-      item_ids.push_back(current_element_id);      
+      item_ids.push_back(current_element_id);
       remaining_ip_list.push_back(current_element);
     }
   }
@@ -271,7 +299,7 @@ Rcpp::S4 get_remaining_items(Rcpp::List cd, Rcpp::List est_history,
   // S4 temp_s4;
   // std::string temp_id;
   // List temp_list;
-  // Rcout << "    get_remaining_items 2  " << std::endl;
+  // Rcout << "    get_remaining_items_cpp 2  " << std::endl;
   // // Get the ID's of items in the estimation history
   // for (int i = 0; i < est_history_size; i++)  {
   //   temp_list = est_history[i];
@@ -279,15 +307,15 @@ Rcpp::S4 get_remaining_items(Rcpp::List cd, Rcpp::List est_history,
   //   est_history_id[i] = Rcpp::as<std::string>(temp_s4.slot("item_id"));
   //   //// Rcout << ip_id[i] << "\\n";
   // }
-  // Rcout << "    get_remaining_items 3  " << std::endl;
+  // Rcout << "    get_remaining_items_cpp 3  " << std::endl;
   // for (int i = 0; i < ip_size; i++)  {
   //   temp_s4 = as<S4>(ip_list[i]);
   //   ip_id[i] = Rcpp::as<std::string>(temp_s4.slot("item_id"));
   // }
-  // Rcout << "    get_remaining_items 4  " << std::endl;
+  // Rcout << "    get_remaining_items_cpp 4  " << std::endl;
   // int remaining_counter = 0;
   // for (int i = 0; i < ip_size; i++)  {
-  //   Rcout << "      get_remaining_items 4.1  " << std::endl;
+  //   Rcout << "      get_remaining_items_cpp 4.1  " << std::endl;
   //   temp_s4 = as<S4>(ip_list[i]);
   //   temp_id = Rcpp::as<std::string>(temp_s4.slot("item_id"));
   //   item_in_est_history = false;
@@ -297,7 +325,7 @@ Rcpp::S4 get_remaining_items(Rcpp::List cd, Rcpp::List est_history,
   //       break;
   //     }
   //   }
-  //   Rcout << "      get_remaining_items 4.3  " << std::endl;
+  //   Rcout << "      get_remaining_items_cpp 4.3  " << std::endl;
   //   if (!item_in_est_history) {
   //     Rcout << temp_id << std::endl;
   //     remaining_ip[remaining_counter] = temp_s4;
@@ -306,15 +334,15 @@ Rcpp::S4 get_remaining_items(Rcpp::List cd, Rcpp::List est_history,
   // }
   //
   // int tempint = remaining_ip.size();
-  // Rcout << "    get_remaining_items 5 - tempint = " << tempint << std::endl;
+  // Rcout << "    get_remaining_items_cpp 5 - tempint = " << tempint << std::endl;
   // CharacterVector temptemp;
   // for (int i=0; i < tempint; i++) {
   //   temp_s4 = as<S4>(remaining_ip[i]);
   //   temptemp = temp_s4.slot("item_id");
-  //   Rcout << "      get_remaining_items 5.2  - temptemp = " << temptemp << std::endl;
+  //   Rcout << "      get_remaining_items_cpp 5.2  - temptemp = " << temptemp << std::endl;
   // }
   //
-  // Rcout << "    get_remaining_items 6  " << std::endl;
+  // Rcout << "    get_remaining_items_cpp 6  " << std::endl;
   // S4 ip_new("Itempool");
   // ip_new.slot("item_list") = remaining_ip;
   // return ip_new;
@@ -415,34 +443,8 @@ Rcpp::S4 get_administered_items_cpp(Rcpp::List est_history) {
   return administered_ip;
 }
 
-//########################### get_response_categories ##########################
-// [[Rcpp::export]]
-Rcpp::IntegerVector get_response_categories(Rcpp::S4 item) {
-  // This function returns the possible response options for a given item.
-  // For dichotomous IRT models it will return c(0, 1)
-  // For polytomous IRT models it will return c(0, 1, 2, ...), number of item
-  // thresholds plus one.
-  std::string model = as<std::string>(item.attr("class"));
-  if (model == "GPCM" || model == "GRM" || model == "PCM" ||
-      model == "GPCM2") {
-    Rcpp::NumericVector b;
-    // Item difficulty
-    if (model == "GPCM2") {
-      b = as<Rcpp::NumericVector>(item.slot("d"));
-    } else
-      b = as<Rcpp::NumericVector>(item.slot("b"));
-    IntegerVector output(b.size() + 1);
-    for (int i = 0; i < output.size(); i++)
-      output[i] = i;
-    return output;
-  } else
-    return IntegerVector::create(0, 1);
-}
-
-
-
 //#############################################################################@
-//########################### loglik_est_history ###############################
+//########################### loglik_est_history_cpp ###########################
 //#############################################################################@
 //' Calculate the likelihood or log-likelihood of the estimate history.
 //'
@@ -478,8 +480,8 @@ Rcpp::IntegerVector get_response_categories(Rcpp::S4 item) {
 //' @noRd
 //'
 // [[Rcpp::export]]
-double loglik_est_history(Rcpp::List est_history, double theta,
-                          bool calculate_loglik = true) {
+double loglik_est_history_cpp(Rcpp::List est_history, double theta,
+                              bool calculate_loglik = true) {
 
   // Clone the inputs
   Rcpp::List eh = clone(est_history);
@@ -525,26 +527,34 @@ double loglik_est_history(Rcpp::List est_history, double theta,
 Rcpp::List select_next_item_fisher_max_info_cpp(Rcpp::List cd,
                                                 Rcpp::List est_history,
                                                 Rcpp::List additional_args) {
+  Rcpp::List temp_list;
+  //Rcout << "    select_next_item_fisher_max_info_cpp -- 1" << std::endl;
 
-  int item_no = est_history.size();  // The stage of the test.
+  temp_list = process_testlet_cat_cpp(cd, est_history, additional_args);
+  //Rcout << "    select_next_item_fisher_max_info_cpp -- 2" << std::endl;
+  if (temp_list.size() > 0) return temp_list;
+  Rcpp::List eh = clone(est_history); // this may change, hence clone
+  Rcpp::List aa = clone(additional_args); // this may change, hence clone
+  int item_no = eh.size();  // The stage of the test.
   // Create an item pool of remaining items
-  Rcpp::S4 remaining_ip = get_remaining_items(cd, est_history, additional_args);
+  Rcpp::S4 remaining_ip = get_remaining_items_cpp(cd, eh, aa);
+  //Rcout << "    select_next_item_fisher_max_info_cpp -- 4" << std::endl;
   Rcpp::List remaining_ip_list = remaining_ip.slot("item_list");
-  int no_of_remaining_items = remaining_ip_list.size();
-  if (no_of_remaining_items == 0)
-    stop("There are no items to select from for the next item selection function.");
+  int num_of_remaining_items = remaining_ip_list.size();
+  if (num_of_remaining_items == 0)
+    stop("There are no items to select for the next item selection function.");
   // info_values will hold the information values of each element (item
   // or testlet)
-  Rcpp::NumericVector info_values(no_of_remaining_items);
+  Rcpp::NumericVector info_values(num_of_remaining_items);
 
   // Get the previous (actually current) estimated ability
-  Rcpp::List est_history_last_step = est_history[item_no-1];
+  Rcpp::List est_history_last_step = eh[item_no-1];
   double current_ability_est = est_history_last_step("est_before");
+  //Rcout << "    select_next_item_fisher_max_info_cpp -- 6" << std::endl;
 
   // Since there is one theta, the output will be a matrix with one row. So,
   // it can be converted to a NumericVector.
-  info_values = info_itempool_bare_cpp(current_ability_est, remaining_ip, false,
-                                       false, R_NilValue);
+  info_values = info_itempool_bare_cpp(current_ability_est, remaining_ip);
   // Get the sorted (from lowest to the highest) indices of info_values.
 
   // Rcpp::IntegerVector idx = seq_along(info_values) - 1;
@@ -552,85 +562,85 @@ Rcpp::List select_next_item_fisher_max_info_cpp(Rcpp::List cd,
   Rcpp::IntegerVector idx = order_decreasing(info_values);
 
   // Sort info_values and remaining_ip_list using the sort order of epv_list
-  return Rcpp::List::create(Named("criteria") = info_values[idx],
-                            Named("remaining_ip_list") = remaining_ip_list[idx]);
+  // return Rcpp::List::create(Named("criteria") = info_values[idx],
+  //                           Named("remaining_ip_list") = remaining_ip_list[idx]);
+  return return_select_next_item_output(cd, eh, remaining_ip_list[idx], aa);
 }
 
 
-//#############################################################################@
-//########################### select_next_item_fisher_max_info_cpp #############
-//#############################################################################@
-
-// [[Rcpp::export]]
-Rcpp::S4 select_next_item_fmi_cpp(
-    double theta, Rcpp::S4 ip, int randomesqueN)
-{
-  int num_of_items = as<List>(ip.slot("item_list")).size();
-  int selected_item_no, i, j;
-  double maxInfoThreshold;
-  Rcpp::NumericMatrix ipMatrix;
-  Rcpp::NumericVector infos;
-  Rcpp::List item_list = ip.slot("item_list");
-
-  ipMatrix = get_parameters_itempool_cpp(ip);
-  //Rcpp::NumericMatrix theta_matrix(1,1);
-  //theta_matrix(0,0) = theta;
-  //infos = info_itempool_cpp(theta_matrix, ip, false, false, R_NilValue);
-  // Since there is one theta, the output will be a matrix with one row. So,
-  // it can be converted to a NumericVector.
-  infos = as<Rcpp::NumericVector>(info_itempool_cpp(theta, ip, false, false, R_NilValue));
-
-
-  if (num_of_items <= randomesqueN) {
-    // selected_item_no = rand() % num_of_items + 1;
-    selected_item_no = as<int>(Rcpp::sample(num_of_items, 1));
-  } else {
-    // this indexes vector will hold the indexes of the maximum information
-    // items found so far.
-    IntegerVector indexes(randomesqueN);
-    // maxInfoThreshold is the minimum information value among the top
-    // randomesqueN items.
-    maxInfoThreshold = infos(0,0);
-    // minIndex will hold the index of the minimum element of the indexes
-    // vector.
-    int minIndex = 0;
-    for (j = 0; j < randomesqueN; j++) {
-      indexes[j] = j;
-      if (infos(0,j) < maxInfoThreshold) {
-        maxInfoThreshold = infos(0,j);
-        minIndex = j;
-      }
-    }
-
-    // Top randomesqueN most informative items will be hold here.
-    for (i = randomesqueN; i < num_of_items; i++)
-    {
-      if (infos(0,i) > maxInfoThreshold)
-      {
-        // Find the indexes which has the minimum information, remove it
-        // and replace it with the newly found value.
-
-        indexes[minIndex] = i;
-        maxInfoThreshold = infos(0,i);
-        for (j = 0; j < randomesqueN; j++)
-        {
-          if (infos(0,indexes[j]) < maxInfoThreshold)
-          {
-            maxInfoThreshold = infos(0,indexes[j]);
-            minIndex = j;
-          }
-        }
-      }
-    }
-    // Randomly select one of the items form the top informative items
-    // selected_item_no = indexes[rand() % randomesqueN] + 1;
-    selected_item_no = indexes[as<int>(Rcpp::sample(randomesqueN, 1)) - 1] + 1;
-  }
-
-  // Rcout << "  Stage (sni-fmi) 1 -  selected_item_no: " << selected_item_no << std::endl;
-  // Rcout << "  Stage (sni-fmi) 2 -  ENDING" << std::endl;
-  return item_list[selected_item_no - 1];
-}
+// //#############################################################################@
+// //########################### select_next_item_fmi_cpp ########################@
+// //#############################################################################@
+//
+// Rcpp::S4 select_next_item_fmi_cpp(
+//     double theta, Rcpp::S4 ip, int randomesqueN)
+// {
+//   int num_of_items = as<List>(ip.slot("item_list")).size();
+//   int selected_item_no, i, j;
+//   double maxInfoThreshold;
+//   Rcpp::NumericMatrix ipMatrix;
+//   Rcpp::NumericVector infos;
+//   Rcpp::List item_list = ip.slot("item_list");
+//
+//   ipMatrix = get_parameters_itempool_cpp(ip);
+//   //Rcpp::NumericMatrix theta_matrix(1,1);
+//   //theta_matrix(0,0) = theta;
+//   //infos = info_itempool_cpp(theta_matrix, ip, false, false, R_NilValue);
+//   // Since there is one theta, the output will be a matrix with one row. So,
+//   // it can be converted to a NumericVector.
+//   // infos = as<Rcpp::NumericVector>(info_itempool_cpp(theta, ip, false, false, R_NilValue));
+//   infos = info_itempool_bare_cpp(theta, ip);
+//
+//   if (num_of_items <= randomesqueN) {
+//     // selected_item_no = rand() % num_of_items + 1;
+//     selected_item_no = as<int>(Rcpp::sample(num_of_items, 1));
+//   } else {
+//     // this indexes vector will hold the indexes of the maximum information
+//     // items found so far.
+//     IntegerVector indexes(randomesqueN);
+//     // maxInfoThreshold is the minimum information value among the top
+//     // randomesqueN items.
+//     maxInfoThreshold = infos(0,0);
+//     // minIndex will hold the index of the minimum element of the indexes
+//     // vector.
+//     int minIndex = 0;
+//     for (j = 0; j < randomesqueN; j++) {
+//       indexes[j] = j;
+//       if (infos(0,j) < maxInfoThreshold) {
+//         maxInfoThreshold = infos(0,j);
+//         minIndex = j;
+//       }
+//     }
+//
+//     // Top randomesqueN most informative items will be hold here.
+//     for (i = randomesqueN; i < num_of_items; i++)
+//     {
+//       if (infos(0,i) > maxInfoThreshold)
+//       {
+//         // Find the indexes which has the minimum information, remove it
+//         // and replace it with the newly found value.
+//
+//         indexes[minIndex] = i;
+//         maxInfoThreshold = infos(0,i);
+//         for (j = 0; j < randomesqueN; j++)
+//         {
+//           if (infos(0,indexes[j]) < maxInfoThreshold)
+//           {
+//             maxInfoThreshold = infos(0,indexes[j]);
+//             minIndex = j;
+//           }
+//         }
+//       }
+//     }
+//     // Randomly select one of the items form the top informative items
+//     // selected_item_no = indexes[rand() % randomesqueN] + 1;
+//     selected_item_no = indexes[as<int>(Rcpp::sample(randomesqueN, 1)) - 1] + 1;
+//   }
+//
+//   // Rcout << "  Stage (sni-fmi) 1 -  selected_item_no: " << selected_item_no << std::endl;
+//   // Rcout << "  Stage (sni-fmi) 2 -  ENDING" << std::endl;
+//   return item_list[selected_item_no - 1];
+// }
 
 //#############################################################################@
 //#############################################################################@
@@ -644,7 +654,7 @@ Rcpp::S4 select_next_item_fmi_cpp(
 //#############################################################################@
 //########################### calculate_epv_cpp ################################
 //#############################################################################@
-// [[Rcpp::export]]
+
 double calculate_epv_cpp(std::string var_calc_method,
                          NumericVector current_resp,
                          Rcpp::NumericVector previous_resp,
@@ -666,10 +676,10 @@ double calculate_epv_cpp(std::string var_calc_method,
 
   // an indicator for a testlet
   bool item_is_testlet = candidate_item.inherits("Testlet");
-  List testlet_item_list;
-  S4 testlet_ip("Itempool");
+  Rcpp::List testlet_item_list;
+  Rcpp::S4 testlet_ip("Itempool");
   if (item_is_testlet) {
-    testlet_ip= as<S4>(candidate_item.slot("item_list"));
+    testlet_ip = as<Rcpp::S4>(candidate_item.slot("item_list"));
     testlet_item_list = testlet_ip.slot("item_list");
     // Rcout << "          (calculate_epv_cpp) -- 1.1 -- testlet size = " << testlet_size << std::endl;
   } else {
@@ -693,7 +703,7 @@ double calculate_epv_cpp(std::string var_calc_method,
   // previous answers)estimate, which is not very accurate.
   double P = resp_lik_bare_itempool_cpp(current_resp, current_ability_est, testlet_ip);
 
-  List est_list;
+  Rcpp::List est_list;
 
   // timer.step("P Calculated        "); //@@@@@@@@@@@@@@ TIMER @@@@@@@@@@@@@@@@@@
   if (var_calc_method == "owen") {
@@ -709,7 +719,7 @@ double calculate_epv_cpp(std::string var_calc_method,
 	  //// Calculate the posterior variance given all previous items and
 	  //// current candidate item
       // All responses including current candidate response
-    NumericVector all_resp = previous_resp;
+    Rcpp::NumericVector all_resp = previous_resp;
     // Rcout << "          (calculate_epv_cpp) -- 2.1 --  Previous Resp Size = "
     // << previous_resp.size() << std::endl;
     for (int i = 0; i < current_resp.size(); i++)
@@ -717,7 +727,7 @@ double calculate_epv_cpp(std::string var_calc_method,
 
     // Rcout << "          (calculate_epv_cpp) -- 2.2 --  All Resp Size = "
     // << all_resp.size() << std::endl;
-    List all_items_list;
+    Rcpp::List all_items_list;
     //// Create an item pool of all items including the current candidate.
     // If administered_ip is not 'Itempool', it means that it is empty.
     // For the first item, since there are no administered items, previous
@@ -817,28 +827,33 @@ double calculate_epv_cpp(std::string var_calc_method,
 //
 // Function assumes that when a testlet is selected all of the items in that
 // testlet will be administered.
-// [[Rcpp::export]]
 Rcpp::List select_next_item_mepv_cpp(Rcpp::List cd, Rcpp::List est_history,
                                      Rcpp::List additional_args) {
-
-  // Rcout << "    mepv -- 1 " << std::endl;
+// Rcout << "    mepv -- 1 " << std::endl;
+  Rcpp::List temp_list;
+  temp_list = process_testlet_cat_cpp(cd, est_history, additional_args);
+  if (temp_list.size() > 0) return temp_list;
+  // Rcout << "    mepv -- 2 " << std::endl;
+  
   // Timer timer;           // start the timer   //@@@@@@@@@@@@@@ TIMER @@@@@@@@@@
   // timer.step("\n\n-- Starting Function");   // record the starting point
-  int item_no = est_history.size();  // The stage of the test.
+  Rcpp::List eh = clone(est_history); // this may change, hence clone
+  Rcpp::List aa = clone(additional_args); // this may change, hence clone
+  int item_no = eh.size();  // The stage of the test.
   // Create an item pool of remaining items
-  S4 remaining_ip = get_remaining_items(cd, est_history, additional_args);
-  List remaining_ip_list = remaining_ip.slot("item_list");
-  int no_of_remaining_items = remaining_ip_list.size();
-  if (no_of_remaining_items == 0)
+  Rcpp::S4 remaining_ip = get_remaining_items_cpp(cd, eh, aa);
+  Rcpp::List remaining_ip_list = remaining_ip.slot("item_list");
+  int num_of_remaining_items = remaining_ip_list.size();
+  if (num_of_remaining_items == 0)
     stop("There are no items to select from for the next item selection function.");
   // epv_list will hold the expected posterior variances of each element (item
   // or testlet)
-  NumericVector epv_list(no_of_remaining_items);
+  Rcpp::NumericVector epv_list(num_of_remaining_items);
   // Create an item pool of administered items
   Rcpp::S4 administered_ip("Itempool");
-  administered_ip = get_administered_items_cpp(est_history);
+  administered_ip = get_administered_items_cpp(eh);
 
-  // Rcout << "    mepv -- 2  -- no_of_remaining_items = " << no_of_remaining_items << std::endl;
+  // Rcout << "    mepv -- 4  -- num_of_remaining_items = " << num_of_remaining_items << std::endl;
   // Get the variance calculation method
   Rcpp::List cd_steps = cd["step"];
   Rcpp::List cdi = cd_steps[item_no-1];
@@ -850,23 +865,22 @@ Rcpp::List select_next_item_mepv_cpp(Rcpp::List cd, Rcpp::List est_history,
   Rcpp::DataFrame patterns;
   // Number of patterns for that item or testlet; no_items: 1 or number of testlet items
   int no_patterns, no_items;
-  Rcpp::List temp_list;
   Rcpp::S4 candidate_item;
   // The following will hold response categories of an item temporarily
-  NumericVector resp_categories;
+  Rcpp::NumericVector resp_categories;
   double epv; // Expected posterior variance
   // double mepv = std::numeric_limits<double>::max(); // Minimum Expected posterior variance.
 
   // timer.step("Getting Est History "); //@@@@@@@@@@@@@@ TIMER @@@@@@@@@@@@@@@@@@
   // Get previous responses
   // -1 is for the last item has not been administered yet hence no response
-  NumericVector previous_resp(item_no - 1);
+  Rcpp::NumericVector previous_resp(item_no - 1);
   for (int i = 0; i < item_no - 1; i++) {
-    temp_list = est_history[i];
+    temp_list = eh[i];
     previous_resp[i] = as<int>(temp_list["resp"]);
   }
   // Get the previous (actually current) estimated ability
-  Rcpp::List est_history_last_step = est_history[item_no-1];
+  Rcpp::List est_history_last_step = eh[item_no-1];
   double current_ability_est = est_history_last_step("est_before");
 
   // If var_calc_method is "owen" prior information regarding previous parameters
@@ -885,14 +899,12 @@ Rcpp::List select_next_item_mepv_cpp(Rcpp::List cd, Rcpp::List est_history,
   // timer.step("Before loops        "); //@@@@@@@@@@@@@@ TIMER @@@@@@@@@@@@@@@@@@
   // Rcout << "    mepv -- 6" << std::endl;
   // iterate through all of the remaining items
-  for (int i = 0; i < no_of_remaining_items; i++) {
+  for (int i = 0; i < num_of_remaining_items; i++) {
     // timer.step("Loop " + std::to_string(i) + "             "); //@@@@@@@@@@@@@@ TIMER @@@@@@@@@@@@@@@@@@
     epv = 0;
     // Get the item or testlet
-    candidate_item = as<Rcpp::S4>(remaining_ip_list[i]);    
-    // Rcout << std::endl << std::endl << std::endl
-    // << "      mepv -- 6.1 -- Starting Simulation with Item: " <<
-    // candidate_item_id << std::endl;
+    candidate_item = as<Rcpp::S4>(remaining_ip_list[i]);
+    // Rcout << std::endl << std::endl << std::endl << "      mepv -- 6.1 -- Starting Simulation with Item: " << candidate_item_id << std::endl;
     if (candidate_item.inherits("Testlet")) {
       // Rcout << "        mepv -- 6.2 -- Candidate Testlet" << std::endl;
       // Create possible response patterns of all items within the testlet
@@ -902,10 +914,13 @@ Rcpp::List select_next_item_mepv_cpp(Rcpp::List cd, Rcpp::List est_history,
       temp_list = ip.slot("item_list");  // item list as a list object
       int no_of_testlet_items = temp_list.size(); // number of items in testlet
       // This will hold the response categories of each item:
-      List resp_category_list(no_of_testlet_items);
+      Rcpp::List resp_category_list(no_of_testlet_items);
       for (int j = 0; j < no_of_testlet_items; j++) {
         testlet_item = as<S4>(temp_list[j]);
-        resp_categories = get_response_categories(testlet_item);
+        // Return the possible response categories for a given item. For dichotomous
+        // IRT models it will return c(0, 1). For polytomous IRT models it will
+        // return c(0, 1, 2, ...), number of item thresholds plus one.
+        resp_categories = seq(0, get_max_possible_score_item_cpp(testlet_item));
         resp_category_list[j] = resp_categories;
       }
       // Create all possible patterns of items in the testlet using expand.grid:
@@ -914,7 +929,11 @@ Rcpp::List select_next_item_mepv_cpp(Rcpp::List cd, Rcpp::List est_history,
     } else {
       std::string candidate_item_id = as<std::string>(candidate_item.slot("item_id"));
       // Rcout << "        mepv -- 6.3.1 -- Candidate item" << std::endl;
-      resp_categories = get_response_categories(candidate_item);
+
+      // Return the possible response categories for a given item. For dichotomous
+      // IRT models it will return c(0, 1). For polytomous IRT models it will
+      // return c(0, 1, 2, ...), number of item thresholds plus one.
+      resp_categories = seq(0, get_max_possible_score_item_cpp(candidate_item));
       // Rcout << "        mepv -- 6.3.2 -- Expanding Grid" << std::endl;
       // patterns data frame has only one column where each row represent
       // a different response category
@@ -971,9 +990,521 @@ Rcpp::List select_next_item_mepv_cpp(Rcpp::List cd, Rcpp::List est_history,
 
 
 
-  // Sort epv_list and remaining_ip_list using the sort order of epv_list
-  return List::create(Named("criteria") = epv_list[idx],
-                      Named("remaining_ip_list") = remaining_ip_list[idx]);
+  // // Sort epv_list and remaining_ip_list using the sort order of epv_list
+  // return List::create(Named("criteria") = epv_list[idx],
+  //                     Named("remaining_ip_list") = remaining_ip_list[idx]);
+  return return_select_next_item_output(cd, eh, remaining_ip_list[idx], aa);
+}
+
+//#############################################################################@
+//########################### select_next_item_random_cpp ######################
+//#############################################################################@
+Rcpp::List select_next_item_random_cpp(Rcpp::List cd, Rcpp::List est_history,
+                                       Rcpp::List additional_args) {
+  Rcpp::List temp_list;
+  temp_list = process_testlet_cat_cpp(cd, est_history, additional_args);
+  if (temp_list.size() > 0) return temp_list;
+
+  Rcpp::List eh = clone(est_history); // this may change, hence clone
+  Rcpp::List aa = clone(additional_args); // this may change, hence clone
+  Rcpp::S4 remaining_ip = get_remaining_items_cpp(cd, eh, aa);
+  // Get the remaining item list
+  Rcpp::List remaining_item_list = remaining_ip.slot("item_list");
+  // Create a shuffled integer list
+  Rcpp::IntegerVector int_seq(remaining_item_list.size());
+  std::iota(int_seq.begin(), int_seq.end(), 0);
+  // Feed the shuffled item list to exposure control parameter and return
+  // result
+  return return_select_next_item_output(
+    cd, eh, remaining_item_list[sample(int_seq, int_seq.size())], aa);
+}
+
+
+//#############################################################################@
+//########################### select_next_item_infinite_ip_cpp #################
+//#############################################################################@
+//' When user do not provide an item pool, administer a perfect item to an
+//' examinee at each step of the adaptive test.
+//'
+//' @noRd
+//'
+Rcpp::List select_next_item_infinite_ip_cpp(Rcpp::List cd,
+                                            Rcpp::List est_history,
+                                            Rcpp::List additional_args) {
+  Rcpp::List eh = clone(est_history); // this may change, hence clone
+  Rcpp::List aa = clone(additional_args); // this may change, hence clone
+  int item_no = eh.size();  // The stage of the test.
+  Rcpp::List est_history_last_step = eh[item_no-1];
+
+  //Rcpp::S4 temp_s4("1PL");
+  Rcpp::S4 item("1PL");
+  // Get the latest ability estimate
+  // Set item parameter as the current estimate, i.e. perfect item
+  // is administered to examinee from an infinite item pool
+  item.slot("b") = est_history_last_step["est_before"];
+  item.slot("item_id") = "Item-" + std::to_string(item_no);
+  //item = temp_s4;
+  est_history_last_step["testlet"] = R_NilValue; // Set the selected testlet
+  est_history_last_step["item"] = item;  // Set the selected item
+  eh[item_no-1] = est_history_last_step; // Update est_history
+  return List::create(Named("est_history") = eh,
+                      Named("additional_args") = aa);
+}
+
+
+//#############################################################################@
+//########################### select_next_item_fixed_cpp #######################
+//#############################################################################@
+//' Select an item from a predetermined list of items.
+//'
+//' !!!! FIX THIS for testlets  !!!!
+//'      Currently it automatically selects the
+//'      first item of the testlet with the assumption that testlet items
+//'      has previously been administered.
+//'
+//'
+//'
+//'
+//' @noRd
+//'
+Rcpp::List select_next_item_fixed_cpp(Rcpp::List cd, Rcpp::List est_history,
+                                      Rcpp::List additional_args) {
+  Rcpp::List temp_list;
+  temp_list = process_testlet_cat_cpp(cd, est_history, additional_args);
+  if (temp_list.size() > 0) return temp_list;
+
+  Rcpp::List eh = clone(est_history); // this may change, hence clone
+  Rcpp::List aa = clone(additional_args); // this may change, hence clone
+  int item_no = eh.size();  // The stage of the test.
+  Rcpp::List est_history_last_step = eh[item_no-1];
+  Rcpp::List cd_steps = cd["step"];
+  Rcpp::List cdi = cd_steps[item_no-1];
+  // Create an item pool of remaining items
+  S4 remaining_ip = get_remaining_items_cpp(cd, eh, aa);
+  // Get next_item_par
+  Rcpp::List next_item_par = cdi["next_item_par"];
+  // Get the next item parameter "item_id", which is the ID of the next
+  // administered item.
+  std::string next_item_id = next_item_par("item_id");
+  // Vector that hold the ID's of remaining items in the item pool:
+  Rcpp::StringVector remaining_ip_ids;
+  remaining_ip_ids = get_slot_itempool_cpp(remaining_ip, "id");
+  int temp_int = remaining_ip_ids.size();
+
+  Rcpp::List remaining_item_list = remaining_ip.slot("item_list");
+  for (int i = 0; i < temp_int; i++) {
+    if (next_item_id == as<std::string>(remaining_ip_ids[i])) {
+      // Check whether next_item_id belongs to an item or testlet, if it is
+      // testlet select the first element of the testlet. "next_item_id"
+      // should appear for testlets only once because, in further iterations
+      // a testlet will be caugth automatically by the code at the beginning
+      // of this function and the remaining items of the testlet will be
+      // administered automatically.
+      Rcpp::S4 object = remaining_item_list[i];  // object can be Item or Testlet
+      if (object.inherits("Testlet")) {
+        est_history_last_step["testlet"] = object; // Set the selected testlet
+        object = as<S4>(object.slot("item_list")); // item_list is Itempool
+        temp_list = object.slot("item_list");
+        // Select the first item from the testlet
+        est_history_last_step["item"] = temp_list[0];
+      } else {
+        est_history_last_step["testlet"] = R_NilValue; // Set the selected testlet
+        est_history_last_step["item"] = object;  // Set the selected item
+      }
+      eh[item_no-1] = est_history_last_step; // Update est_history
+      return List::create(Named("est_history") = eh,
+                          Named("additional_args") = aa);
+    }
+  }
+  stop("An item with next_item_id cannot be found within the remaining items.");
+}
+
+//#############################################################################@
+//########################### get_unadministered_testlet_items_cpp #############
+//#############################################################################@
+//' Get list of unadministered items within a testlet
+//'
+//' This function returns the list of unadministered items from a Testlet using
+//' the estimate history of CAT so far. The names of each list element is the
+//' same as the item's ids. Consequently, can be easily used to build an
+//' itempool object.
+//' The function assumes that the testlet items were administered consecutively.
+//'
+//' @return The function will return a list of remaining items in the testlet.
+//'   If there is no remaining item in the testlet, the function will return
+//'   an empty list.
+//'
+//'
+//'
+//' @noRd
+//'
+// [[Rcpp::export]]
+Rcpp::List get_unadministered_testlet_items_cpp(Rcpp::S4 testlet,
+                                                Rcpp::List est_history) {
+  // Output will be a list of remaining items
+  int item_no = est_history.size();  // The stage of the test.
+  // Item pool of testlet
+  Rcpp::S4 temp_s4 = as<S4>(testlet.slot("item_list")); //item pool of testlet
+  // list of items in the testlet
+  Rcpp::List testlet_item_list = temp_s4.slot("item_list");
+  // if there are no items administered so far, return all items in testlet
+  if (item_no == 1) return testlet_item_list;
+
+  int num_of_testlet_items = testlet_item_list.size();
+  Rcpp::List remaining_item_list(num_of_testlet_items);// = Rcpp::List::create();
+  Rcpp::List eh_step;
+  Rcpp::S4 temp_item;
+  // unadministered item IDs
+  Rcpp::StringVector remaining_item_ids(num_of_testlet_items);
+  std::string temp_s4_id;
+  std::string temp_item_id;
+  // a boolean indicating whether to add the testlet item to remaining items
+  // or not.
+  bool add_item;
+  // iterate through all testlet items. If a testlet item has not been
+  // administered yet, add that to the remaining items list.
+  int item_ind = 0; // this will hold the unadminstered item index
+  for (int i = 0; i < num_of_testlet_items; i++) {
+    add_item = true;
+    temp_s4 = as<S4>(testlet_item_list[i]); // select the testlet item
+    temp_s4_id = get_s4_id(temp_s4);
+    // Check whether this testlet item has been administered before:
+    for (int j = item_no - 2; j >= 0; j--) {
+      eh_step = est_history[j];
+      temp_item = as<S4>(eh_step["item"]);
+      std::string temp_item_id = as<std::string>(temp_item.slot("item_id"));
+      if (temp_s4_id == temp_item_id) {
+        add_item = false;
+        break;
+      }
+    }
+    // TODO: Use a preallocated list instead of push_back
+    if (add_item) {
+      remaining_item_list(item_ind) = temp_s4;
+      remaining_item_ids(item_ind) = temp_s4_id;
+      // remaining_item_list.push_back(temp_s4);
+      item_ind++;
+    }
+  }
+  if (item_ind == 0) return Rcpp::List::create();
+  remaining_item_list = remaining_item_list[seq(0, item_ind-1)];
+  remaining_item_list.attr("names") = remaining_item_ids[seq(0, item_ind-1)];
+  return remaining_item_list;
+}
+
+//#############################################################################@
+//########################### select_next_testlet_item_none_cpp ################
+//#############################################################################@
+//' Select remaining testlet items if a testlet has been chosen.
+//' 
+//' @description This item selection method chooses testlet items in the 
+//'   same order they appear in the testlet. 
+//' 
+//' @noRd
+//'
+//'
+// [[Rcpp::export]]
+Rcpp::List select_next_testlet_item_none_cpp(Rcpp::List cd,
+                                             Rcpp::List est_history,
+                                             Rcpp::List additional_args) {
+
+  Rcpp::List default_output = Rcpp::List::create();
+  int item_no = est_history.size();  // The stage of the test.
+  Rcpp::List est_history_last_step = est_history[item_no - 1];
+  // Rcout << "    select_next_testlet_item_none_cpp -- 1 -- item_no = " << item_no << " -- Testlet NULL: " <<  Rf_isNull(est_history_last_step["testlet"]) << std::endl;
+  // If this is first item, no testlets has been selected yet, so no need
+  // for this section. Alternatively, sometimes, item selection functions 
+  // such as "select_next_item_fisher_max_info_cpp", selects a testlet but 
+  // leaves testlet selection to "process_testlet_cat_cpp" function. 
+  if (item_no == 1 && Rf_isNull(est_history_last_step["testlet"])) {
+    // Rcout << "    select_next_testlet_item_none_cpp -- 4 -- First Step -- Returning" << std::endl;
+    return default_output;
+  }
+  Rcpp::S4 testlet("Testlet");
+  // if in this last step testlet has not been selected, it is possible that
+  // this is the second (or later) item in the testlet selection process. But
+  // if the second to the last is not a testlet either, then this function 
+  // should return an empty list.   
+  if (Rf_isNull(est_history_last_step["testlet"])) {
+    // Rcout << "    select_next_testlet_item_none_cpp -- 8 -- Testlet is NULL" << std::endl;
+    Rcpp::List est_history_penultimate_step = est_history[item_no-2];
+    if (Rf_isNull(est_history_penultimate_step["testlet"])) {
+      return default_output;
+    } else {
+      testlet = as<S4>(est_history_penultimate_step["testlet"]);
+    }
+  } else {
+    testlet = as<S4>(est_history_last_step["testlet"]);
+  }
+  // Check whether testlet termination criteria has been met for this testlet
+  if (terminate_testlet_cat_cpp(testlet, cd, est_history, additional_args)) {
+    return default_output;
+  }
+
+  Rcpp::List remaining_item_list = get_unadministered_testlet_items_cpp(
+    testlet, est_history);
+  if (remaining_item_list.size() > 0) { // there is at least one item in
+                                        // the testlet to be administered
+    Rcpp::List eh = clone(est_history);
+    Rcpp::List aa = clone(additional_args);
+    Rcpp::List eh_last_step = clone(est_history_last_step);
+    
+    Rcpp::S4 temp_s4 = as<S4>(remaining_item_list[0]);
+    eh_last_step["testlet"] = testlet; // Set the selected testlet
+    eh_last_step["item"] = temp_s4;  // Set the selected item
+    eh[item_no-1] = eh_last_step; // Update est_history
+    return Rcpp::List::create(Named("est_history") = eh,
+                              Named("additional_args") = aa);
+  } else { // there are not items left in testlet to be administered
+    return default_output;
+  }
+  return default_output;
+}
+
+//#############################################################################@
+//########################### select_next_testlet_item_mfi_cpp #################
+//#############################################################################@
+
+//' Select remaining testlet items using Maximum Fisher Information if a
+//' testlet has been chosen
+//'
+//' @return This function returns either an empty list which means there
+//'   no items in the item pool to be selected. Or, it will return the most
+//'   informative item from the testlet that has not been administered. The
+//'   function will return an updated estimate history with the updated item
+//'   and testlet fields.
+//'
+//'
+//' @noRd
+//'
+//'
+// [[Rcpp::export]]
+Rcpp::List select_next_testlet_item_mfi_cpp(Rcpp::List cd,
+                                            Rcpp::List est_history,
+                                            Rcpp::List additional_args) {
+  Rcpp::List default_output = Rcpp::List::create();
+  int item_no = est_history.size();  // The stage of the test.
+  
+  Rcpp::List est_history_last_step = est_history[item_no - 1];
+  // Get current ability estimate based on the last step. It is important
+  // get the current ability estimate now because, est_history_last_step can 
+  // be set to the step before in case the testlet of the last step is NULL. 
+  double current_ability_est = est_history_last_step("est_before");
+  // Rcout << "    select_next_testlet_item_mfi_cpp -- 1  -- item_no = " << item_no << std::endl;
+  
+  // If this is first item, no testlets has been selected yet, so no need
+  // for this section. Alternatively, sometimes, item selection functions 
+  // such as "select_next_item_fisher_max_info_cpp", selects a testlet but 
+  // leaves testlet selection to "process_testlet_cat_cpp" function. 
+  if (item_no == 1 && Rf_isNull(est_history_last_step["testlet"])) 
+    return default_output;
+  Rcpp::S4 testlet("Testlet");
+  // if in this last step testlet has not been selected, it is possible that
+  // this is the second (or later) item in the testlet selection process. But
+  // if the second to the last is not a testlet either, then this function 
+  // should return an empty list.   
+  if (Rf_isNull(est_history_last_step["testlet"])) {
+    //Rcout << "    select_next_testlet_item_mfi_cpp -- 4 " << std::endl;
+    Rcpp::List est_history_penultimate_step = est_history[item_no-2];
+    if (Rf_isNull(est_history_penultimate_step["testlet"])) {
+      return default_output;
+    } else {
+      testlet = as<S4>(est_history_penultimate_step["testlet"]);
+    }      
+    //est_history_last_step = est_history[item_no-2];
+  } else {
+    testlet = as<S4>(est_history_last_step["testlet"]);
+  }
+  // Check whether testlet termination criteria has been met for this testlet
+  if (terminate_testlet_cat_cpp(testlet, cd, est_history, additional_args)) {
+    return default_output;
+  }
+  // Get the remaining items within the testlet as a list, the list is named
+  // with item id's.
+  Rcpp::List remaining_item_list = get_unadministered_testlet_items_cpp(
+        testlet, est_history);
+  int num_of_remaining_items = remaining_item_list.size();
+  // info_values will hold the information values of each element (item
+  // or testlet)
+  Rcpp::NumericVector info_values(num_of_remaining_items);
+  
+  Rcpp::List eh = clone(est_history); // this may change, hence clone
+  Rcpp::List aa = clone(additional_args); // this may change, hence clone
+  // Get the previous (actually current) estimated ability
+  Rcpp::List eh_last_step = clone(est_history_last_step);
+  // Rcout << "    select_next_testlet_item_mfi_cpp -- 8  -- current_ability_est = " << current_ability_est << "  --  num_of_remaining_items = " << num_of_remaining_items << std::endl;
+    
+  // Create an Itempool from the remaining_item_list
+  Rcpp::S4 remaining_ip("Itempool");
+  remaining_ip.slot("item_list") = remaining_item_list;
+  
+  // Since there is one theta, the output will be a matrix with one row. So,
+  // it can be converted to a NumericVector.
+  info_values = info_itempool_bare_cpp(current_ability_est, remaining_ip);
+  
+  Rcpp::IntegerVector idx = order_decreasing(info_values);
+  
+  Rcpp::S4 temp_s4 = as<S4>(remaining_item_list[idx[0]]);
+  eh_last_step["testlet"] = testlet; // Set the selected testlet
+  eh_last_step["item"] = temp_s4;  // Set the selected item
+  eh[item_no-1] = eh_last_step; // Update est_history
+  return Rcpp::List::create(Named("est_history") = eh,
+                            Named("additional_args") = aa);
+  
+  
+  // Rcpp::List temp_list = est_history[item_no-2];
+  // if (Rf_isNull(temp_list["testlet"]) || item_no <= 1) {
+  //   return default_output;
+  // }
+  // Rcpp::S4 testlet("Testlet");
+  // testlet = as<S4>(temp_list["testlet"]);
+  // // Check whether testlet termination criteria has been met for this testlet
+  // if (terminate_testlet_cat_cpp(testlet, cd, est_history, additional_args)) {
+  //   return default_output;
+  // }
+  // 
+  // // Get the remaining items within the testlet as a list, the list is named
+  // // with item id's.
+  // Rcpp::List remaining_item_list = get_unadministered_testlet_items_cpp(
+  //       testlet, est_history);
+  // int num_of_remaining_items = remaining_item_list.size();
+  // // info_values will hold the information values of each element (item
+  // // or testlet)
+  // Rcpp::NumericVector info_values(num_of_remaining_items);
+  // 
+  // Rcpp::List eh = clone(est_history); // this may change, hence clone
+  // Rcpp::List aa = clone(additional_args); // this may change, hence clone
+  // 
+  // 
+  // // Get the previous (actually current) estimated ability
+  // Rcpp::List est_history_last_step = eh[item_no-1];
+  // double current_ability_est = est_history_last_step("est_before");
+  // 
+  // // Create an Itempool from the remaining_item_list
+  // Rcpp::S4 remaining_ip("Itempool");
+  // remaining_ip.slot("item_list") = remaining_item_list;
+  // 
+  // // Since there is one theta, the output will be a matrix with one row. So,
+  // // it can be converted to a NumericVector.
+  // info_values = info_itempool_bare_cpp(current_ability_est, remaining_ip);
+  // 
+  // Rcpp::IntegerVector idx = order_decreasing(info_values);
+  // 
+  // Rcpp::S4 temp_s4 = as<S4>(remaining_item_list[idx[0]]);
+  // est_history_last_step["testlet"] = testlet; // Set the selected testlet
+  // est_history_last_step["item"] = temp_s4;  // Set the selected item
+  // eh[item_no-1] = est_history_last_step; // Update est_history
+  // return Rcpp::List::create(Named("est_history") = eh,
+  //                           Named("additional_args") = aa);
+}
+
+
+//#############################################################################@
+//########################### terminate_testlet_cat_cpp ########################
+//#############################################################################@
+//' Check whether to terminate the testlet
+//'
+//' @description This function checks whether the termination criteria has
+//' been satisfied for a given testlet. It will check the est_history for
+//' whether testlet's termination met.
+//'
+//' @return A boolean value. If testlet termination criteria has not been met
+//' and more items can be administered from this testlet, it will return
+//' `false`. If termination criteria has been met and no more items can be
+//' administered from the testlet, it will return `true`.
+//'
+//'
+//' @noRd
+//'
+//'
+// [[Rcpp::export]]
+bool terminate_testlet_cat_cpp(Rcpp::S4 testlet,
+                               Rcpp::List cd,
+                               Rcpp::List est_history,
+                               Rcpp::List additional_args) {
+   Rcpp::List testlet_rules = cd["testlet_rules"];
+
+  // get `termination_rule`, if it doesn't exist, set it to "max_item"
+  std::string termination_rule =
+    testlet_rules.containsElementNamed("termination_rule") ?
+    Rcpp::as<std::string>(testlet_rules["termination_rule"]) : "max_item";
+  // get `termination_par`, if it doesn't exist, set it to list(max_item = 999)
+  Rcpp::List termination_par =
+    testlet_rules.containsElementNamed("termination_par") ?
+    Rcpp::as<Rcpp::List>(testlet_rules["termination_par"]) :
+    Rcpp::List::create(Named("max_item") = 999);
+
+  // Rcpp::List remaining_item_list = get_unadministered_testlet_items_cpp(
+  //       testlet, est_history);
+  // int remaining_item_number = remaining_item_list.size();
+  // // if no items left in the testlet, terminate testlet
+  // if (remaining_item_number == 0) return true;
+
+  std::string testlet_id = as<std::string>(testlet.slot("testlet_id"));
+  Rcpp::S4 temp_s4 = as<S4>(testlet.slot("item_list")); //item pool of testlet
+  // list of items in the testlet
+  Rcpp::List testlet_item_list = temp_s4.slot("item_list");
+  int num_of_testlet_items = testlet_item_list.size();
+
+  if (termination_rule == "max_item") {
+    int max_item = as<int>(termination_par["max_item"]);
+    // number of items administered so far from this testlet
+    int num_of_items_administered = 0;
+    int item_no = est_history.size();  // The stage of the test.
+    Rcpp::List eh_step;
+    Rcpp::S4 temp_testlet;
+    for (int j = item_no - 2; j >= 0; j--) {
+      eh_step = est_history[j];
+      if (!Rf_isNull(eh_step["testlet"])) {
+        temp_testlet = as<S4>(eh_step["testlet"]);
+        std::string temp_testlet_id = as<std::string>(
+          temp_testlet.slot("testlet_id"));
+        if (testlet_id == as<std::string>(temp_testlet.slot("testlet_id"))) {
+          num_of_items_administered++;
+        }
+      }
+    }
+    // Rcout << "terminate_testlet_cat_cpp -- num_of_items_administered = " << num_of_items_administered << " -- max_item = " << max_item << " - num_of_testlet_items = " << num_of_testlet_items << std::endl;
+    return num_of_items_administered >= max_item ||
+      num_of_items_administered >= num_of_testlet_items;
+  }
+  // by default return true, i.e. terminate the testlet.
+  return true;
+}
+
+
+//#############################################################################@
+//########################### process_testlet_cat_cpp ##########################
+//#############################################################################@
+//' Process testlet items in CAT step
+//'
+//' This function runs before some of the item selection functions to process
+//' testlets. Usually if the first item from a testlet is administered, the
+//' next item that will be administered will be from the same testlet if
+//' there are available items in the testlet.
+//'
+//' @return The function can return an updated estimate_history element which
+//' can be returned as is or it can return an empty list which means the item
+//' function can find a new item/testlet.
+//'
+//' @noRd
+//'
+//'
+// [[Rcpp::export]]
+Rcpp::List process_testlet_cat_cpp(Rcpp::List cd, Rcpp::List est_history,
+                                   Rcpp::List additional_args) {
+  Rcpp::List testlet_rules = cd["testlet_rules"];
+
+  std::string next_testlet_item_rule =
+    testlet_rules.containsElementNamed("next_item_rule") ?
+    Rcpp::as<std::string>(testlet_rules["next_item_rule"]) : "none";
+  // Rcout << "    process_testlet_cat_cpp -- 2  -- " << next_testlet_item_rule << std::endl;
+  if  (next_testlet_item_rule == "none") {
+    return select_next_testlet_item_none_cpp(cd, est_history, additional_args);
+  } else if (next_testlet_item_rule == "mfi") {
+    return select_next_testlet_item_mfi_cpp(cd, est_history, additional_args);
+  }
+  return Rcpp::List::create();
 }
 
 
@@ -985,7 +1516,6 @@ Rcpp::List select_next_item_mepv_cpp(Rcpp::List cd, Rcpp::List est_history,
 // criteria is mfi, the first element of "remaining_ip_list" is the item or
 // testlet that has the highest information) to the worst item to administer
 // at this stage and returns one item that is selected.
-// [[Rcpp::export]]
 Rcpp::List apply_exposure_control_cpp(Rcpp::List cd, Rcpp::List est_history,
                                       Rcpp::List remaining_ip_list,
                                       Rcpp::List additional_args) {
@@ -1013,7 +1543,7 @@ Rcpp::List apply_exposure_control_cpp(Rcpp::List cd, Rcpp::List est_history,
     int randomesque_n = exposure_control_par("num_items");
     // Sample integers from 0 to (randomesque_n - 1)
     IntegerVector sample_n = sample(randomesque_n, 1) - 1;
-    // Return the itemno_of_remaining_items
+    // Return the item
     return List::create(Named("additional_args") = aa,
                         Named("item") = as<S4>(remaining_ip_list[sample_n[0]]));
   } else if (exposure_control_rule == "sympson-hetter") {
@@ -1032,7 +1562,7 @@ Rcpp::List apply_exposure_control_cpp(Rcpp::List cd, Rcpp::List est_history,
     } else
       set_aside_item_list = aa["set_aside_item_list"];
 
-    int no_of_remaining_items = remaining_ip_list.size();
+    int num_of_remaining_items = remaining_ip_list.size();
     S4 item; // This is either an "item" or "Testlet" object.
     List temp_list;
     double K; // Sympson-Hetter's K value.
@@ -1044,7 +1574,7 @@ Rcpp::List apply_exposure_control_cpp(Rcpp::List cd, Rcpp::List est_history,
     // (by adding it to "set_aside_item_list") and check the second best
     // item for administration.
     // TODO: what happens if no items can be selected for administration?
-    for (int i=0; i < no_of_remaining_items; i++) {
+    for (int i=0; i < num_of_remaining_items; i++) {
       item = as<S4>(remaining_ip_list[i]);
 
       // Rcout << "        apply_exposure_control_cpp 2.2.1 -- sympson-hetter --  item ID: "
@@ -1060,7 +1590,7 @@ Rcpp::List apply_exposure_control_cpp(Rcpp::List cd, Rcpp::List est_history,
 
       u = as<double>(runif(1, 0, 1));
       // Rcout << "        apply_exposure_control_cpp 2.2.1 -- sympson-hetter -- Step " << i+1 << "/"
-      // << no_of_remaining_items << " -- K = " << K  << " -- u = " << u << std::endl;
+      // << num_of_remaining_items << " -- K = " << K  << " -- u = " << u << std::endl;
 
       if (u > K) { // do not administer item and set that item aside
         // Add item to set_aside_item_list
@@ -1069,7 +1599,7 @@ Rcpp::List apply_exposure_control_cpp(Rcpp::List cd, Rcpp::List est_history,
 
         // If none of the items are selected by the exposure control algorighm,
         // the CAT should stop.
-        if (i == no_of_remaining_items - 1) {
+        if (i == num_of_remaining_items - 1) {
           stop("Exposure control function cannot find an appropriate items "
                  "in the item pool to administer.");
         }
@@ -1110,9 +1640,20 @@ Rcpp::List return_select_next_item_output(Rcpp::List cd, Rcpp::List est_history,
   int item_no = eh.size();  // The stage of the test.
   Rcpp::List est_history_last_step = eh[item_no-1];
   if (element.inherits("Testlet")) {
-    Rcpp::List temp_list = element.slot("item_list");
+    // Set the testlet of the last step of estimate history. 
     est_history_last_step["testlet"] = element; // Set the selected testlet
-    est_history_last_step["item"] = as<S4>(temp_list[0]);  // Set the selected item
+    eh[item_no-1] = est_history_last_step; // Update est_history
+    // Select the best item from the testlet based on 
+    Rcpp::List temp_list = process_testlet_cat_cpp(cd, eh, aa);
+    if (temp_list.size() > 0) {
+      return temp_list;
+    } else {
+      stop("Error in Testlet selection. Cannot select a testlet.");
+    }
+    // Rcpp::List temp_list = element.slot("item_list");
+    // est_history_last_step["testlet"] = element; // Set the selected testlet
+    // // set the selected testlet item as the first item of the testlet
+    // est_history_last_step["item"] = as<S4>(temp_list[0]);  // Set the selected item
   // } else if (element.inherits("Item")) {
   } else {
     est_history_last_step["testlet"] = R_NilValue; // Set the selected testlet
@@ -1126,269 +1667,82 @@ Rcpp::List return_select_next_item_output(Rcpp::List cd, Rcpp::List est_history,
 //#############################################################################@
 //########################### select_next_item_cpp #############################
 //#############################################################################@
+//' This function selects an item given an cat design (cd) and estimate
+//' history (est_history). It returns a named list with "item" and it's
+//' "testlet".
+//'
+//' @description
+//' Assumptions of this function:
+//' * This function assumes that the first item is administered and
+//'   item number (item_no) is larger than 1.
+//' * The est_history already have an current estimate, i.e. a valid
+//'   'est' field in the latest element of est_history.
+//' *
+//'  /// Select Next Item Function Rules /////
+//' The rule for next item selection functions such as 
+//'     "select_next_item_fisher_max_info_cpp":
+//'   * Any prescreening or constraints should be applied within the function.
+//'   * Each function will need to get following three arguments:
+//'     - 'cd': CAT Design object
+//'     - 'est_history': Estimate History so far
+//'     - 'additional_args': Additional arguments
+//'   * Each function will return a list with the following named elements:
+//'     - 'est_history': Estimate history where the 'item' and 'testlet'
+//'          elements of the last step is updated with the selected item's ID's
+//'     - 'additional_args': Additional arguments that will be passed to the
+//'          next step.
+//'   * If exposure control can be applied to item selection algorighm, then,
+//'     it should be applied within the item selection sub-function. Exposure
+//'     control is not applied item selection within testlets. I
+//'     within testlet selection function, exposure control is not applied
+//'     to item selection.
+//'   * Currently, for testlets, CAT next item selection functions such as
+//'     `select_next_item_mepv_cpp`, `select_next_item_random_cpp`,
+//'     `select_next_item_fisher_max_info_cpp` first selects a Testlet and 
+//'     run "process_testlet_cat_cpp" which selects a testlet item based on 
+//'     "testlet_rules". 
+//'     After this, each item from the testlet is selected using
+//'     `process_testlet_cat_cpp` fuction. This function will be run at the
+//'     beginning of each item selection method (except infinite one) and
+//'     selects the testlet item separately based on testlet item selection
+//'     rules. If testlet termination criteria is satisfied (checked in
+//'     `process_testlet_cat_cpp` fuction), the item selection function will
+//'     select the next item/testlet using `next_item_selecton` rules.
+//'
+//'
+//'
+//' @noRd
+//'
+//'
+//'
+//'
 // [[Rcpp::export]]
 Rcpp::List select_next_item_cpp(Rcpp::List cd, Rcpp::List est_history,
                                 Rcpp::List additional_args) {
-  // This function selects an item given an cat design (cd) and estimate
-  // history (est_history). It returns a named list with "item" and it's
-  // "testlet".
-  //
-  // Assumptions of this function:
-  // * This function assumes that the first item is administered and
-  //   item number (item_no) is larger than 1.
-  // * The est_history already have an current estimate, i.e. a valid
-  //   'est' field in the latest element of est_history.
-  // *
-
-  // Rcout << "    (select_next_item) 1 -  Beginning" << std::endl;
-  // Timer timer;      // start the timer //@@@@@@@@@@@@@@ TIMER @@@@@@@@@@@@@@@@@@
-  // timer.step("\n\n-- Starting Function");   // record the starting point
-
-  Rcpp::List eh = clone(est_history);
-  Rcpp::List aa = clone(additional_args);
-  int item_no = eh.size();  // The stage of the test.
-  Rcpp::List est_history_last_step = eh[item_no-1];
-  Rcpp::S4 item;
   // Infinite Item Pool
-  if (Rf_isNull(cd["ip"])) {
-    Rcpp::S4 temp_s4("1PL");
-    // Get the latest ability estimate
-    // Set item parameter as the current estimate, i.e. perfect item
-    // is administered to examinee from infinite item pool
-    item.slot("b") = est_history_last_step["est_before"];
-    item.slot("item_id") = "Item-" + std::to_string(item_no);
-    item = temp_s4;
-    est_history_last_step["testlet"] = R_NilValue; // Set the selected testlet
-    est_history_last_step["item"] = item;  // Set the selected item
-    eh[item_no-1] = est_history_last_step; // Update est_history
-    return List::create(Named("est_history") = eh,
-                        Named("additional_args") = aa);
-  }
-  Rcpp::List temp_list;
-  Rcpp::S4 testlet("Testlet");
-  Rcpp::S4 temp_s4;
-
-  // Rcout << "    (select_next_item) 1.2 - Checking testlets - item_no: " << item_no << std::endl;
-  // timer.step("Checking testlets   ");  //@@@@@@@@@@@@@@ TIMER @@@@@@@@@@@@@@@@@@
-
-  // This part may need to be changed later. If the previous
-  // selected item is a testlet, then the rest of the items in that testlet
-  // needs to be administered without searching for new items. In the future
-  // this can be changed.
-  if (item_no > 1) { // If this is first item, no testlets has been selected
-                     // yet, so no need for this section
-    temp_list = eh[item_no-2]; // estimate history step before the last step
-    // item = as<S4>(temp_list["item"]);
-    // Rcout << "      (select_next_item) 1.2.1 - Checking testlets" << std::endl;
-    if (!Rf_isNull(temp_list["testlet"])) { // alternatively use inherits("testlet")
-      // Check whether there are other available items in the testlet to be
-      // administered.
-      // Rcout << "      (select_next_item) 1.2.2 - Checking testlets" << std::endl;
-
-      testlet = as<S4>(temp_list["testlet"]);
-      // Rcout << "      (select_next_item) 1.2.3 - Checking testlets" << std::endl;
-      // temp_list = testlet.slot("item_list");
-      temp_s4 = as<S4>(testlet.slot("item_list")); //item pool of testlet
-      temp_list = temp_s4.slot("item_list");
-      int temp_int = temp_list.size();
-      Rcpp::List eh_step;
-      Rcpp::S4 temp_item;
-      // Rcout << "      (select_next_item) 1.2.4 - Checking testlets" << std::endl;
-      for (int i = 0; i < temp_int; i++) { // iterate through all of the items of the testlet
-        // Rcout << "        (select_next_item) 1.2.4.1 - Checking testlets" << std::endl;
-        bool administer_item = true;
-        temp_s4 = as<S4>(temp_list[i]); // select the testlet item
-        std::string temp_s4_id = get_s4_id(temp_s4);
-        // Rcout << "        (select_next_item) 1.2.4.2 - Checking testlets : administer_item: " << administer_item << " - administered_item: " <<  temp_s4_id << std::endl;
-        // Check whether this testlet item has been administered before:
-        for (int j = item_no - 2; j >= 0; j--) {
-          eh_step = eh[j];
-          temp_item = as<S4>(eh_step["item"]);
-          std::string temp_id = as<std::string>(temp_item.slot("item_id"));
-          // Rcout << "          (select_next_item) 1.2.4.2.1 - Checking testlets - candidate item-ID: " << temp_id << std::endl;
-          if (temp_s4_id == temp_id) {
-            // Rcout << "            (select_next_item) 1.2.4.2.1.1 - Checking testlets" << std::endl;
-            administer_item = false;
-            break;
-          }
-        }
-        // Rcout << "        (select_next_item) 1.2.4.3 - Checking testlets" << std::endl;
-        if (administer_item) { // item in the testlet has not been administered, so administer it right away
-          est_history_last_step["testlet"] = testlet; // Set the selected testlet
-          est_history_last_step["item"] = temp_s4;  // Set the selected item
-          eh[item_no-1] = est_history_last_step; // Update est_history
-          return List::create(Named("est_history") = eh,
-                              Named("additional_args") = aa);
-        } else
-          continue;
-      }
-    }
+  if (!cd.containsElementNamed("ip") || Rf_isNull(cd["ip"])) {
+    return select_next_item_infinite_ip_cpp(cd, est_history, additional_args);
   }
 
   // cdi is the "cAT dESIGN iTEM"
   Rcpp::List cd_steps = cd["step"];
-  Rcpp::List cdi = cd_steps[item_no-1];
-
-  // int temp_int = cdi.size();
-  // if (cdi.containsElementNamed("next_item_rule"))
-  //   // Rcout << "    (select_next_item) 1.1 - Yes - next_item_rule" << std::endl;
-  // if (cdi.containsElementNamed("ability_est_rule"))
-  //   // Rcout << "    (select_next_item) 1.1 - Yes - ability_est_rule" << std::endl;
-  // if (cdi.containsElementNamed("ability_est_par"))
-  //   // Rcout << "    (select_next_item) 1.1 - Yes - ability_est_par" << std::endl;
-
-  // Rcout << "    (select_next_item) 1.3 - Get Exposure and Content Parameters" << std::endl;
-
-  // Rcout << "    (select_next_item) 1.4" << std::endl;
-  ///// Get Parameters to select next item /////
-  // get the selection method and parameters:
+  Rcpp::List cdi = cd_steps[est_history.size()-1]; // get last CatDesign step
+  
+  // get the next item selection method:
   std::string next_item_rule = cdi["next_item_rule"];
-
-  // Rcout << "    (select_next_item) 1.5" << std::endl;
-  // Get exposure_control_rule
-  std::string exposure_control_rule =
-    cdi.containsElementNamed("exposure_control_rule") &&
-    !Rf_isNull(cdi("exposure_control_rule")) ?
-    Rcpp::as<std::string>(cdi("exposure_control_rule")) : "";
-  // Get exposure_control_par
-  Rcpp::List exposure_control_par = cdi.containsElementNamed("exposure_control_par") ?
-    cdi["exposure_control_par"] : List();
-
-  // Rcout << "    (select_next_item) 1.6" << std::endl;
-  // Get content_bal_rule
-  std::string content_bal_rule =
-    cdi.containsElementNamed("content_bal_rule") &&
-    !Rf_isNull(cdi("content_bal_rule")) ?
-    Rcpp::as<std::string>(cdi("content_bal_rule")) : "";
-  // Get content_bal_par
-  Rcpp::List content_bal_par = cdi.containsElementNamed("content_bal_par") ?
-    cdi["content_bal_par"] : List();
-
-  // Rcout << "    (select_next_item) 2" << std::endl;
-
-  // Rcout << "      (select_next_item) 2.2" << std::endl;
-
-  // Rcout << "      (select_next_item) 2.4 - Before if" << std::endl;
-
-  // timer.step("Before if           ");  //@@@@@@@@@@@@@@ TIMER @@@@@@@@@@@@@@@@@@
-
-  ///// Select Next Item /////
+  
   if (next_item_rule == "mfi") {
-    ///////////////////////////////////////////////////////////////////////////
-    /////////////////////////// MFI ///////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////
-
-    temp_list = select_next_item_fisher_max_info_cpp(cd, eh, aa);
-    return return_select_next_item_output(cd, eh,
-                                          temp_list["remaining_ip_list"], aa);
-
-  /////////////////////////////////////////////////////////////////////////////
-  /////////////////////////// MEPV ////////////////////////////////////////////
-  /////////////////////////////////////////////////////////////////////////////
+    // Rcout << "select_next_item_cpp -- MFI item selection -- 4" << std::endl;
+    return select_next_item_fisher_max_info_cpp(cd, est_history, additional_args);
   } else if (next_item_rule == "mepv") {
-    // timer.step("mepv selected       ");  //@@@@@@@@@@@@@@ TIMER @@@@@@@@@@@@@@@@@@
-    // Rcout << "      (select_next_item) 2.4.2 - mepv" << std::endl;
-    temp_list = select_next_item_mepv_cpp(cd, eh, aa);
-
-    // timer.step("mepv item selected  ");  //@@@@@@@@@@@@@@ TIMER @@@@@@@@@@@@@@@@@@
-    // Rcout << "      (select_next_item) 2.4.2.1 - mepv -- apply_exposure_control_cpp " << std::endl;
-
-    // timer.step("mepv exp control end");  //@@@@@@@@@@@@@@ TIMER @@@@@@@@@@@@@@@@@@
-    // Rcout << "      (select_next_item) 2.4.2.2 - mepv" << std::endl;
-
-    // timer.step("Finishing mepv      ");  //@@@@@@@@@@@@@@ TIMER @@@@@@@@@@@@@@@@@@
-    // NumericVector res(timer);
-    // StringVector res_names = res.names();
-    // for (int i=0; i<res.size(); i++) {
-      // Rcout << res_names[i] << ": " << res[i]/1000000 << std::endl;
-    // }                                    //@@@@@@@@@@@@@@ TIMER @@@@@@@@@@@@@@@@@@
-
-    return return_select_next_item_output(cd, eh,
-                                          temp_list["remaining_ip_list"], aa);
-
-  /////////////////////////////////////////////////////////////////////////////
-  /////////////////////////// random //////////////////////////////////////////
-  /////////////////////////////////////////////////////////////////////////////
+    return  select_next_item_mepv_cpp(cd, est_history, additional_args);
   } else if (next_item_rule == "random") {
-    // Create an item pool of remaining items
-    Rcpp::S4 remaining_ip = get_remaining_items(cd, eh, aa);
-    // Rcout << "      (select_next_item) 2.4.4 - random" << std::endl;
-    temp_list = remaining_ip.slot("item_list");; // Get the remaining item list
-    // Create a shuffled integer list
-    Rcpp::IntegerVector int_seq(temp_list.size());
-    std::iota(int_seq.begin(), int_seq.end(), 0);
-    // Feed the shuffled item list to exposure control parameter and return
-    // result
-    return return_select_next_item_output(
-      cd, eh, temp_list[sample(int_seq, int_seq.size())], aa);
-    // // Vector that hold the ID's of remaining items in the item pool:
-    // Rcpp::StringVector  remaining_ip_ids;
-    // remaining_ip_ids = get_slot_itempool_cpp(remaining_ip, "id");
-    // // Rcout << "      (select_next_item) 2.4.2.1 - random" << std::endl;
-    // temp_list = remaining_ip.slot("item_list");
-    // IntegerVector int_sequence = seq_along(temp_list);
-    // // Rcout << "      (select_next_item) 2.4.2.2 - random" << std::endl;
-    // int i = Rcpp::as<int>(sample(int_sequence, 1)) - 1;
-    // // item = as<S4>(temp_list[i]);
-    // est_history_last_step["testlet"] = R_NilValue; // Set the selected testlet
-    // est_history_last_step["item"] = as<S4>(temp_list[i]);  // Set the selected item
-    // eh[item_no-1] = est_history_last_step; // Update est_history
-    // return List::create(Named("est_history") = eh,
-    //                     Named("additional_args") = aa);
-  /////////////////////////////////////////////////////////////////////////////
-  /////////////////////////// fixed ///////////////////////////////////////////
-  /////////////////////////////////////////////////////////////////////////////
+    return select_next_item_random_cpp(cd, est_history, additional_args);
   } else if (next_item_rule == "fixed") {
-    // Create an item pool of remaining items
-    S4 remaining_ip = get_remaining_items(cd, eh, aa);
-    // Rcout << "      (select_next_item) 2.4.5 - fixed" << std::endl;
-    // Get next_item_par
-    Rcpp::List next_item_par = cdi["next_item_par"];
-    // Get the next item parameter "item_id", which is the ID of the next
-    // administered item.
-    std::string next_item_id = next_item_par("item_id");
-    // Vector that hold the ID's of remaining items in the item pool:
-    Rcpp::StringVector  remaining_ip_ids;
-    remaining_ip_ids = get_slot_itempool_cpp(remaining_ip, "id");
-    int temp_int = remaining_ip_ids.size();
-    temp_list = remaining_ip.slot("item_list");
-    for (int i = 0; i < temp_int; i++) {
-      // Rcout << remaining_ip_ids[i] << std::endl;
-      if (next_item_id == as<std::string>(remaining_ip_ids[i])) {
-        // Check whether next_item_id belongs to an item or testlet, if it is
-        // testlet select the first element of the testlet. "next_item_id"
-        // should appear for testlets only once because, in further iterations
-        // a testlet will be caugth automatically by the code at the beginningo
-        // of this function and the remaining items of the testlet will be
-        // administered automatically.
-        Rcpp::S4 object =  temp_list[i];  // object can be Item or Testlet
-        if (object.inherits("Testlet")) {
-          est_history_last_step["testlet"] = object; // Set the selected testlet
-          object = as<S4>(object.slot("item_list")); // item_list is Itempool
-          temp_list = object.slot("item_list");
-          // Select the first item from the testlet
-          est_history_last_step["item"] = temp_list[0];
-        } else {
-          est_history_last_step["testlet"] = R_NilValue; // Set the selected testlet
-          est_history_last_step["item"] = object;  // Set the selected item
-        }
-        eh[item_no-1] = est_history_last_step; // Update est_history
-        return List::create(Named("est_history") = eh,
-                            Named("additional_args") = aa);
-      }
-    }
+    return select_next_item_fixed_cpp(cd, est_history, additional_args);
   } else
-    stop("This method has not been implemented yet. ");
-  // Rcout << "  Stage     (select_next_item) 2.4 - After if" << std::endl;
+    stop("This method has not been implemented yet.");
 
-  est_history_last_step["testlet"] = R_NilValue; // Set the selected testlet
-  est_history_last_step["item"] = item;  // Set the selected item
-  eh[item_no-1] = est_history_last_step; // Update est_history
-  return List::create(Named("est_history") = eh,
-                      Named("additional_args") = aa);
-  //return List::create(Named("item") = item,
-  //                    Named("testlet") = R_NilValue,
-  //                    Named("additional_args") = aa);
 }
 
 

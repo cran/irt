@@ -7,7 +7,7 @@
 \method{summary}{cat_output}(
   object,
   ...,
-  cols = c("true_ability", "est_ability", "se", "test_length")
+  cols = c("examinee_id", "true_ability", "est_ability", "se", "test_length")
 )
 }
 \arguments{
@@ -19,6 +19,8 @@ elements that are "cat_output" class.}
 \item{cols}{The variables that will be included in the summary. There should
 be at least one column. Available columns are:
 \describe{
+  \item{examinee_id}{Examinee ID's if named true theta vector
+    has been provided to \code{cat_sim()} function.}
   \item{true_ability}{True ability of the simulee}
   \item{est_ability}{Ability Estimate}
   \item{se}{Standard Error of the ability estimate}
@@ -26,6 +28,14 @@ be at least one column. Available columns are:
   \item{bias}{The difference between true ability and ability
     estimate}
   \item{mse}{Mean squared error}
+  \item{mean_qip}{Mean of Quality of Item Pool Index.
+          See \code{qip_index()} function for details.}
+  \item{median_qip}{Median of Quality of Item Pool Index.
+          See \code{qip_index()} function for details.}
+  \item{min_qip}{Minimum value of Quality of Item Pool Index.
+          See \code{qip_index()} function for details.}
+  \item{max_qip}{Maximum value of Quality of Item Pool Index.
+          See \code{qip_index()} function for details.}
 }}
 }
 \value{
@@ -46,6 +56,12 @@ cd <- create_cat_design(ip = ip, next_item_rule = 'mfi',
                         termination_par = list(max_item = 10))
 cat_data <- cat_sim(true_ability = rnorm(5), cd = cd)
 summary(cat_data)
+
+# Get only selected columns
+summary(cat_data, cols = c("examinee_id", "true_ability", "est_ability",
+                           "bias"))
+summary(cat_data, cols = c("examinee_id", "true_ability", "est_ability",
+                           "mean_qip", "median_qip", "min_qip"))
 }
 \seealso{
 \code{\link{cat_sim}}

@@ -36,13 +36,5 @@ Show a \code{\link{Testlet-class}} object
 }
 \author{
 Emre Gonulates
-
-Emre Gonulates
-
-Emre Gonulates
-
-Emre Gonulates
-
-Emre Gonulates
 }
 \keyword{internal}

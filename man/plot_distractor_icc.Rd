@@ -61,7 +61,8 @@ arguments provided  the scale defaults to \code{"criterion"}.
 Only available if a valid item pool object (\code{ip}) is provided and
 \code{x_axis_scale = "criterion"}. The default value is \code{FALSE}.}
 
-\item{title}{Title of the plot}
+\item{title}{Title of the plot. If the value is \code{NULL}, the plot title
+will be suppressed.}
 
 \item{n_dodge}{The number of lines the x-axis tick labels should be written
 to. This is especially useful if the x-axis tick labels overlap with each

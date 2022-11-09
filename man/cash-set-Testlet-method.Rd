@@ -2,12 +2,12 @@
 % Please edit documentation in R/itempool-class-methods.R
 \name{$<-,Testlet-method}
 \alias{$<-,Testlet-method}
-\title{Set values to parameters or components of 'Item' class.}
+\title{Set values to parameters or components of \code{\link{Testlet-class}} object}
 \usage{
 \S4method{$}{Testlet}(x, name) <- value
 }
 \arguments{
-\item{x}{A \code{\link{Testlet-class}} object.}
+\item{x}{An \code{\link{Testlet-class}} object.}
 
 \item{name}{Name of the parameter or component.}
 
@@ -17,7 +17,23 @@
 This operation will not return anything.
 }
 \description{
-Set values to parameters or components of 'Item' class.
+Set values to parameters or components of \code{\link{Testlet-class}} object
+}
+\examples{
+tlt <- generate_testlet()
+tlt$testlet_id <- "New-Testlet-ID-111"
+tlt$content <- "Algebra"
+# Set all misc fields like this
+tlt$misc <- list(passage_text = "This is a reading passage.",
+                 passage_lexile = 450)
+
+tlt$passage_text
+# Add a misc field
+tlt$passage_language <- "En-US"
+
+# Remove a misc field
+tlt$passage_language <- NULL
+
 }
 \author{
 Emre Gonulates

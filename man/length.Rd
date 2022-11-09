@@ -36,8 +36,4 @@ length(r)
 }
 \author{
 Emre Gonulates
-
-Emre Gonulates
-
-Emre Gonulates
 }

@@ -13,7 +13,8 @@ using namespace Rcpp;
 //#############################################################################@
 // Run CAT simulation for one examinee.
 // [[Rcpp::export]]
-Rcpp::List cat_sim_single_cpp(Rcpp::List true_ability, Rcpp::List cd) {
+Rcpp::List cat_sim_single_cpp(Rcpp::List true_ability, Rcpp::List cd,
+                              Rcpp::String examinee_id = NA_STRING) {
   // Rcout << "Stage - Beginning" << std::endl;
   // TODO: The following line assumes theta is a vector of length one. For MIRT
   // or other models the following needs to be changed.
@@ -24,9 +25,10 @@ Rcpp::List cat_sim_single_cpp(Rcpp::List true_ability, Rcpp::List cd) {
 
   int max_test_length = cd["max_test_length"];
   Rcpp::List output = Rcpp::List::create(
+    Rcpp::Named("examinee_id") = examinee_id,
     Rcpp::Named("true_ability") = true_ability,
-    Rcpp::Named("est_history") = List(), 
-    Rcpp::Named("additional_args") = List());
+    Rcpp::Named("est_history") = Rcpp::List(),
+    Rcpp::Named("additional_args") = Rcpp::List());
 
   // Rcout << "(cat_sim_single_cpp) - Initial Ability Estimate 2" << std::endl;
 
@@ -105,8 +107,8 @@ Rcpp::List cat_sim_single_cpp(Rcpp::List true_ability, Rcpp::List cd) {
   output.attr("class") = "cat_output";
   return output;
 }
- 
- 
+
+
 void print_cat_progress(int i, int n_sim) {
   auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   std::string s(20, '\0');
@@ -122,26 +124,51 @@ void print_cat_progress(int i, int n_sim) {
 Rcpp::List cat_sim_cpp(Rcpp::List true_ability, Rcpp::List cd, int verbose = 0)
 {
   int n_sim = true_ability.size();
-  List output(n_sim);
-  List temp_list;
+  Rcpp::List output(n_sim);
+  Rcpp::List temp_list;
+  Rcpp::CharacterVector examinee_ids(n_sim);
+
+  if (true_ability.hasAttribute("names")) {
+    examinee_ids = true_ability.attr("names");
+  } else {
+    for(int i = 0; i < n_sim; i++){
+      examinee_ids[i] = "S" + std::to_string(i+1);
+    }
+  }
+
   if (verbose > 0) print_cat_progress(0, n_sim);
-  // Rcout << "cat_sim_cpp  -- Beginning Function  -- n_sim = " << n_sim << std::endl;
   try
   {
-    for (int i = 0; i < n_sim; i++) {
-      // Rcout << "  cat_sim_cpp  -- Beginning New Examinee  -- " << i << std::endl;
-      // The following line asssumes each element of true_ability is a single
-      // numeric variable. For MIRT or CDM-CAT it will not work.
-      output[i] = cat_sim_single_cpp(true_ability[i], cd);
-      if (verbose > 0 && (i+1) % verbose == 0) print_cat_progress(i+1, n_sim);
-      if(i % 5 == 0) Rcpp::checkUserInterrupt();
+    if (cd.inherits("cat_design")) {
+      for (int i = 0; i < n_sim; i++) {
+        // The following line asssumes each element of true_ability is a single
+        // numeric variable. For MIRT or CDM-CAT it will not work.
+        output[i] = cat_sim_single_cpp(true_ability[i], cd, examinee_ids[i]);
+        if (verbose > 0 && (i+1) % verbose == 0) print_cat_progress(i+1, n_sim);
+        if(i % 5 == 0) Rcpp::checkUserInterrupt();
+      }
+    } else {
+      // In case there is a separate cat_design for each examinee, run this.
+      // This part assumes that cat_sim_cpp function is accessed via cat_sim()
+      // function where cat_sim() function already checks whether each element
+      // of the list is a 'cat_design' object and the length of the list is
+      // equal to the length of true_ability. If not, this function will fail.
+      for (int i = 0; i < n_sim; i++) {
+        // The following line asssumes each element of true_ability is a single
+        // numeric variable. For MIRT or CDM-CAT it will not work.
+        output[i] = cat_sim_single_cpp(true_ability[i], cd[i], examinee_ids[i]);
+        if (verbose > 0 && (i+1) % verbose == 0) print_cat_progress(i+1, n_sim);
+        if(i % 5 == 0) Rcpp::checkUserInterrupt();
+      }
     }
   } catch (Rcpp::internal::InterruptedException& e)
   {
     Rcout << "cat_sim interrupted by the user!" << std::endl;
   }
 
-  // Rcout << "cat_sim_cpp  -- Wrapping things  -- " << std::endl;
+  // if true_ability vector/list has names, set the names for output as well
+  output.attr("names") = examinee_ids;
+
   if (n_sim == 1) {
     return output[0];
   } else return output;

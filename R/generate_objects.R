@@ -204,7 +204,7 @@ generate_item <- function(model = "3PL", n_categories = 4,
 #' generate_ip(model = "GRM") # Graded Response Model
 #' generate_ip(model = "GPCM") # Generalized Partial Credit Model
 #' generate_ip(model = "PCM") # Partial Credit Model
-#' generate_ip(model = "GPCM2") # Reparametrized GPCM
+#' generate_ip(model = "GPCM2") # Reparameterized GPCM
 #' # Mixture of models
 #' generate_ip(model = c("4PL", "Rasch"))
 #' generate_ip(model = sample(c("4PL", "GPCM"), 12, TRUE))
@@ -301,7 +301,7 @@ generate_ip <- function(model = "3PL", n = NULL, output = "Itempool",
 #' generate_testlet(item_model = "GRM") # Graded Response Model
 #' generate_testlet(item_model = "GPCM") # Generalized Partial Credit Model
 #' generate_testlet(item_model = "PCM") # Partial Credit Model
-#' generate_testlet(item_model = "GPCM2") # Reparametrized GPCM
+#' generate_testlet(item_model = "GPCM2") # Reparameterized GPCM
 #' # Mixture of models
 #' generate_testlet(item_models = c("4PL", "Rasch"))
 #' generate_testlet(model = c("2PL", "GRM", "Rasch"), n = 11)
@@ -396,8 +396,10 @@ generate_testlet <- function(model = "BTM", n = NULL,
 #'
 generate_resp <- function(ip, theta, prop_missing = 0) {
   if (!is(ip, "Itempool")) ip <- itempool(ip)
-  lapply(theta, sim_resp_response_cpp, ip = ip,
-         prop_missing = prop_missing)
+  result <- sim_resp_response_set_cpp(theta = theta, ip = ip,
+                                      prop_missing = prop_missing,
+                                      examinee_id = as.character(names(theta)))
+  result@response_list
 }
 
 
@@ -440,7 +442,8 @@ generate_resp <- function(ip, theta, prop_missing = 0) {
 generate_resp_set <- function(ip, theta, prop_missing = 0) {
   if (!is(ip, "Itempool")) ip <- itempool(ip)
   sim_resp_response_set_cpp(theta = theta, ip = ip,
-                            prop_missing = prop_missing)
+                            prop_missing = prop_missing,
+                            examinee_id = as.character(names(theta)))
 }
 
 

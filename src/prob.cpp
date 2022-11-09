@@ -58,7 +58,7 @@ double prob_4pm_bare_cpp(double theta, Rcpp::S4 item, int derivative = 0,
 //##############################################################################
 
 // [[Rcpp::export]]
-Rcpp::NumericVector prob_4pm_item_cpp(NumericVector theta, Rcpp::S4 item,
+Rcpp::NumericVector prob_4pm_item_cpp(Rcpp::NumericVector theta, Rcpp::S4 item,
                                       int derivative = 0)
 {
   // This function calculates the probability of correct response for one item
@@ -352,7 +352,7 @@ Rcpp::NumericVector prob_mirt_item_cpp(Rcpp::NumericMatrix theta,
                                        Rcpp::S4 item,
                                        int derivative = 0)
 {
-   unsigned int num_of_theta = theta.nrow();
+  unsigned int num_of_theta = theta.nrow();
   unsigned int noDim = theta.ncol();
   Rcpp::NumericVector singleTheta(noDim);
   Rcpp::NumericVector output(num_of_theta);

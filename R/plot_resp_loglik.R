@@ -44,7 +44,8 @@ get_data_plot_resp_loglik <- function(ip, resp, theta_range = c(-4,4),
 #'   are minimum and maximum theta values, or, (b) a numeric vector of length
 #'   more than two where values represents the theta values that will be
 #'   plotted.
-#' @param title Title of the Plot
+#' @param title Title of the plot. If the value is \code{NULL},
+#'   the plot title will be suppressed.
 #' @param likelihood If \code{TRUE}, likelihood function will be plotted
 #'          instead of log-likelihood graph. Default value is \code{FALSE}.
 #' @param show_estimate If \code{TRUE} the maximum likelihood ability estimate
@@ -73,21 +74,22 @@ get_data_plot_resp_loglik <- function(ip, resp, theta_range = c(-4,4),
 #' list each of which contains item parameters. And the name of the test also.
 #' }
 #' @examples
+#' \dontrun{
 #' ip <- generate_ip(n = 9)
 #' resp_set <- generate_resp_set(ip = ip, theta = rnorm(10))
 #'
 #' # Plot second item's response log-likelihood function
 #' plot_resp_loglik(ip, resp_set[[2]])
 #'
-#' # # Plot response likelihood function of second item
-#' # plot_resp_loglik(ip, resp_set[[2]], likelihood = TRUE)
-#' #
-#' # # Plot using base r graphics
-#' # plot_resp_loglik(ip, resp_set[[2]], likelihood = TRUE, base_r_graph = TRUE)
-#' #
-#' # # Suppress the MLE estimate
-#' # plot_resp_loglik(ip, resp_set[[4]], show_estimate = FALSE)
+#' # Plot response likelihood function of second item
+#' plot_resp_loglik(ip, resp_set[[2]], likelihood = TRUE)
 #'
+#' # Plot using base r graphics
+#' plot_resp_loglik(ip, resp_set[[2]], likelihood = TRUE, base_r_graph = TRUE)
+#'
+#' # Suppress the MLE estimate
+#' plot_resp_loglik(ip, resp_set[[4]], show_estimate = FALSE)
+#' }
 plot_resp_loglik <- function(ip, resp, theta_range = c(-5,5), title = "",
                              likelihood = FALSE, show_estimate = TRUE,
                              base_r_graph = FALSE, suppress_plot = FALSE,
@@ -99,7 +101,7 @@ plot_resp_loglik <- function(ip, resp, theta_range = c(-5,5), title = "",
   gd <- get_data_plot_resp_loglik(ip = ip, resp = resp,
                                   theta_range = theta,
                                   likelihood = likelihood)
-  if (title == "")
+  if (!is.null(title) && title == "")
     title <- ifelse(likelihood, "Likelihood Graph", "Log-Likelihood Graph")
   if (show_estimate) {
     xIntercept <- gd$theta[which.max(gd$value)]

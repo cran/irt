@@ -57,7 +57,7 @@ bool check_validity_response_set_cpp(Rcpp::S4 resp_set, Rcpp::S4 ip) {
     for (int j = 0; j < resp_item_ids.size(); j++) {
       if (std::find(ip_item_ids.begin(), ip_item_ids.end(),
                     resp_item_ids[j]) == ip_item_ids.end()) {
-        stop("Invalid 'item_id'. All of the 'item_id's should be in 'ip'.");
+        stop("Invalid 'ip'. All of the items in the response data should be in the item pool, ip.");
       }
     }
   }

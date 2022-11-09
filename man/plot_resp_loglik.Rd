@@ -28,7 +28,8 @@ are minimum and maximum theta values, or, (b) a numeric vector of length
 more than two where values represents the theta values that will be
 plotted.}
 
-\item{title}{Title of the Plot}
+\item{title}{Title of the plot. If the value is \code{NULL},
+the plot title will be suppressed.}
 
 \item{likelihood}{If \code{TRUE}, likelihood function will be plotted
 instead of log-likelihood graph. Default value is \code{FALSE}.}
@@ -67,6 +68,7 @@ list each of which contains item parameters. And the name of the test also.
 }
 
 \examples{
+\dontrun{
 ip <- generate_ip(n = 9)
 resp_set <- generate_resp_set(ip = ip, theta = rnorm(10))
 
@@ -81,7 +83,7 @@ plot_resp_loglik(ip, resp_set[[2]], likelihood = TRUE, base_r_graph = TRUE)
 
 # Suppress the MLE estimate
 plot_resp_loglik(ip, resp_set[[4]], show_estimate = FALSE)
-
+}
 }
 \author{
 Emre Gonulates

@@ -6,10 +6,6 @@
 
 using namespace Rcpp;
 
-
-
-
-
 //##############################################################################
 //########################### lz_response_cpp ##################################
 //##############################################################################
@@ -39,7 +35,7 @@ double lz_response_cpp(Rcpp::S4 resp, double theta,
     p = prob_bare_item_cpp(Rcpp::NumericVector::create(theta), item, 0, -9, false);
 
     // Rcout << "p = " << p.size() << " - p: " << p << "  - item_id: " <<
-    //   item_id << "  -  item_id: " << as<std::string>(item.slot("item_id")) <<  std::endl;
+    //  item_id << "  -  item_id: " << as<std::string>(item.slot("item_id")) <<  std::endl;
 
     // Rcout << "item_id: " << as<std::string>(item.slot("id")) <<
     //   "; a = " << as<double>(item.slot("a")) <<
@@ -53,6 +49,7 @@ double lz_response_cpp(Rcpp::S4 resp, double theta,
 
     if (check_item_model(item, false, true)) {
       l0 = l0 + log(p[scores[k]]);
+      
       for (int j = 0; j < p.size(); j++) {
         E = E + p[j] * log(p[j]);
         // Calculate Variance of l0
@@ -60,10 +57,16 @@ double lz_response_cpp(Rcpp::S4 resp, double theta,
           V = V + p[j] * p[h] * log(p[j]) * log(p[j]/p[h]);
         }
       }
+      // Rcout << item_id << " -- scores[k] = " << scores[k] << " -- p[scores[k]] = " 
+      //   << p[scores[k]] << " -- log(p[scores[k]]) = " << log(p[scores[k]]) << std::endl;
+      // Rcout << item_id << " -- l0 = " << l0 << "  E = " << E << "  V = " << V 
+      //   << "  -  lz = " << (l0 - E) / sqrt(V) << std::endl << std::endl;
     } else if ( check_item_model(item, true, true)) {
       l0 = l0 + scores[k] * log(p[1]) + (1 - scores[k]) * log(p[0]);
       E =  E + p[1] * log(p[1]) + p[0] * log(p[0]);
       V = V + p[1] * p[0] * pow(log(p[1] / p[0]), 2);
+      // Rcout << item_id << " -- l0 = " << l0 << "  E = " << E << "  V = " << V 
+      //  << "  -  lz = " << (l0 - E) / sqrt(V) << std::endl << std::endl;
     } else {
       stop("Invalid item model. lz cannot be calculated for this item.");
     }

@@ -12,6 +12,7 @@ plot_info(
   title = "",
   suppress_plot = FALSE,
   base_r_graph = FALSE,
+  separate_testlet = TRUE,
   ...
 )
 }
@@ -31,7 +32,8 @@ plotted.}
 focused whereas rest of the items' information functions needed to be on
 the background, provide item numbers or item ID's to be focused.}
 
-\item{title}{Title of the plot}
+\item{title}{Title of the plot. If the value is \code{NULL},
+the plot title will be suppressed.}
 
 \item{suppress_plot}{If \code{FALSE} the function will print the plot. If
 \code{TRUE}, function will return the plot object. Default value is
@@ -41,6 +43,12 @@ the background, provide item numbers or item ID's to be focused.}
 graphics. If \code{FALSE} the function will check whether 'ggplot2' package
 is installed. If it is installed, it will use 'ggplot2' package for the
 plot. The default value is \code{FALSE}.}
+
+\item{separate_testlet}{A logical value indicating whether to separate
+items within testlets or not. If \code{TRUE}, information values of all
+items within the testlet are plotted separately. if \code{FALSE},
+information functions of items within testlets are combined (like test
+information function) and plotted that way along with standalone items.}
 
 \item{...}{Extra parameters that will pass to \code{geom_line}.}
 }
@@ -78,6 +86,18 @@ plot_info(ip, focus_item = 7, alpha = .7, color = "gray")
 
 plot_info(ip, focus_item = "Item_3", color = "green", base_r_graph = TRUE)
 
+
+# Information Plots with Testlets
+ip <- c(testlet(itempool(b = c(-1, 1), item_id = c("t1-i1", "t1-i2"),
+                         D = 1.702), testlet_id = "t1"),
+        testlet(itempool(b = c(-2, 0, 2),
+                         item_id = c("t2-i1", "t2-i2", "t2-i3"),
+                         D = 1.702), testlet_id = "t2"),
+        item(b = -1.5, item_id = "i1", D = 1.702),
+        item(b = 0.25, item_id = "i2", D = 1.702),
+        item(b = 1.5, item_id = "i3", D = 1.702))
+plot_info(ip)
+plot_info(ip, separate_testlet = FALSE)
 }
 \author{
 Emre Gonulates

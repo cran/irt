@@ -19,12 +19,8 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
-library(irt)
-```
-
-This vignettes covers the psychometric models that has been implemented in 
-`irt` package. 
+This vignettes covers the psychometric models that are implemented in 
+the `irt` package. 
 
 
 # Item Models
@@ -39,7 +35,7 @@ This vignettes covers the psychometric models that has been implemented in
 | GRM   | Graded Response Model                           | a, b, D       |
 | PCM   | Partial Credit Model                            | b             |
 | GPCM  | Generalized Partial Credit Model                | a, b, D       |
-| GPCM2 | Reparametrized Generalized Partial Credit Model | a, b, d, D    |
+| GPCM2 | Reparameterized Generalized Partial Credit Model | a, b, d, D    |
 
 
 ## Rasch Model
@@ -56,11 +52,13 @@ where , $b_j$ is the item difficulty (or threshold) of item $j$.
 User needs to specify only the item difficulty parameter: 
 
 ```{r}
+library(irt)
+
 itm_rasch <- item(b = -1.29)
 itm_rasch
 ```
 
-The probability of correct response at $\theta = -.65$ is: 
+The probability of each response option at $\theta = -.65$ is: 
 
 ```{r}
 prob(ip = itm_rasch, theta = -0.65)
@@ -92,7 +90,7 @@ itm_1pl <- item(b = 0.83, D = 1)
 itm_1pl
 ```
 
-The probability of correct response at $\theta = .73$ is: 
+The probability of each response option at $\theta = .73$ is: 
 
 ```{r}
 prob(ip = itm_1pl, theta = 0.73)
@@ -125,7 +123,7 @@ itm_2pl <- item(a = .94, b = -1.302, D = 1)
 itm_2pl
 ```
 
-The probability of correct response at $\theta = -0.53$ is: 
+The probability of each response option at $\theta = -0.53$ is: 
 
 ```{r}
 prob(ip = itm_2pl, theta = -0.53)
@@ -160,7 +158,7 @@ itm_3pl <- item(a = 1.51, b = 2.04, c = .16, D = 1.7)
 itm_3pl
 ```
 
-The probability of correct response at $\theta = 1.5$ is: 
+The probability of each response option at $\theta = 1.5$ is: 
 
 ```{r}
 prob(ip = itm_3pl, theta = 1.5)
@@ -195,7 +193,7 @@ itm_4pl <- item(a = 1.2, b = -.74, c = .22, d = .99, D = 1.7)
 itm_4pl
 ```
 
-The probability of correct response at $\theta = 1.2$ is: 
+The probability of each response option at $\theta = 1.2$ is: 
 
 ```{r}
 prob(ip = itm_4pl, theta = 1.2)
@@ -319,7 +317,7 @@ plot(itm_pcm)
 
 <!-- ####################################################################### -->
 
-## Re-parametrized Generalized Partial Credit Model (GPCM2)
+## Reparameterized Generalized Partial Credit Model (GPCM2)
 
 For an examinee $i$ with ability $\theta_i$, the probability of a 
 response $k$ to an item $j$ with possible scores $k = 0, 1, \ldots, m_j$: 

@@ -56,6 +56,4 @@ c(ip, item1, item2)
 }
 \author{
 Emre Gonulates
-
-Emre Gonulates
 }

@@ -129,6 +129,8 @@ convert_resp <- function(resp, examinee_id_col = NULL, item_id_col = NULL,
 #' @param bold whether the text should appear in bold
 #' @param italic whether the text should appear in italic
 #'
+#' @author Emre Gonulates
+#'
 #' @keywords internal
 #'
 #' @noRd
@@ -214,6 +216,8 @@ format_text <- function(text, fg = "black",
 #'
 #' @keywords internal
 #'
+#' @author Emre Gonulates
+#'
 #' @noRd
 #'
 is_integer <- function(x, tol = 10 * .Machine$double.eps) {
@@ -255,6 +259,8 @@ is_integer <- function(x, tol = 10 * .Machine$double.eps) {
 #'
 #' @keywords internal
 #'
+#' @author Emre Gonulates
+#'
 #' @noRd
 #'
 #' @examples
@@ -279,7 +285,7 @@ is_single_value <- function(x, class = NULL, accept_na = FALSE) {
   #     length(accept_na) != 1 || !is.logical(accept_na))
   #   stop("Invalid 'accept_na'.")
   if (is.null(x)) return(FALSE)
-  if (!accept_na && is.na(x)) return(FALSE)
+  if (!accept_na && all(is.na(x))) return(FALSE)
   # First check if the value is a single value
   if (!is.atomic(x) || is.matrix(x) || length(x) > 1) return(FALSE)
 
@@ -321,6 +327,8 @@ is_single_value <- function(x, class = NULL, accept_na = FALSE) {
 #'
 #' @keywords internal
 #'
+#' @author Emre Gonulates
+#'
 #' @noRd
 #'
 #' @examples
@@ -328,7 +336,10 @@ is_single_value <- function(x, class = NULL, accept_na = FALSE) {
 #' is_atomic_vector(1:6, class = "integer")
 #' is_atomic_vector(1:6, class = "numeric")
 #' is_atomic_vector(1:6, class = c("integer", "numeric"))
-is_atomic_vector <- function(x, class = NULL, accept_na = TRUE) {
+is_atomic_vector <- function(
+  x,
+  class = c("numeric", "integer", "character", "logical", "complex", "Date"),
+  accept_na = TRUE) {
   # if (is.null(accept_na) || !is.atomic(accept_na) || is.matrix(accept_na) ||
   #     length(accept_na) != 1 || !is.logical(accept_na))
   #   stop("Invalid 'accept_na'.")
@@ -348,4 +359,45 @@ is_atomic_vector <- function(x, class = NULL, accept_na = TRUE) {
 
   return(class(x) %in% class)
 }
+
+
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%####
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%% rmsd %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#' Calculate Root Mean Square Deviation (RMSD)
+#'  (or Root Mean Square Error (RMSE))
+#'
+#' @description The formula for RMSD is:
+#'
+#' \deqn{RMSD = \sqrt{\frac{\sum_{i = 1}^n(\hat \theta - \theta)^2}{n}}}
+#'
+#' @param est A numeric vector of estimated values
+#' @param true A numeric vector of true values
+#'
+#' @return A number representing RMSD.
+#'
+#' @author Emre Gonulates
+#'
+#' @keywords internal
+#'
+#' @examples
+#' true <- rnorm(10)
+#' est <- true + runif(10)
+#'
+rmsd <- function(est, true) {
+
+  if (!is_atomic_vector(true, class = c("numeric", "integer")) ||
+      !is_atomic_vector(est, class = c("numeric", "integer")))
+    stop("Both 'est' and 'true' should be numeric.")
+  if (length(est) != length(true))
+    stop("The lengths of 'est' and 'true' should be equal")
+
+  sqrt(mean((est - true)^2, na.rm = TRUE))
+}
+
 

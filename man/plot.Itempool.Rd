@@ -15,6 +15,7 @@
   suppress_plot = FALSE,
   legend_title = NULL,
   base_r_graph = FALSE,
+  y_lim = NULL,
   ...
 )
 }
@@ -43,9 +44,13 @@ will be 0-1 instead of 0 to the number of items).}
 focused. If \code{type = "pars"}, this item will be shown with a
 red dot to distinguish it from others.}
 
-\item{title}{Title of the plot. Default is \code{NULL}. If \code{tcc} is
-\code{TRUE} it will be 'Test Characteristic Curve', if \code{FALSE}
-it will be 'Item Characteristic Curve'.}
+\item{title}{Title of the plot. Set \code{title = NULL} to suppress the plot
+title. The default is \code{""}.
+If \code{type = "tcc"} and \code{title = ""}, title will be 'Test
+Characteristic Curve'. If \code{type = "icc"} and \code{title = ""}, title
+will be 'Item Characteristic Curve'. If \code{type = "hist"} or
+\code{type = "pars"} and \code{title = ""}, title will be
+'Parameter Values'.}
 
 \item{suppress_plot}{If \code{FALSE} the function will print the plot. If
 \code{TRUE}, function will return the plot object. Default value is
@@ -57,6 +62,9 @@ it will be 'Item Characteristic Curve'.}
 graphics. If \code{FALSE} the function will check whether 'ggplot2' package
 is installed. If it is installed, it will use 'ggplot2' package for the
 plot. The default value is \code{FALSE}.}
+
+\item{y_lim}{A numeric vector of length two representing the lower and
+upper bound of y-axis.}
 
 \item{...}{Additional arguments that will be passed to \code{geom_line}}
 }

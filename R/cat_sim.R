@@ -1,3 +1,60 @@
+
+CAT_FIRST_ITEM_RULES <- list(
+  fixed_theta = list(par_names = c("theta")),
+  theta_range = list(par_names = c("min_theta", "max_theta"))
+  )
+
+CAT_NEXT_ITEM_RULES <- list(
+  random = list(par_names = NULL),
+  mfi = list(par_names = NULL),
+  # b_optimal = list(par_names = NULL),
+  fixed = list(par_names = c("item_id")),
+  mepv = list(par_names = c("var_calc_method"))
+  )
+
+CAT_ABILITY_EST_RULES <- list(
+  eap = list(par_names = c("prior_dist", "prior_par", "min_theta",
+                           "max_theta", "no_of_quadrature")),
+  map = list(par_names = c("prior_dist", "prior_par", "min_theta",
+                           "max_theta", "tol")),
+  map_ml = list(par_names = c("prior_dist", "prior_par", "min_theta",
+                           "max_theta", "tol")),
+  ml = list(par_names = c("min_theta", "max_theta", "criterion")),
+  # "eap_ml" = list(par_names = c("prior_dist", "prior_par", "min_theta",
+  #                               "max_theta", "no_of_quadrature")),
+  # "sum_score" = list(par_names = NULL),
+  owen = list(par_names = c("prior_mean", "prior_var")),
+  sum_score = list(par_names = NULL)
+  )
+
+CAT_EXPOSURE_CONTROL_RULES <- list(
+  randomesque  = list(par_names = c("num_items")),
+  `sympson-hetter` = list(par_names = NULL)
+  )
+
+# content_bal_rule <- c("max_discrepancy")
+CAT_CONTENT_BAL_RULES <- c()
+
+CAT_TERMINATION_RULES <- list(
+  min_item = list(par_names = "min_item"),
+  max_item = list(par_names = "max_item"),
+  min_se = list(par_names = "min_se"),
+  sprt = list(par_names = c("theta_0", "theta_1", "alpha", "beta"))
+  )
+
+CAT_ABILITY_TYPES <- c(
+  # "multi_theta", "cdm", "raw_score",
+  "theta"
+  )
+
+CAT_TESTLET_RULES <- list(
+  next_item_rule = c("none", "mfi"),
+  termination_rule = c("max_item"),
+  termination_par = c("max_item")
+  )
+
+
+
 ###############################################################################@
 ########################### create_cat_design ##################################
 ###############################################################################@
@@ -164,7 +221,8 @@
 #'                  A vector of prior parameters.
 #'
 #'                  * For normal distribution \code{c(0, 1)}, see \code{?dnorm}
-#'                  * For uniform distribution \code{c(-3, 3)}, see \code{?dunif}
+#'                  * For uniform distribution \code{c(-3, 3)}, see
+#'                    \code{?dunif}
 #'
 #'                  The default value is \code{c(0, 1)}.
 #'                }
@@ -184,6 +242,44 @@
 #'                  more precise (and slower) the estimates will be.
 #'
 #'                  The default value is \code{50}.
+#'                }
+#'              }
+#'            }
+#'            \item{\strong{"map"}}{
+#'            Maximum-a-posteriori (Bayes Modal).
+#'              Required parameters:
+#'              \describe{
+#'                \item{prior_dist}{
+#'                  Distribution of the prior distribution. Currently only
+#'                  available value is:
+#'
+#'                  * \code{norm} for normal distribution,
+#'
+#'                  The default value is \code{norm}.
+#'                }
+#'                \item{prior_par}{
+#'                  A vector of prior parameters.
+#'
+#'                  * For normal distribution \code{c(0, 1)}, see \code{?dnorm}
+#'                  * For uniform distribution \code{c(-3, 3)}, see
+#'                    \code{?dunif}
+#'
+#'                  The default value is \code{c(0, 1)}.
+#'                }
+#'                \item{min_theta}{
+#'                  Minimum possible value of theta. It is a lower bound.
+#'
+#'                  The default value is \code{-4}.
+#'                }
+#'                \item{max_theta}{
+#'                  Maximum possible value of theta. It is an upper bound.
+#'
+#'                  The default value is \code{4}.
+#'                }
+#'                \item{tol}{
+#'                  The tolerance (precision) level of the estimate.
+#'
+#'                  The default value is \code{0.00001}.
 #'                }
 #'              }
 #'            }
@@ -247,6 +343,35 @@
 #'                  The number of quadrature, more specifically the number of
 #'                  bins the theta range should be divided. The more bins, the
 #'                  more precise (and slower) the estimates will be.
+#'                }
+#'              }
+#'            }
+#'            \item{\strong{"map_ml"}}{
+#'              Maximum-a-posteriori until an imperfect item response string,
+#'              then switch to Maximum Likelihood estimation.
+#'              Required parameters:
+#'              \describe{
+#'                \item{prior_dist}{
+#'                  Distribution of the prior distribution.
+#'
+#'                  Available values:
+#'
+#'                  \code{norm} for normal distribution,
+#'                }
+#'                \item{prior_par}{
+#'                  A vector of prior parameters.
+#'                  For normal distribution \code{c(0, 1)}, see \code{?dnorm}
+#'                }
+#'                \item{min_theta}{
+#'                  Minimum possible value of theta. It is a lower bound.
+#'                }
+#'                \item{max_theta}{
+#'                  Maximum possible value of theta. It is an upper bound.
+#'                }
+#'                \item{tol}{
+#'                  The tolerance (precision) level of the estimate.
+#'
+#'                  The default value is \code{0.00001}.
 #'                }
 #'              }
 #'            }
@@ -388,6 +513,48 @@
 #'
 #'          \strong{Default}: \code{list(min_item = 10, min_se = 0.33,
 #'                                       max_item = 20)}
+#' @param testlet_rules A \code{list} containing arguments that specify the
+#'          rules that will be used within a testlet.
+#'
+#'          The default value is \code{NULL} where the following rules will
+#'          be applied if there is a testlet:
+#'          \code{list(next_item_rule = "none", termination_rule = "max_item",
+#'                     termination_par = list(max_item = 999))} where if a
+#'          testlet is selected all items of this testlet is selected (unless
+#'          the a testlet has more than 999 items.). Each item is selected
+#'          with the order it appears in the testlet.
+#'
+#'          It is assumed that items within testlet are administered together.
+#'          In other words, an item that does not belong to a selected testlet
+#'          cannot be administered between two items that belong to the same
+#'          testlet.
+#'
+#'          The following list elements are available:
+#'
+#'          \describe{
+#'            \item{\code{next_item_rule}}{The way item selection is performed
+#'              within a testlet. Following options are available:
+#'              \describe{
+#'                \item{\code{"none"}}{Items are selected with the order of
+#'                  observed in the testlet.}
+#'                \item{\code{"mfi"}}{Maximum Fisher Information. The most
+#'                  informative unadministered item within the testlet at
+#'                  the current ability estimate is selected.}
+#'              }
+#'            }
+#'            \item{\code{"termination_rule"}}{The rule that should be
+#'              satisfied to stop administering items from a testlet.
+#'              Currently, only \code{"max_item"} is available. The test will
+#'              terminate when maximum number of items is reached or there
+#'              are no items left in the testlet.
+#'            }
+#'            \item{\code{"termination_par"}}{The test termination parameters.
+#'              See the \code{"termination_par"} above in the main function for
+#'              available options.
+#'            }
+#'          }
+#'
+#'
 #' @param exposure_control_rule A vector of length one or length maximum test
 #'          length which is designating the next item selection rules. It can
 #'          be \code{NULL} in which case there won't be any exposure control.
@@ -588,6 +755,7 @@ create_cat_design <- function(
   final_ability_est_par = NULL,
   termination_rule = c("min_item", "min_se", "max_item"),
   termination_par = list(min_item = 10, min_se = .33, max_item = 20),
+  testlet_rules = NULL,
   exposure_control_rule = NULL,
   exposure_control_par = NULL,
   content_bal_rule = NULL,
@@ -618,44 +786,6 @@ create_cat_design <- function(
                         ### Implemented Rules ###
                         #####################@###
 
-  first_item_rules <- list(
-    fixed_theta = list(par_names = c("theta")),
-    theta_range = list(par_names = c("min_theta", "max_theta"))
-    )
-  # next_item_rules <- c("random", "mfi", "b_optimal", "fixed")
-  next_item_rules <- list(
-    random = list(par_names = NULL),
-    mfi = list(par_names = NULL),
-    # b_optimal = list(par_names = NULL),
-    fixed = list(par_names = c("item_id")),
-    mepv = list(par_names = c("var_calc_method"))
-    )
-  ability_est_rules <- list(
-    eap = list(par_names = c("prior_dist", "prior_par", "min_theta",
-                             "max_theta", "no_of_quadrature")),
-    ml = list(par_names = c("min_theta", "max_theta", "criterion")),
-    # "eap_ml" = list(par_names = c("prior_dist", "prior_par", "min_theta",
-    #                               "max_theta", "no_of_quadrature")),
-    # "sum_score" = list(par_names = NULL),
-    owen = list(par_names = c("prior_mean", "prior_var")),
-    sum_score = list(par_names = NULL)
-    )
-  exposure_control_rules <- list(
-    randomesque  = list(par_names = c("num_items")),
-    `sympson-hetter` = list(par_names = NULL)
-    )
-  # content_bal_rule <- c("max_discrepancy")
-  content_bal_rules <- c()
-  termination_rules <- list(
-    min_item = list(par_names = "min_item"),
-    max_item = list(par_names = "max_item"),
-    min_se = list(par_names = "min_se"),
-    sprt = list(par_names = c("theta_0", "theta_1", "alpha", "beta"))
-    )
-  ability_types <- c(
-    # "multi_theta", "cdm", "raw_score",
-    "theta"
-    )
 
 
   is_single_string <- function(x) length(x) && is.character(x)
@@ -704,13 +834,14 @@ create_cat_design <- function(
       # check whether the rule is a single string
       if (!is_single_string(first_item_rule))
         stop(paste0("'first_item_rule' should be a string like:\n",
-                    paste0("'", names(first_item_rules), "'", collapse = ", ")))
-      if (!first_item_rule %in% names(first_item_rules))
-        stop(paste0("'first_item_rule' should be a string with a value either: ",
-                    paste0("'", names(first_item_rules), "'", collapse = ", "),
-                    "."))
+                    paste0("'", names(CAT_FIRST_ITEM_RULES), "'",
+                           collapse = ", ")))
+      if (!first_item_rule %in% names(CAT_FIRST_ITEM_RULES))
+        stop(paste0("'first_item_rule' should be a string with a value ",
+                    "either: ", paste0("'", names(CAT_FIRST_ITEM_RULES),
+                                       "'", collapse = ", "), "."))
       # Check first_item_pars
-      par_names <- first_item_rules[[first_item_rule]]$par_names
+      par_names <- CAT_FIRST_ITEM_RULES[[first_item_rule]]$par_names
       if (!is.null(par_names) &&
           !(names(first_item_par) %in% par_names &&
           par_names %in% names(first_item_par))
@@ -743,21 +874,23 @@ create_cat_design <- function(
     #   next_item_par = list(var_calc_method = "eap")
     #
 
-    if (is.null(next_item_rules[[next_item_rule]]$par_names)) {
+    if (is.null(CAT_NEXT_ITEM_RULES[[next_item_rule]]$par_names)) {
       next_item_par_structure = 0
     } else if (
       is.list(next_item_par) &&
       length(next_item_par) == max_test_length &&
       all(sapply(next_item_par, names) ==
-          next_item_rules[[next_item_rule]]$par_names)
+          CAT_NEXT_ITEM_RULES[[next_item_rule]]$par_names)
       ) {
       next_item_par_structure = 1
     } else if (
         is.list(next_item_par) &&
         length(next_item_par) == 1 &&
-        names(next_item_par) == next_item_rules[[next_item_rule]]$par_names &&
+        names(next_item_par) == CAT_NEXT_ITEM_RULES[[
+          next_item_rule]]$par_names &&
         # Either the length of next_item_par is equal to the max_test_length or
-        (length(next_item_par[[next_item_rules[[next_item_rule]]$par_names]]) ==
+        (length(
+          next_item_par[[CAT_NEXT_ITEM_RULES[[next_item_rule]]$par_names]]) ==
         max_test_length ||
         # or there are testlets in the item pool and the "fixed" specifies the
         # test lengths of the testlet items and standalone items.
@@ -781,8 +914,9 @@ create_cat_design <- function(
     } else if (
       is.list(next_item_par) &&
       length(next_item_par) == 1 &&
-      names(next_item_par) == next_item_rules[[next_item_rule]]$par_names &&
-      length(next_item_par[[next_item_rules[[next_item_rule]]$par_names]]) == 1
+      names(next_item_par) == CAT_NEXT_ITEM_RULES[[next_item_rule]]$par_names &&
+      length(
+        next_item_par[[CAT_NEXT_ITEM_RULES[[next_item_rule]]$par_names]]) == 1
       ) {
       next_item_par_structure = 3
     } else
@@ -794,9 +928,9 @@ create_cat_design <- function(
     # This function checks whether next item rule and parameters are valid.
     # Next item rule cannot be empty and it should be a vector of
     # valid rules.
-    if (!all(next_item_rule %in% names(next_item_rules)))
+    if (!all(next_item_rule %in% names(CAT_NEXT_ITEM_RULES)))
       stop(paste0("next_item_rule should be a vector with elements either: ",
-                  paste0("'", names(next_item_rules), "'", collapse = ", "),
+                  paste0("'", names(CAT_NEXT_ITEM_RULES), "'", collapse = ", "),
                   "."))
 
     next_item_par_structure <- get_next_item_par_structure()
@@ -812,22 +946,22 @@ create_cat_design <- function(
            next_item_par.")
     next_item_missing_par_error_text <- paste0(
       "'next_item_par' should be a list object. \n", ifelse(
-        is.null(next_item_rules[[next_item_rule]]$par_names), "",
+        is.null(CAT_NEXT_ITEM_RULES[[next_item_rule]]$par_names), "",
         paste0("When you specify 'next_item_rule' = '", next_item_rule,
                "', you need to add the following argument: \n ",
                "next_item_par = list(",
-               paste0(next_item_rules[[next_item_rule]]$par_names,
+               paste0(CAT_NEXT_ITEM_RULES[[next_item_rule]]$par_names,
                       collapse = " = ...,"), " = ...)\n")
           ))
     # If there should be a next item parameters, raise an error.
-    if (!is.null(next_item_rules[[next_item_rule]]$par_names) &&
+    if (!is.null(CAT_NEXT_ITEM_RULES[[next_item_rule]]$par_names) &&
         is.null(next_item_par))
       stop(next_item_missing_par_error_text)
     if (!is.null(next_item_par)  && !is(next_item_par, "list"))
       stop(next_item_missing_par_error_text)
 
-    # If next_item_rule is a vector with length larger than one, it's size should
-    # be equal to the max_test_length (maximum test length)
+    # If next_item_rule is a vector with length larger than one, it's size
+    # should be equal to the max_test_length (maximum test length)
     if ((length(next_item_rule) > 1) &&
         (length(next_item_rule) != max_test_length))
       stop("The length of next_item_rule should be equal to the maximum item
@@ -862,9 +996,11 @@ create_cat_design <- function(
         # next_item_par = list(item_id = c("i3", "i2", "i4", "i5", "i1"))
         is.list(next_item_par) &&
         length(next_item_par) == 1 &&
-        names(next_item_par) == next_item_rules[[next_item_rule]]$par_names &&
+        names(next_item_par) ==
+          CAT_NEXT_ITEM_RULES[[next_item_rule]]$par_names &&
         # Either the length of next_item_par is equal to the max_test_length or
-        (length(next_item_par[[next_item_rules[[next_item_rule]]$par_names]]) ==
+        (length(
+          next_item_par[[CAT_NEXT_ITEM_RULES[[next_item_rule]]$par_names]]) ==
         max_test_length ||
         # or there are testlets in the item pool and the "fixed" specifies the
         # test lengths of the testlet items and standalone items.
@@ -881,7 +1017,8 @@ create_cat_design <- function(
           "If 'next_item_rule' = 'fixed', the 'next_item_par' should be ",
           "like:\n   ",
           "next_item_par = list('item_id' = c(<THE ORDERED ITEM IDs>))",
-          "\nAlso, the length of the 'item_id' vector should be ", max_test_length,
+          "\nAlso, the length of the 'item_id' vector should be ",
+          max_test_length,
           "."))
       # All elements should be unique
       if (
@@ -889,23 +1026,24 @@ create_cat_design <- function(
          any(duplicated(sapply(next_item_par, "[[", "item_id")))) ||
         (next_item_par_structure == 2 &&
          any(duplicated(
-           next_item_par[[next_item_rules[[next_item_rule]]$par_names]])))
+           next_item_par[[CAT_NEXT_ITEM_RULES[[next_item_rule]]$par_names]])))
       )
         stop("All item_id's should be unique. Please check 'next_item_par'.")
-      # All of the item_id field's should be within the item_id's of item pool (ip)
+      # All of the item_id field's should be within the item_id's of
+      # item pool (ip)
 
       # print("1------------------------")
       # print(next_item_par)
       # print("2------------------------")
       # print(ip)
       # print("3------------------------")
-      # print(next_item_rules[[next_item_rule]]$par_names)
+      # print(CAT_NEXT_ITEM_RULES[[next_item_rule]]$par_names)
       # print("4------------------------")
       # print(next_item_par_structure == 1 &&
       #          !all(sapply(next_item_par, "[[", "item_id") %in% ip$item_id))
       # print("5------------------------")
       # print(next_item_par[[
-      #        next_item_rules[[next_item_rule]]$par_names]] %in% ip$id)
+      #        CAT_NEXT_ITEM_RULES[[next_item_rule]]$par_names]] %in% ip$id)
       # print("6------------------------")
 
 
@@ -913,7 +1051,7 @@ create_cat_design <- function(
            !all(sapply(next_item_par, "[[", "item_id") %in% ip$item_id)) ||
           (next_item_par_structure == 2 &&
            !all(next_item_par[[
-             next_item_rules[[next_item_rule]]$par_names]] %in% ip$item_id))
+             CAT_NEXT_ITEM_RULES[[next_item_rule]]$par_names]] %in% ip$item_id))
           )
         stop("All of the ID's in 'item_id' field of next_item_par should be ",
              "also in the item pool (ip) ID's. Some of the 'item_id's are not",
@@ -932,11 +1070,11 @@ create_cat_design <- function(
     #   final_ability_est_rule and final_ability_est_par.
     # Ability estimation rule cannot be empty and it should be a vector of
     # valid rules
-    if (!all(ae_rule %in% names(ability_est_rules)))
+    if (!all(ae_rule %in% names(CAT_ABILITY_EST_RULES)))
       stop(paste0(ifelse(final_ae, "'final_", "'"),
                   "ability_est_rule' should be a vector with elements either: ",
-                  paste0("'", names(ability_est_rules), "'", collapse = ", "),
-                  "."))
+                  paste0("'", names(CAT_ABILITY_EST_RULES), "'",
+                         collapse = ", "), "."))
 
     # If ability_est_rule is a vector with length larger than one, it's size
     # should be equal to the max_test_length (maximum test length)
@@ -954,7 +1092,7 @@ create_cat_design <- function(
         stop(ifelse(final_ae, "'final_", "'"),
              "ability_est_par' should be a list object.")
       # check if it is a list of lists.
-      par_names <- ability_est_rules[[ae_rule]]$par_names
+      par_names <- CAT_ABILITY_EST_RULES[[ae_rule]]$par_names
       if (!all(sapply(ae_par, is.list))) { # if it is not a list of lists:
         if (!all(names(ae_par) %in% par_names) ||
             !all(par_names %in% names(ae_par)))
@@ -984,8 +1122,8 @@ create_cat_design <- function(
       # if (all(sapply(ability_est_par, is, "list")) &&
       #     (length(ability_est_par) > 1) &&
       #     (length(ability_est_par) != max_test_length))
-      #   stop("The length of ability_est_par should be equal to the maximum item
-      #        length.")
+      #   stop("The length of ability_est_par should be equal to the maximum ",
+      #        "item length.")
     }
     return(TRUE)
   }
@@ -1001,8 +1139,9 @@ create_cat_design <- function(
   #   if (!is_single_string(final_ability_est_rule) ||
   #       (!final_ability_est_rule %in% names(final_ability_est_rules))
   #       )
-  #     stop(paste0("'final_ability_est_rule' should be a string with elements ",
-  #                 "either: \n", paste0("'", names(ability_est_rules), "'",
+  #     stop(paste0("'final_ability_est_rule' should be a string with ",
+  #                 "elements ",
+  #                 "either: \n", paste0("'", names(CAT_ABILITY_EST_RULES), "'",
   #                                    collapse = ", ")))
   #
   #   # if ((!is.null(ability_est_par)) &&
@@ -1018,8 +1157,8 @@ create_cat_design <- function(
   #   #     all(sapply(ability_est_par, is, "list")) &&
   #   #     (length(ability_est_par) > 1) &&
   #   #     (length(ability_est_par) != max_test_length))
-  #   #   stop("The length of ability_est_par should be equal to the maximum item
-  #   #        length.")
+  #   #   stop("The length of ability_est_par should be equal to the maximum ",
+  #   #        " item length.")
   #   return(TRUE)
   # }
                         ###########################@###
@@ -1031,11 +1170,11 @@ create_cat_design <- function(
     # Exposure control rule is either NULL or a vector of valid rules
 
     if (!is.null(exposure_control_rule) &&
-        !all(exposure_control_rule %in% names(exposure_control_rules)))
+        !all(exposure_control_rule %in% names(CAT_EXPOSURE_CONTROL_RULES)))
       stop(paste0(
         "exposure_control_rule should be a vector with elements either: ",
-        paste0("'", names(exposure_control_rules), "'", collapse = ", "), "."),
-        call. = FALSE)
+        paste0("'", names(CAT_EXPOSURE_CONTROL_RULES), "'", collapse = ", "),
+        "."), call. = FALSE)
     if (!is.null(exposure_control_rule))
     {
       # Make sure that the length of exposure_control_rule and
@@ -1158,7 +1297,7 @@ create_cat_design <- function(
   get_termination_par_structure <- function(tr) {
     tp_structure <- NULL
     # Get the parameter count
-    pars <- termination_rules[[tr]]$par_names
+    pars <- CAT_TERMINATION_RULES[[tr]]$par_names
     if (length(pars) == 1) { # either min_se, min_item or max_item
       if (is.list(termination_par[[tr]]) &&
           names(termination_par[[tr]]) == pars) {
@@ -1186,14 +1325,14 @@ create_cat_design <- function(
       stop("The length of termination_rule should be equal to the length of
            termination_par.")
     # The elements of the termination_rule should be valid
-    if (!all(termination_rule %in% names(termination_rules)))
+    if (!all(termination_rule %in% names(CAT_TERMINATION_RULES)))
       stop(paste0("termination_rule should be a vector with elements either: ",
-                  paste0(names(termination_rules), collapse = ", "), "."))
+                  paste0(names(CAT_TERMINATION_RULES), collapse = ", "), "."))
     # The elements of the termination_par should be valid
-    if (!all(names(termination_par) %in% names(termination_rules)))
+    if (!all(names(termination_par) %in% names(CAT_TERMINATION_RULES)))
       stop(paste0("The names of the elements of the termination_par should ",
                   "match one of the following: ",
-                  paste0(termination_rules, collapse = ", "), "."))
+                  paste0(CAT_TERMINATION_RULES, collapse = ", "), "."))
 
     if (!all(names(termination_par) %in% termination_rule))
         stop("The names of the elements of termination_par should match the
@@ -1203,8 +1342,8 @@ create_cat_design <- function(
       max_item will be set to the size of the item pool (ip). Make sure
       'ip' is present if 'max_item' is missing. ")
     # Further check the termination_par:
-    # If the length of the termination_rules$termination_rule$par_names is 1,
-    # then there are two structures:
+    # If the length of the CAT_TERMINATION_RULES$termination_rule$par_names
+    # is 1, then there are two structures:
     for (tr in termination_rule) { # tr: individual termination rule
       tr_structure <- get_termination_par_structure(tr)
       if (is.null(tr_structure))
@@ -1218,10 +1357,52 @@ create_cat_design <- function(
                         ########################@###
                         ### Ability Types Checks ###
                         ########################@###
-  if (is.null(ability_type) || (!ability_type %in% ability_types))
+  if (is.null(ability_type) || (!ability_type %in% CAT_ABILITY_TYPES))
     stop(paste0("'ability_type' should be one of the following:\n",
-                paste0("'", ability_types, "'", collapse = ", ")))
+                paste0("'", CAT_ABILITY_TYPES, "'", collapse = ", ")))
 
+                        #######################@###
+                        ### Testlet Rules Check ###
+                        #######################@###
+  if (!is.null(testlet_rules) && is.list(testlet_rules)) {
+    if (!all(names(testlet_rules) %in% names(CAT_TESTLET_RULES))) {
+      stop(paste0("Invalid 'testlet_rules'. The elements of 'testlet_rules' ",
+                  " should be one of the following:\n",
+                  paste0("'", names(CAT_TESTLET_RULES), "'", collapse = ", "),
+                  "\n\nSee '?create_cat_design' for details."))
+    }
+    if (!"next_item_rule" %in% names(testlet_rules) ||
+        !is_single_value(testlet_rules[["next_item_rule"]],
+                         class = "character") ||
+        !testlet_rules[["next_item_rule"]] %in%
+        CAT_TESTLET_RULES[["next_item_rule"]]) {
+      stop(paste0("Invalid 'testlet_rules'. 'next_item_rule' ",
+                  " should be one of the following:\n",
+                  paste0("'", CAT_TESTLET_RULES[["next_item_rule"]], "'",
+                         collapse = ", "),
+                  "\n\nSee '?create_cat_design' for details."))
+    }
+    if (!"termination_rule" %in% names(testlet_rules) ||
+        !is_single_value(testlet_rules[["termination_rule"]],
+                         class = "character") ||
+        !testlet_rules[["termination_rule"]] %in%
+        CAT_TESTLET_RULES[["termination_rule"]]) {
+      stop(paste0("Invalid 'testlet_rules'. 'termination_rule' ",
+                  " should be one of the following:\n",
+                  paste0("'", CAT_TESTLET_RULES[["termination_rule"]], "'",
+                         collapse = ", "),
+                  "\n\nSee '?create_cat_design' for details."))
+    }
+    if (!"termination_par" %in% names(testlet_rules) ||
+        !names(testlet_rules[["termination_par"]]) %in%
+        CAT_TESTLET_RULES[["termination_par"]]) {
+      stop(paste0("Invalid 'testlet_rules'. The elements of 'termination_par' ",
+                  " should be one of the following:\n",
+                  paste0("'", CAT_TESTLET_RULES[["termination_par"]], "'",
+                         collapse = ", "),
+                  "\n\nSee '?create_cat_design' for details."))
+    }
+  } else testlet_rules <- NULL
 
 
   ##########################################################################@###
@@ -1265,6 +1446,7 @@ create_cat_design <- function(
   ##########################################################################@###
   ################## Set Defaults for Parameters if Missing ################@###
   ##########################################################################@###
+  ### ability_est_rule ###
   if (is.null(ability_est_rule)) ability_est_rule <- "eap"
 
   ### ability_est_par ###
@@ -1272,6 +1454,10 @@ create_cat_design <- function(
     ability_est_par <- switch (ability_est_rule,
       "eap" = list(prior_dist = "norm", prior_par = c(0, 1),
                    min_theta = -4, max_theta = 4, no_of_quadrature = 50),
+      "map" = list(prior_dist = "norm", prior_par = c(0, 1),
+                   min_theta = -4, max_theta = 4, tol = 0.00001),
+      "map_ml" = list(prior_dist = "norm", prior_par = c(0, 1),
+                      min_theta = -4, max_theta = 4, tol = 0.00001),
       "owen" = list(prior_mean = 0, prior_var = 1),
       "ml" = list(min_theta = -4, max_theta = 4, criterion = 0.001)
     )
@@ -1281,6 +1467,10 @@ create_cat_design <- function(
     final_ability_est_par <- switch (final_ability_est_rule,
       "eap" = list(prior_dist = "norm", prior_par = c(0, 1),
                    min_theta = -4, max_theta = 4, no_of_quadrature = 50),
+      "map" = list(prior_dist = "norm", prior_par = c(0, 1),
+                   min_theta = -4, max_theta = 4, tol = 0.00001),
+      "map_ml" = list(prior_dist = "norm", prior_par = c(0, 1),
+                      min_theta = -4, max_theta = 4, tol = 0.00001),
       "owen" = list(prior_mean = 0, prior_var = 1),
       "ml" = list(min_theta = -4, max_theta = 4, criterion = 0.001)
     )
@@ -1302,6 +1492,14 @@ create_cat_design <- function(
       1:length(ip), function(i) ip[1:i]$n$items) >= max_test_length)[1]])
   }
 
+  ### testlet_rules ###
+  if (is.null(testlet_rules)) {
+    testlet_rules <-  list(next_item_rule = "none",
+                           termination_rule = "max_item",
+                           termination_par = list(max_item = 999))
+  }
+
+  ##########################################################################@###
   ##########################################################################@###
   ##########################################################################@###
   cd <- list()
@@ -1375,12 +1573,12 @@ create_cat_design <- function(
         # next_item_par = list(item_id = c("i3", "i2", "i4", "i5", "i1"))
       } else if (next_item_par_structure == 2) {
         cd$step[[i]]$next_item_par[[
-          next_item_rules[[next_item_rule]]$par_names]] =
-          next_item_par[[next_item_rules[[next_item_rule]]$par_names]][i]
+          CAT_NEXT_ITEM_RULES[[next_item_rule]]$par_names]] =
+          next_item_par[[CAT_NEXT_ITEM_RULES[[next_item_rule]]$par_names]][i]
       } else if (next_item_par_structure == 3) {
         cd$step[[i]]$next_item_par[[
-          next_item_rules[[next_item_rule]]$par_names]] =
-          next_item_par[[next_item_rules[[next_item_rule]]$par_names]]
+          CAT_NEXT_ITEM_RULES[[next_item_rule]]$par_names]] =
+          next_item_par[[CAT_NEXT_ITEM_RULES[[next_item_rule]]$par_names]]
       } else cd$step[[i]]$next_item_par = next_item_par
   }
   # -------------------------------------------------------------------------- #
@@ -1425,6 +1623,10 @@ create_cat_design <- function(
     }
   }
   cd$termination_par <- termination_par
+
+  # -------------------------------------------------------------------------- #
+  # Set the Testlet Rules
+  cd$testlet_rules <- testlet_rules
 
   # -------------------------------------------------------------------------- #
   # Set Exposure Control Rules
@@ -1544,17 +1746,46 @@ create_cat_design <- function(
 #' # Check the default:
 #' cd <- create_cat_design(ip = ip)
 #' cat_sim(true_ability = rnorm(1), cd = cd)
+#'
+#' # Multiple theta, optionally set names to the the vector to give examinee IDs
+#' true_theta <- setNames(c(-2, 0.4, 1.5), c("Jimmy", "Ali", "Mirabel"))
+#' cd <- create_cat_design(
+#'   ip = ip,
+#'   ability_est_rule = 'ml',
+#'   termination_rule = c('min_item', 'min_se', 'max_item'),
+#'   termination_par = list(min_item = 10, min_se = .33, max_item = 20))
+#' cat_sim(true_ability = true_theta, cd = cd)
 cat_sim <- function(true_ability, cd, verbose = -1)
 {
   # Make sure that cat_design is a cat_design object.
-  if (!inherits(cd, "cat_design"))
-    stop("'cat_design' should be a 'cat_design' object. Please run
-         'create_cat_design' function.")
+  if (!inherits(cd, "cat_design")) {
+    # Check if a different cat_design per simulee provided. If so, enforce
+    # equal length for true_ability and cat_design.
+    if (is.list(cd) && all(sapply(cd, inherits, "cat_design"))) {
+      if (length(cd) != length(true_ability)) {
+        stop("Invalid 'cd'. When a list of 'cat_design' objects provided, ",
+             "it means each simulee will have their own cat_design. ",
+             "Consequently, the length of 'cat_design' object should be ",
+             "equal to the length of 'true_ability'.")
+      }
+    } else {
+      stop("'cd' should be a 'cat_design' object. Please run ",
+           "'create_cat_design' function to create a CAT design.")
+    }
+  }
   # Convert true_ability to list in case it is numeric. This is to take care
   # of future expansion for possible representation of ability of an examinee
   # using multiple values (like MIRT or CDM)
   if (!is(true_ability, "list"))
     true_ability <- lapply(true_ability, function(x) x)
+  if (!all(sapply(true_ability, is.numeric))) {
+    stop("Invalid 'true_ability'. 'true_ability' should be a numeric vector ",
+         "or a list of numeric vectors.")
+  }
+  if (anyNA(true_ability, recursive = TRUE)) {
+    stop("Invalid 'true_ability'. 'true_ability' should not contain any ",
+         "missing (NA) values.")
+  }
   started <- Sys.time()
   result <- cat_sim_cpp(true_ability, cd, verbose = as.integer(max(0, verbose)))
 
@@ -1643,13 +1874,21 @@ cat_sim_fast <- function(true_ability, cd, verbose = -1, n_cores = NULL)
 {
   # Make sure that cat_design is a cat_design object.
   if (!inherits(cd, "cat_design"))
-    stop("'cat_design' should be a 'cat_design' object. Please run
+    stop("'cd' should be a 'cat_design' object. Please run
          'create_cat_design' function.")
   # Convert true_ability to list in case it is numeric. This is to take care
   # of future expansion for possible representation of ability of an examinee
   # using multiple values (like MIRT or CDM)
   if (!is(true_ability, "list"))
     true_ability <- lapply(true_ability, function(x) x)
+  if (!all(sapply(true_ability, is.numeric))) {
+    stop("Invalid 'true_ability'. 'true_ability' should be a numeric vector ",
+         "or a list of numeric vectors.")
+  }
+  if (anyNA(true_ability, recursive = TRUE)) {
+    stop("Invalid 'true_ability'. 'true_ability' should not contain any ",
+         "missing (NA) values.")
+  }
   started <- Sys.time()
   n_theta <- length(true_ability)
   max_cores <- parallel::detectCores()

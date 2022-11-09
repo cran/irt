@@ -1,7 +1,10 @@
 #include <Rcpp.h>
 #include "itempool_class_methods.h"
 #include "sim_resp.h"
-#include "ability_estimation.h"
+#include "est_ability_eap.h"
+#include "est_ability_map.h"
+#include "est_ability_ml.h"
+#include "est_ability_owen.h"
 #include "cat_select_next_item.h"
 #include "info.h"
 using namespace Rcpp;
@@ -115,6 +118,16 @@ Rcpp::List generate_cat_resp_cpp(Rcpp::List true_ability,
 
 
 //#############################################################################@
+// Check for perfect response string. If all responses are the same function 
+// will return 'true', otherwise 'false'
+bool is_perfect_resp(Rcpp::NumericVector resp) {
+  for (int i = 0, size = resp.size(); i < size; ++i) {
+    if (resp[i] != resp[0]) return false;      
+  }
+  return true;
+}
+
+//#############################################################################@
 //########################### est_ability_cat_cpp ##############################
 //#############################################################################@
 // This function estimates the ability so far in CAT given the cat design (cd)
@@ -122,13 +135,14 @@ Rcpp::List generate_cat_resp_cpp(Rcpp::List true_ability,
 // last_estimate: an indicator for whether the this is the last estimate before
 //   terminating the CAT.
 // The output will be a list with two elements: "est" and "se"
+
 // [[Rcpp::export]]
 Rcpp::List est_ability_cat_cpp(Rcpp::List true_ability,
                                Rcpp::List cd,
                                Rcpp::List est_history,
                                Rcpp::List additional_args,
                                bool last_estimate = false) {
-  // Rcout << "Stage 1" << "\n";
+  // Rcout << "Stage 1" << std::endl;
   Rcpp::List eh = clone(est_history);
   Rcpp::List aa = clone(additional_args);
   int item_no = eh.size();  // The stage of the test.
@@ -151,7 +165,7 @@ Rcpp::List est_ability_cat_cpp(Rcpp::List true_ability,
   }
   // Rcout << "Stage 2" << "\n";
   // Get Administered item pool and response string
-  NumericVector resp(item_no);
+  Rcpp::NumericVector resp(item_no);
   Rcpp::List administered_ip_list(item_no);
   Rcpp::List temp_list;
   for (int i=0; i < item_no; i++) {
@@ -165,12 +179,12 @@ Rcpp::List est_ability_cat_cpp(Rcpp::List true_ability,
   // Rcout << "Stage 4" << "\n";
   if (ability_est_rule == "eap") {
     // Rcout << "  Stage 4.1 - EAP" << "\n";
-    // Get parameters for the eap
+    // Get parameters for the EAP
     std::string prior_dist = ability_est_par("prior_dist");
-    NumericVector prior_par = ability_est_par("prior_par");
+    Rcpp::NumericVector prior_par = ability_est_par("prior_par");
     double min_theta = ability_est_par("min_theta");
     double max_theta = ability_est_par("max_theta");
-    NumericVector theta_range = NumericVector::create(min_theta, max_theta);
+    Rcpp::NumericVector theta_range = Rcpp::NumericVector::create(min_theta, max_theta);
     int no_of_quadrature = ability_est_par("no_of_quadrature");
     // Rcout << "    Stage 4.1.2" << "\n";
     temp_list = est_ability_eap_single_examinee_cpp(
@@ -181,6 +195,48 @@ Rcpp::List est_ability_cat_cpp(Rcpp::List true_ability,
     eh[item_no-1] = est_history_last_step; // Update est_history
     return List::create(Named("est_history") = eh,
                         Named("additional_args") = aa);
+  } else if (ability_est_rule == "map") {  
+    // Rcout << "  MAP - " << resp.size()  << std::endl;  
+    // Get parameters for the MAP
+    std::string prior_dist = ability_est_par("prior_dist");
+    Rcpp::NumericVector prior_par = ability_est_par("prior_par");
+    double min_theta = ability_est_par("min_theta");
+    double max_theta = ability_est_par("max_theta");
+    Rcpp::NumericVector theta_range = Rcpp::NumericVector::create(min_theta, max_theta);
+    double tol = ability_est_par("tol");
+    // Rcout << "    Stage 4.1.2" << "\n";
+    temp_list = est_ability_map_single_examinee_cpp(
+      resp, administered_ip, prior_dist, prior_par, theta_range, 0, tol);
+    est_history_last_step["est_after"] = temp_list["est"];
+    est_history_last_step["se_after"] = temp_list["se"];
+    eh[item_no-1] = est_history_last_step; // Update est_history
+    return List::create(Named("est_history") = eh,
+                        Named("additional_args") = aa);
+ } else if (ability_est_rule == "map_ml") {
+    // Get parameters for the 'map_ml'
+    std::string prior_dist = ability_est_par("prior_dist");
+    Rcpp::NumericVector prior_par = ability_est_par("prior_par");
+    double min_theta = ability_est_par("min_theta");
+    double max_theta = ability_est_par("max_theta");
+    Rcpp::NumericVector theta_range = Rcpp::NumericVector::create(min_theta, max_theta);
+    double tol = ability_est_par("tol");
+    if (is_perfect_resp(resp)) {
+      temp_list = est_ability_map_single_examinee_cpp(
+        resp, administered_ip, prior_dist, prior_par, theta_range, 0, tol);
+      est_history_last_step["est_after"] = temp_list["est"];
+      est_history_last_step["se_after"] = temp_list["se"];
+    } else {
+      double est = est_ability_4pm_nr_itempool_cpp(
+        resp, administered_ip, Rcpp::NumericVector::create(min_theta, max_theta), 
+        tol);
+      double info = info_itempool_bare_tif_cpp(est, administered_ip);
+      est_history_last_step["est_after"] = est;
+      est_history_last_step["se_after"] = 1/sqrt(info);
+    }
+    eh[item_no-1] = est_history_last_step; // Update est_history
+    return List::create(Named("est_history") = eh,
+                        Named("additional_args") = aa);
+    
   } else if (ability_est_rule == "owen") {
     // Rcout << "  Stage 4.2 - Owen" << "\n";
     // Get parameters for the owen
@@ -200,15 +256,14 @@ Rcpp::List est_ability_cat_cpp(Rcpp::List true_ability,
     double max_theta = ability_est_par("max_theta");
     double criterion = ability_est_par("criterion");
     double est = est_ability_4pm_nr_itempool_cpp(
-      resp, administered_ip, NumericVector::create(min_theta, max_theta), 
+      resp, administered_ip, Rcpp::NumericVector::create(min_theta, max_theta), 
       criterion);
-    Rcpp::NumericVector info = info_itempool_bare_cpp(est, administered_ip,
-                                                       true, false, resp);
+	  double info = info_itempool_bare_tif_cpp(est, administered_ip);
     // double se = 1/sqrt(info[0]);
     // return Rcpp::List::create(Named("est") = est , Named("se") = se);
     //
     est_history_last_step["est_after"] = est;
-    est_history_last_step["se_after"] = 1/sqrt(info[0]);
+    est_history_last_step["se_after"] = 1/sqrt(info);
     eh[item_no-1] = est_history_last_step; // Update est_history
     return List::create(Named("est_history") = eh,
                         Named("additional_args") = aa);
@@ -291,7 +346,8 @@ bool terminate_cat_cpp(Rcpp::List true_ability,
   bool terminate_test = true;
 
   // Get termination rule
-  StringVector termination_rules = Rcpp::as<StringVector>(cd_copy("termination_rule"));
+  StringVector termination_rules = Rcpp::as<StringVector>(
+    cd_copy("termination_rule"));
   // Get termination parameters
   Rcpp::List termination_pars = cd_copy["termination_par"];
 
@@ -351,9 +407,9 @@ bool terminate_cat_cpp(Rcpp::List true_ability,
       double A = (1 - beta) / alpha;
       double B = beta/(1-alpha);
       // Calculate the log-likelihood at theta_0 and theta_1
-      // Rcout << "  terminate_test  --   log(theta_1) = " << loglik_est_history(eh, theta_1, true) << "  --  log(theta_0) = " << loglik_est_history(eh, theta_0, true) << std::endl;
-      double loglik_ratio = loglik_est_history(eh, theta_1, true) -
-        loglik_est_history(eh, theta_0, true);
+      // Rcout << "  terminate_test  --   log(theta_1) = " << loglik_est_history_cpp(eh, theta_1, true) << "  --  log(theta_0) = " << loglik_est_history_cpp(eh, theta_0, true) << std::endl;
+      double loglik_ratio = loglik_est_history_cpp(eh, theta_1, true) -
+        loglik_est_history_cpp(eh, theta_0, true);
       // Rcout << "  terminate_test  --   log(B) = " << log(B) << "  --  loglik_ratio = " << loglik_ratio << "  --  log(A) = " << log(A) << std::endl;
       if (loglik_ratio > log(A) || loglik_ratio < log(B)) {
         terminate_test = true;

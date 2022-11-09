@@ -112,7 +112,6 @@
   }
   # Check whether there are testlets in the item pool and responses. If there
   # are, automatically add testlet info to the responses
-  testlet_ids <- NULL
   if (!is.null(ip) && any(sapply(ip@item_list, class) == "Testlet")) {
     testlet_ids <- matrix(
       merge(data.frame(item_id = rep(item_ids, each = nrow(x))),
@@ -133,28 +132,58 @@
          "and character for raw response data.")
   }
 
-  response_list <- tryCatch({
-    sapply(1:nrow(x), function(i)
+  response_list <- vector("list", nrow(x))
+  for (i in 1:nrow(x)) {
+    response_list[[i]] <- tryCatch({
       response(
-        score = switch(
-          score_matrix + 1, NULL,
-          unname(unlist(x[i, !is.na(x[i, , drop = TRUE])]))),
+        score = switch(score_matrix + 1, NULL,
+                       unname(unlist(x[i, !is.na(x[i, , drop = TRUE])]))),
         raw_response = switch(
           score_matrix + 1,
           unname(unlist(x[i, !is.na(x[i, , drop = TRUE])])), NULL),
         item_id = item_ids[!is.na(x[i, ])],
         testlet_id = switch((is.null(testlet_ids) ||
                                all(is.na(testlet_ids[i, ]))) + 1,
-                            testlet_ids[i, ], NULL),
+                            testlet_ids[i, !is.na(x[i, , drop = TRUE])], NULL),
         examinee_id = examinee_ids[i]
         )
-      )
-    }, error = function(e) {
-      if (grepl("Either 'score' or 'raw_response' should be provided.",
-                e$message)) {
-        stop("All scores/raw_responses cannot be NA. Please check 'x'. ")
-      } else stop(e$message, call. = FALSE)
-  })
+      }, error = function(e) {
+        if (grepl("Either 'score' or 'raw_response' should be provided.",
+                  e$message)) {
+          stop(paste0("All scores/raw_responses cannot be NA. Please check ",
+                      "row ", i, " of 'x'."))
+        } else if (grepl("Score should be a valid atomic vector", e$message)) {
+          stop(paste0("Invalid 'x'. There are no valid responses in row ", i,
+                      "."))
+        } else {
+          stop(e$message, call. = FALSE)
+        }
+      })
+  }
+
+  # response_list <- tryCatch({
+  #   sapply(1:nrow(x), function(i)
+  #     response(
+  #       score = switch(
+  #         score_matrix + 1, NULL,
+  #         unname(unlist(x[i, !is.na(x[i, , drop = TRUE])]))),
+  #       raw_response = switch(
+  #         score_matrix + 1,
+  #         unname(unlist(x[i, !is.na(x[i, , drop = TRUE])])), NULL),
+  #       item_id = item_ids[!is.na(x[i, ])],
+  #       testlet_id = switch((is.null(testlet_ids) ||
+  #                              all(is.na(testlet_ids[i, ]))) + 1,
+  #                           testlet_ids[i, !is.na(x[i, , drop = TRUE])], NULL),
+  #       examinee_id = examinee_ids[i]
+  #       )
+  #     )
+  #   }, error = function(e) {
+  #     if (grepl("Either 'score' or 'raw_response' should be provided.",
+  #               e$message)) {
+  #       stop("All scores/raw_responses cannot be NA. Please check 'x'. ")
+  #     } else stop(e$message, call. = FALSE)
+  # })
+
 
   # Setup 'testlet_id' slot
   if (!is.null(testlet_ids)) {
@@ -520,11 +549,14 @@ response_set <- function(x,
     stop("Invalid 'ip' argument. 'ip' should be an Itempool object.")
 
   # Check 'x' argument
-  if (!(inherits(x, c("matrix", "data.frame", "list", "Response"))))
+  if (!(inherits(x, c("matrix", "data.frame", "list", "Response",
+                      "Response_set"))))
     stop("Invalid 'x' argument. 'x' should be a matrix, data.frame or a ",
          "list of 'Response' objects.")
   ################# Response ###############################################@###
-  if (is(x, "Response")) {
+  if (is(x, "Response_set")) {
+    return(x)
+  } else if (is(x, "Response")) {
     return(.create_response_set_from_list(x = list(x), ip = ip, misc = misc))
   ################# list of Responses ######################################@###
   } else if (inherits(x, "list")) {
@@ -590,6 +622,7 @@ name_examinees <- function(response_list)
       response_list[[i]]@examinee_id <- examinee_ids[[i]]
     }
   }
+  names(response_list) <- unlist(examinee_ids)
   return(response_list)
 }
 
@@ -784,9 +817,9 @@ as.list.Response_set <- function(x, ...) return(x@response_list)
   # TODO: maybe only first responses can be converted to matrix. But if
   # the responses towards the end has more responses to different item than
   # the previous ones, fewer items might be displayed.
-  result <- as.matrix(x, output = "score")
+  result <- as.matrix(x[1:n], output = "score")
 
-  if (all(is.na(result))) result <- as.matrix(x, output = "raw_response")
+  if (all(is.na(result))) result <- as.matrix(x[1:n], output = "raw_response")
 
   num_of_items <- ncol(result)
 
@@ -799,7 +832,7 @@ as.list.Response_set <- function(x, ...) return(x@response_list)
   if (n < 1) {
     result <- ""
   } else if (n < num_of_resp) {
-    result <- result[1:n, ]
+    result <- result[1:n, , drop = FALSE]
   }
 
   if (print_tibble) {
@@ -1324,6 +1357,10 @@ convert_to_resp_set <- function(resp, ip = NULL, enforce_data_type = "score",
     "it to this function.")
   if (is(resp, "Response_set")) {
     resp_set <- resp
+    if (is(ip, "Itempool") && !all(resp_set$item_id %in% ip$item_id)) {
+      stop(paste0("Invalid 'ip'. All of the items in the response data ",
+                  "should be in the item pool, ip."), call. = FALSE)
+    }
   } else if (is.numeric(resp) && is.atomic(resp) && !is.matrix(resp)) {
     resp_set <- tryCatch({
       if (is.null(ip)) {

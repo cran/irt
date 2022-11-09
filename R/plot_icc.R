@@ -56,7 +56,7 @@ get_data_plot_empirical_icc <- function(resp, item, ip, theta = NULL,
   if (!is(ip, "Itempool")) {
     stop(paste0("Invalid 'ip'. A valid Itempool object is necessary."))
     # Currently only dichotomous IRT models supported.
-  } else if (!all(ip$model %in% supported_models))  {
+  } else if (!all(ip$item_model %in% supported_models))  {
     stop(paste0("Currently, only following models are supported by this ",
                 "function: ",
                 paste0("'", supported_models, "'", collapse = ", ")),
@@ -138,8 +138,9 @@ get_data_plot_empirical_icc <- function(resp, item, ip, theta = NULL,
   # Remove the bins that do not have any observations/responses
   gd <- gd[!is.nan(gd$Observed),]
 
+  ip_standalone <- flatten_itempool_cpp(ip)
   gd$Expected <- resp_lik(
-    ip = ip[[item$col_num]],
+    ip = ip_standalone[[item$item_id]],
     resp = as.integer(as.character(gd$Response)),
     theta = as.numeric(as.character(gd$bin)))
   gd <- stats::reshape(
@@ -179,7 +180,9 @@ get_data_plot_empirical_icc <- function(resp, item, ip, theta = NULL,
 #'   \code{bins +  1} is the number of possible total scores.
 #' @param binwidth This determines  the width of each bin of the theta scale.
 #'   Within each bin, there might be different number of examinees.
-#' @param title Title of the plot
+#' @param title Title of the plot. The default value is \code{""}, where title
+#'   of the plot will be "Trace Plot of <Item ID>". If the value is \code{NULL},
+#'   the plot title will be suppressed.
 #' @param suppress_plot If \code{FALSE} the function will print the plot. If
 #'          \code{TRUE}, function will return the plot object. Default value is
 #'          \code{FALSE}.
@@ -227,7 +230,8 @@ plot_empirical_icc <- function(resp, item, ip, theta = NULL, bins = 10,
                     "Proportion Correct")
 
   # Set the graph title:
-  if (title == "") title <- paste0("Trace Graph for '", gd$item_id[1], "'")
+  if (!is.null(title) && title == "")
+    title <- paste0("Trace Graph for '", gd$item_id[1], "'")
 
   ### ggplot2 ###
   if (!base_r_graph && requireNamespace("ggplot2", quietly = TRUE)) {
@@ -496,7 +500,7 @@ get_data_plot_empirical_icc2 <- function(resp, item, bins = 10,
 #' @param ip An \code{\link{Itempool-class}} object needs to be provided if
 #'   expected ICC desired.
 #' @param theta A vector of examinee abilities.
-#' @param title Title of the plot
+#' @param title Title of the plot. The default value is \code{""}.
 #' @param n_dodge The number of lines the x-axis tick labels should be written
 #'   to. This is especially useful if the x-axis tick labels overlap with each
 #'   other. The default value is \code{1}, which means all of the labels are

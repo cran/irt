@@ -166,7 +166,19 @@ double info_item_bare_cpp(double theta, Rcpp::S4 item, bool observed,
 //##############################################################################
 //########################### info_testlet_bare_cpp ############################
 //##############################################################################
-
+//' This function calculates the information of a single testlet for single
+//' theta. It returns the total information of all items in the testlet. 
+//'  
+//' @param theta A numeric value at which the information will be calculated. 
+//' @param testlet A Testlet object.  
+//' @param observed Boolean. If "TRUE", observed information will be calculated  
+//' @param resp If 'resp' is not NULL, then it will remove the items' with NA 
+//'   from the information calculation.
+//'  
+//' @return A numeric value for the information of the testlet at the "theta"
+//'   value.
+//' 
+//' @noRd
 // [[Rcpp::export]]
 double info_testlet_bare_cpp(
   double theta, Rcpp::S4 testlet, bool observed,
@@ -175,20 +187,22 @@ double info_testlet_bare_cpp(
   // theta. It returns the total information of all items in the testlet.
   Rcpp::List item_list = as<List>(testlet.slot("item_list"));
   int num_of_items = item_list.size();
-  S4 item;
+  Rcpp::S4 item;
   double output = 0;
   bool return_na = !Rf_isNull(resp);
   // resp is also used to calculate whether to include an item in information
   // calculation. It is not just for 'observed' information.
   if (return_na) {
     // NumericVector resp_i = as<NumericVector>(resp);
-    if (as<NumericVector>(resp).size() != num_of_items)
-      throw std::range_error("Inadmissible 'resp' value. The length of the "
-             "'resp' and number of items in the testlet should be the same.");
+    if (as<Rcpp::NumericVector>(resp).size() != num_of_items)
+      
+      stop("Inadmissible 'resp' value. The length of the " 
+           "'resp' and number of items in the testlet should be the same.");
   }
+  
   for (int i = 0; i < num_of_items; i++) {
     item = as<Rcpp::S4>(item_list(i));
-    if (Rf_isNull(resp)  || !NumericVector::is_na(as<NumericVector>(resp)[i])) {
+    if (Rf_isNull(resp)  || !Rcpp::NumericVector::is_na(as<Rcpp::NumericVector>(resp)[i])) {
       output = output + info_item_bare_cpp(theta, item, false, 0);
       return_na = false;
     }
@@ -236,12 +250,16 @@ Rcpp::NumericVector info_item_cpp(
 
 
 //##############################################################################
-//########################### info_itempool_bare_cpp ##########################
+//########################### info_itempool_bare_cpp ###########################
 //##############################################################################
+//' This function calculates the information of multiple items for a single
+//' theta. It returns the information value of each item as a vector.
+//' 
+//' @noRd
 
 // [[Rcpp::export]]
 Rcpp::NumericVector info_itempool_bare_cpp(
-    double theta, Rcpp::S4 ip, bool tif, bool observed,
+    double theta, Rcpp::S4 ip, bool observed = false,
     Rcpp::Nullable<Rcpp::NumericVector> resp = R_NilValue)
 {
   // This function calculates the information of multiple items for a single
@@ -264,29 +282,49 @@ Rcpp::NumericVector info_itempool_bare_cpp(
         output[i] = info_item_bare_cpp(theta, item, false, 0);
       }
     }
-  } else {  // Use resp to calculate info, if resp is NA return NA otherwise calculate info
+  } else {  // Use resp to calculate info, if resp is NA return NA otherwise
+            // calculate info
     int resp_index = 0;
     for (int i = 0; i < num_of_items; i++) {
       item = as<Rcpp::S4>(item_list(i));
 
       if (item.inherits("Testlet")) {
-        testlet_size = as<List>(as<S4>(item.slot("item_list")).slot("item_list")).size();
-        NumericVector resp_ = Rcpp::as<NumericVector>(resp)[Rcpp::Range(resp_index, resp_index + testlet_size - 1)];
+        testlet_size = as<List>(as<S4>(
+          item.slot("item_list")).slot("item_list")).size();
+        NumericVector resp_ = Rcpp::as<NumericVector>(resp)[Rcpp::Range(
+          resp_index, resp_index + testlet_size - 1)];
         output[i] = info_testlet_bare_cpp(theta, item, false, resp_);
         resp_index += testlet_size;
       } else { // if (item.inherits("Item")) {
-        output[i] = info_item_bare_cpp(theta, item, false, as<NumericVector>(resp)[resp_index]);
+        output[i] = info_item_bare_cpp(theta, item, false,
+                                       as<NumericVector>(resp)[resp_index]);
         resp_index += 1;
       }
     }
   }
-  if (tif) {
-    NumericVector tif_output(1);
-    for (int i = 0; i < num_of_items; i++) {
-      if (!R_IsNA(output[i]))
-        tif_output[0] = tif_output[0] + output[i];
-    }
-    return tif_output;
+  return output;
+}
+
+
+//##############################################################################
+//########################### info_itempool_bare_tif_cpp #######################
+//##############################################################################
+//' This function returns the total information of an itempool for a single
+//' theta.
+//' @noRd
+
+// [[Rcpp::export]]
+double info_itempool_bare_tif_cpp(
+    double theta, Rcpp::S4 ip, bool observed = false,
+    Rcpp::Nullable<Rcpp::NumericVector> resp = R_NilValue)
+{
+  Rcpp::NumericVector item_info = info_itempool_bare_cpp(theta, ip, observed,
+                                                         resp);
+  int num_of_items = item_info.length();
+  double output = 0;
+  for (int i = 0; i < num_of_items; i++) {
+    if (!R_IsNA(item_info[i]))
+      output = output + item_info[i];
   }
   return output;
 }
@@ -295,36 +333,65 @@ Rcpp::NumericVector info_itempool_bare_cpp(
 //##############################################################################
 //########################### info_itempool_cpp ################################
 //##############################################################################
+//' This function calculates the information of multiple items for multiple
+//' thetas.
+//' @noRd
 
 // [[Rcpp::export]]
 Rcpp::NumericMatrix info_itempool_cpp(
-  Rcpp::NumericVector theta, Rcpp::S4 ip, bool tif, bool observed,
+  Rcpp::NumericVector theta, Rcpp::S4 ip, bool observed = false,
   Rcpp::Nullable<Rcpp::NumericMatrix> resp = R_NilValue)
 {
-  // This function calculates the information of multiple items for multiple
-  // thetas.
   int num_of_cols = as<List>(ip.slot("item_list")).size();
   int num_of_theta = theta.size();
-  if (tif) num_of_cols = 1;
   Rcpp::NumericMatrix output(num_of_theta, num_of_cols);
   if (Rf_isNull(resp)) {
-    for(int i = 0; i < num_of_theta; i++)
-      output(i, Rcpp::_) = info_itempool_bare_cpp(theta[i], ip, tif, false,
-                                                  R_NilValue);
+    for(int i = 0; i < num_of_theta; i++) {
+		output(i, Rcpp::_) = info_itempool_bare_cpp(theta[i], ip);
+	}
   } else {
     Rcpp::NumericMatrix resp_ = Rcpp::as<NumericMatrix>(resp);
     Rcpp::NumericVector resp_row;
     for(int i = 0; i < num_of_theta; i++) {
       resp_row = resp_(i, Rcpp::_);
-      output(i, Rcpp::_) = info_itempool_bare_cpp(theta[i], ip, tif, false,
-                                                   resp_row);
+	  output(i, Rcpp::_) = info_itempool_bare_cpp(theta[i], ip, observed, 
+	                                              resp_row);
     }
   }
   // // Consider Testlets etc.
   // // Set the column names to the item ids
-  // if (!tif)
-  //   colnames(output) = (as<Rcpp::List>(ip.slot("item_list"))).names();
+  colnames(output) = get_ids_itempool_cpp(ip);
 
+  return output;
+}
+
+
+//##############################################################################
+//########################### info_itempool_tif_cpp ############################
+//##############################################################################
+//' This function calculates the total test information of multiple items for 
+//' multiple thetas.
+//' @noRd
+
+// [[Rcpp::export]]
+Rcpp::NumericVector info_itempool_tif_cpp(
+  Rcpp::NumericVector theta, Rcpp::S4 ip, bool observed = false,
+  Rcpp::Nullable<Rcpp::NumericMatrix> resp = R_NilValue)
+{
+  int num_of_theta = theta.size();
+  Rcpp::NumericVector output(num_of_theta);
+  if (Rf_isNull(resp)) {
+    for(int i = 0; i < num_of_theta; i++) {
+	  output[i] = info_itempool_bare_tif_cpp(theta[i], ip);			
+	}
+  } else {
+    Rcpp::NumericMatrix resp_ = Rcpp::as<NumericMatrix>(resp);
+    Rcpp::NumericVector resp_row;
+    for(int i = 0; i < num_of_theta; i++) {
+      resp_row = resp_(i, Rcpp::_);
+	  output[i] = info_itempool_bare_tif_cpp(theta[i], ip, observed, resp_row);			
+    }
+  }
   return output;
 }
 
@@ -332,20 +399,20 @@ Rcpp::NumericMatrix info_itempool_cpp(
 //##############################################################################
 //########################### info_response_cpp ################################
 //##############################################################################
-// This function is only used when resp is not NULL and resp is a Response
-// object.
+//' This function is only used when resp is not NULL and resp is a Response
+//' object.
+//' @noRd
 
 // [[Rcpp::export]]
 Rcpp::NumericVector info_response_cpp(
   double theta,
-  Rcpp::List ip_list,
-  bool tif,
-  bool observed,
-  Rcpp::S4 resp)
+  Rcpp::S4 ip,
+  Rcpp::S4 resp, 
+  bool observed = false)
 {
   if (!resp.inherits("Response"))
     stop("Invalid 'resp'. 'resp' should be a 'Response' object.");
-
+  Rcpp::List ip_list = flatten_itempool_cpp(ip);	
   Rcpp::NumericVector scores = as<Rcpp::NumericVector>(resp.slot("score"));
   Rcpp::StringVector item_ids = as<Rcpp::StringVector>(resp.slot("item_id"));
   Rcpp::StringVector ip_item_ids = ip_list.names();
@@ -353,7 +420,7 @@ Rcpp::NumericVector info_response_cpp(
   int num_of_items = scores.size();
   Rcpp::NumericVector output(num_of_items_ip, NA_REAL);
   output.attr("names") = ip_item_ids;
-  Rcpp::NumericVector output_tif(1);
+  //Rcpp::NumericVector output_tif(1);
 
 
   Rcpp::S4 item; // This will be item
@@ -362,18 +429,37 @@ Rcpp::NumericVector info_response_cpp(
     item_id = item_ids[i];
     item = as<Rcpp::S4>(ip_list[item_id]);
     output[item_id] = info_item_bare_cpp(theta, item, observed, scores[i]);
-    output_tif[0] = output_tif[0] + output[item_id];
-  }
-  if (tif) {
-    // for (int i = 0; i < num_of_items; i++) {
-    //   output_tif[0] = output_tif[0] + output[i];
-    // }
-    output_tif.attr("names") = "TIF";
-    return output_tif;
+    //output_tif[0] = output_tif[0] + output[item_id];
   }
   return output;
 }
 
+
+//##############################################################################
+//########################### info_response_tif_cpp ############################
+//##############################################################################
+//' This function is only used when resp is not NULL and resp is a Response
+//' object to calculate Total test information.
+//' @noRd
+
+// [[Rcpp::export]]
+double info_response_tif_cpp(
+  double theta,
+  Rcpp::S4 ip, 
+  Rcpp::S4 resp, 
+  bool observed = false)
+{
+  if (!resp.inherits("Response"))
+    stop("Invalid 'resp'. 'resp' should be a 'Response' object.");
+  
+  Rcpp::NumericVector item_info = info_response_cpp(theta, ip, resp, observed);
+  int num_of_items = item_info.length();
+  double output = 0;
+  for (int i = 0; i < num_of_items; i++) {
+	if (!R_IsNA(item_info[i])) output = output + item_info[i];
+  }
+  return output;
+}
 
 
 //##############################################################################
@@ -408,8 +494,11 @@ Rcpp::NumericMatrix info_response_set_cpp(
   Rcpp::S4 temp_resp;
   for (int i = 0; i < num_of_resp; i++) {
     temp_resp = as<Rcpp::S4>(resp_list[i]);
-    output(i, Rcpp::_) = info_response_cpp(theta[i], ip_list, tif, observed,
-                                           temp_resp);
+	if (tif) {
+	  output(i, 0) = info_response_tif_cpp(theta[i], ip, temp_resp, observed);	
+	} else {
+      output(i, Rcpp::_) = info_response_cpp(theta[i], ip, temp_resp, observed);
+	}
   }
   if (tif) {
     colnames(output) = Rcpp::StringVector::create("TIF");

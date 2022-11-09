@@ -30,11 +30,5 @@ three parameter logistic model.
 }
 \author{
 Emre Gonulates
-
-Emre Gonulates
-
-Emre Gonulates
-
-Emre Gonulates
 }
 \keyword{internal}

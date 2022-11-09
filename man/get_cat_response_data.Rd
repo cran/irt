@@ -7,49 +7,87 @@
 get_cat_response_data(
   cat_sim_output,
   cd = NULL,
+  output_type = c("Response_set", "matrix"),
   remove_na = FALSE,
   attach_summary = FALSE
 )
 }
 \arguments{
 \item{cat_sim_output}{This is a list object containing elements that are
-"cat_output" class.}
+\code{cat_output} class.}
 
 \item{cd}{A \code{cat_design} object that is created by function
 \code{create_cat_design}.}
 
+\item{output_type}{A string that specifies the output type. Available
+options are \code{"Response_set"} which returns a \code{Response_set}
+object and \code{"matrix"} which returns a matrix.
+If \code{attach_summary = TRUE} and \code{output_type = "matrix"}, a
+data frame will be returned instead of a matrix.
+The default value is \code{"Response_set"}.}
+
 \item{remove_na}{If \code{TRUE}, the columns that are all \code{NA} will be
 removed.}
 
-\item{attach_summary}{If \code{TRUE}, the summary of each CAT will be
+\item{attach_summary}{If \code{TRUE} and \code{output_type = "matrix"}, the
+summary of each CAT will be
 attached to the beginning of the response string as columns. The default
-value is \code{FALSE}.}
+value is \code{FALSE}. When \code{output_type = "Response_set"},
+CAT summary will automatically added to each Response object of the
+output within \code{misc} field.}
 }
 \value{
-This function returns a response matrix of adaptive tests. If the
-input is a list of \code{cat_output}, then the rows will represent examinees
-and columns will represent items. For single \code{cat_output} object the
-vector names will be the element
+Depending on the \code{output_type}, the function returns the
+  response matrix of adaptive tests. If the input is a list of
+  \code{cat_output}, then the rows will represent examinees
+  and columns will represent items.
 }
 \description{
 This function extracts the response data from a single
-\code{cat_output} object or a list of \code{cat_output} objects and gives
-either a vector (if there is a single \code{cat_output} object) or a matrix
-(if there is a lit of \code{cat_output} objects) of response data.
+\code{cat_output} object or a list of \code{cat_output} objects and returns
+a \code{Response_set} object that contains the administered items of each
+simulee or a matrix or responses.
 
 If \code{cd}, cat design, object is given, then the item pool in the
 \code{cd} will be used.
 }
 \examples{
 n <- 40 # number of items
-ip <- generate_ip(n = n,
-                  content = sample(c("Algebra", "Arithmetic", "Geometry"),
-                                   n, replace = TRUE))
+ip <- generate_ip(n = n)
 cd <- create_cat_design(ip = ip, next_item_rule = 'mfi',
                         termination_rule = 'max_item',
                         termination_par = list(max_item = 10))
 cat_data <- cat_sim(true_ability = rnorm(10), cd = cd)
-get_cat_response_data(cat_sim_output = cat_data, cd)
+resp_set <- get_cat_response_data(cat_sim_output = cat_data, cd)
+resp_set
+
+# Get the examinee_id of third simulee:
+resp_set[[3]]$examinee_id
+# Extract the true theta of the third examinee:
+resp_set[[3]]$true_ability
+# Extract the final estimated theta of the third examinee:
+resp_set[[3]]$est_ability
+# Extract the final standard error of the third examinee:
+resp_set[[3]]$se
+
+
+# Alternatively, output can be a matrix:
+
+resp_matrix <- get_cat_response_data(cat_sim_output = cat_data,
+                                     output_type = "matrix")
+resp_matrix
+
+# If cat design provided, the matrix columns will be sorted as the
+# item pool used for the simulation:
+resp_matrix <- get_cat_response_data(cat_sim_output = cat_data, cd = cd,
+                                     output_type = "matrix")
+resp_matrix
+
+# Additionally, remove the colums which has all NA values:
+resp_matrix <- get_cat_response_data(cat_sim_output = cat_data, cd = cd,
+                                     remove_na = TRUE,
+                                     output_type = "matrix")
+resp_matrix
 
 }
 \seealso{

@@ -23,7 +23,8 @@ Available values:
   \item{\strong{\code{'model'}}}{Extract \code{model}'s of
     all items and testlets.
     This will not extract the \code{model}'s of items within the
-    testlet.}
+    testlet. Use \code{$item_model} to extract models of standalone
+    items.}
   \item{\strong{\code{'misc'}}}{Extract \code{misc} parameters of
     all items and testlets.
     This will not extract the \code{misc} parameters of items
@@ -58,7 +59,8 @@ Available values:
   \item{\strong{\code{'item_id'} or \code{'resp_id'}}}{Extract
     \code{item_id}'s of all standalone items and items within the
     testlets. It will not return \code{testlet_id}'s. This is
-    mainly to get the \code{item_id}'s of items which has a response.
+    mainly to get the \code{item_id}'s of items which has a
+    response.
     }
   \item{\strong{\code{'testlet_id'}}}{Extract \code{testlet_id}'s
     of all items within the testlets. If the item is a standalone

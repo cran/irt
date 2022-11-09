@@ -70,7 +70,7 @@ generate_ip(model = "4PL")
 generate_ip(model = "GRM") # Graded Response Model
 generate_ip(model = "GPCM") # Generalized Partial Credit Model
 generate_ip(model = "PCM") # Partial Credit Model
-generate_ip(model = "GPCM2") # Reparametrized GPCM
+generate_ip(model = "GPCM2") # Reparameterized GPCM
 # Mixture of models
 generate_ip(model = c("4PL", "Rasch"))
 generate_ip(model = sample(c("4PL", "GPCM"), 12, TRUE))

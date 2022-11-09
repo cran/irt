@@ -23,7 +23,7 @@
 #' @author Emre Gonulates
 #'
 setGeneric("max_score", function(ip, resp = NULL, sum = TRUE)
-  {standardGeneric ("max_score")})
+  {standardGeneric("max_score")})
 
 
 ###############################################################################@

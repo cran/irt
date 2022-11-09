@@ -204,11 +204,8 @@ hr {
 </head>
 
 <body>
-<pre><code class="r">library(irt)
-</code></pre>
-
-<p>This vignettes covers the psychometric models that has been implemented in 
-<code>irt</code> package. </p>
+<p>This vignettes covers the psychometric models that are implemented in 
+the <code>irt</code> package. </p>
 
 <h1>Item Models</h1>
 
@@ -261,7 +258,7 @@ hr {
 </tr>
 <tr>
 <td>GPCM2</td>
-<td>Reparametrized Generalized Partial Credit Model</td>
+<td>Reparameterized Generalized Partial Credit Model</td>
 <td>a, b, d, D</td>
 </tr>
 </tbody></table>
@@ -279,7 +276,9 @@ response to an item \(j\) is: </p>
 
 <p>User needs to specify only the item difficulty parameter: </p>
 
-<pre><code class="r">itm_rasch &lt;- item(b = -1.29)
+<pre><code class="r">library(irt)
+
+itm_rasch &lt;- item(b = -1.29)
 itm_rasch
 #&gt; A &#39;Rasch&#39; item.
 #&gt; Model:   Rasch (Rasch Model)
@@ -289,7 +288,7 @@ itm_rasch
 #&gt; --------------------------
 </code></pre>
 
-<p>The probability of correct response at \(\theta = -.65\) is: </p>
+<p>The probability of each response option at \(\theta = -.65\) is: </p>
 
 <pre><code class="r">prob(ip = itm_rasch, theta = -0.65)
 #&gt;              0         1
@@ -330,7 +329,7 @@ itm_1pl
 #&gt; --------------------------
 </code></pre>
 
-<p>The probability of correct response at \(\theta = .73\) is: </p>
+<p>The probability of each response option at \(\theta = .73\) is: </p>
 
 <pre><code class="r">prob(ip = itm_1pl, theta = 0.73)
 #&gt;              0         1
@@ -373,7 +372,7 @@ itm_2pl
 #&gt; --------------------------
 </code></pre>
 
-<p>The probability of correct response at \(\theta = -0.53\) is: </p>
+<p>The probability of each response option at \(\theta = -0.53\) is: </p>
 
 <pre><code class="r">prob(ip = itm_2pl, theta = -0.53)
 #&gt;              0         1
@@ -419,7 +418,7 @@ itm_3pl
 #&gt; --------------------------
 </code></pre>
 
-<p>The probability of correct response at \(\theta = 1.5\) is: </p>
+<p>The probability of each response option at \(\theta = 1.5\) is: </p>
 
 <pre><code class="r">prob(ip = itm_3pl, theta = 1.5)
 #&gt;              0         1
@@ -466,7 +465,7 @@ itm_4pl
 #&gt; --------------------------
 </code></pre>
 
-<p>The probability of correct response at \(\theta = 1.2\) is: </p>
+<p>The probability of each response option at \(\theta = 1.2\) is: </p>
 
 <pre><code class="r">prob(ip = itm_4pl, theta = 1.2)
 #&gt;               0        1
@@ -618,7 +617,7 @@ itm_pcm
 
 <!-- ####################################################################### -->
 
-<h2>Re-parametrized Generalized Partial Credit Model (GPCM2)</h2>
+<h2>Reparameterized Generalized Partial Credit Model (GPCM2)</h2>
 
 <p>For an examinee \(i\) with ability \(\theta_i\), the probability of a 
 response \(k\) to an item \(j\) with possible scores \(k = 0, 1, \ldots, m_j\): </p>
@@ -639,7 +638,7 @@ D is the scaling constant (the default value is 1). </p>
                   model = &quot;GPCM2&quot;)
 itm_gpcm2
 #&gt; A &#39;GPCM2&#39; item.
-#&gt; Model:   GPCM2 (Reparametrized Generalized Partial Credit Model)
+#&gt; Model:   GPCM2 (Reparameterized Generalized Partial Credit Model)
 #&gt; Model Parameters:
 #&gt;   a = 0.71
 #&gt;   b = 0.37

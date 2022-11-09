@@ -129,20 +129,4 @@ as.data.frame(testlet2)
 }
 \author{
 Emre Gonulates
-
-Emre Gonulates
-
-Emre Gonulates
-
-Emre Gonulates
-
-Emre Gonulates
-
-Emre Gonulates
-
-Emre Gonulates
-
-Emre Gonulates
-
-Emre Gonulates
 }

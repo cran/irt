@@ -210,6 +210,39 @@ print.cat_design <- function(x, ..., verbose = FALSE) {
   }
 }
 
+
+###############################################################################@
+############################# c.cat_design #####################################
+###############################################################################@
+#' Concatenate 'cat_design' objects
+#'
+#' @param x A \code{cat_design} class object.
+#' @param ... Remaining \code{cat_design} class objects.
+#'
+#' @return A list of \code{cat_design} objects.
+#'
+#' @export
+#'
+#' @author Emre Gonulates
+#'
+#' @examples
+#'
+#' ip <- generate_ip(n = 20)
+#' cd1 <- create_cat_design(ip = ip,
+#'                          termination_rule = c('max_item'),
+#'                          termination_par = list(max_item = 5))
+#' cd2 <- create_cat_design(ip = ip,
+#'                          termination_rule = c('max_item'),
+#'                          termination_par = list(max_item = 9))
+#' cd <- c(cd1, cd2)
+c.cat_design <- function(x, ...) {
+  args = list(x, ...)
+  if (!all(sapply(args, inherits, c("cat_design"))))
+    stop("All of the elements should be 'cat_design' class.", .call = FALSE)
+  return(args)
+}
+
+
 ###############################################################################@
 ############################# summary.cat_output ###############################
 ###############################################################################@
@@ -224,6 +257,8 @@ print.cat_design <- function(x, ..., verbose = FALSE) {
 #' @param cols The variables that will be included in the summary. There should
 #'          be at least one column. Available columns are:
 #'          \describe{
+#'            \item{examinee_id}{Examinee ID's if named true theta vector
+#'              has been provided to \code{cat_sim()} function.}
 #'            \item{true_ability}{True ability of the simulee}
 #'            \item{est_ability}{Ability Estimate}
 #'            \item{se}{Standard Error of the ability estimate}
@@ -231,6 +266,14 @@ print.cat_design <- function(x, ..., verbose = FALSE) {
 #'            \item{bias}{The difference between true ability and ability
 #'              estimate}
 #'            \item{mse}{Mean squared error}
+#'            \item{mean_qip}{Mean of Quality of Item Pool Index.
+#'                    See \code{qip_index()} function for details.}
+#'            \item{median_qip}{Median of Quality of Item Pool Index.
+#'                    See \code{qip_index()} function for details.}
+#'            \item{min_qip}{Minimum value of Quality of Item Pool Index.
+#'                    See \code{qip_index()} function for details.}
+#'            \item{max_qip}{Maximum value of Quality of Item Pool Index.
+#'                    See \code{qip_index()} function for details.}
 #'          }
 #' @return This function returns a summary data frame of adaptive tests. Each
 #' row will represent a different adaptive test.
@@ -251,9 +294,15 @@ print.cat_design <- function(x, ..., verbose = FALSE) {
 #'                         termination_par = list(max_item = 10))
 #' cat_data <- cat_sim(true_ability = rnorm(5), cd = cd)
 #' summary(cat_data)
+#'
+#' # Get only selected columns
+#' summary(cat_data, cols = c("examinee_id", "true_ability", "est_ability",
+#'                            "bias"))
+#' summary(cat_data, cols = c("examinee_id", "true_ability", "est_ability",
+#'                            "mean_qip", "median_qip", "min_qip"))
 summary.cat_output <- function(
   object, ...,
-  cols = c("true_ability", "est_ability", "se", "test_length")) {
+  cols = c("examinee_id", "true_ability", "est_ability", "se", "test_length")) {
   # Check whether it is one or multiple CAT outputs
   if (is(object, "cat_output")) { # There is a single cat_output element
      nrows <- 1
@@ -266,18 +315,26 @@ summary.cat_output <- function(
   # if (!all(sapply(x, FUN = function(y) is(y, "cat_output"))))
   #   stop("All of the elements of 'cat_output' should be 'cat_output' class.")
   if (length(cols) < 1) stop("There should be at least one column.")
-  if (!all(cols %in% c("true_ability", "est_ability", "se", "test_length",
-                       "bias", "mse")))
+  if (!all(cols %in% c("examinee_id", "true_ability", "est_ability", "se",
+                       "test_length", "bias", "mse",
+                       "mean_qip", "median_qip", "min_qip", "max_qip")))
     stop("Inadmissable column. 'cols' should be composed of one of the
          following: 'true_ability', 'est_ability', 'se', 'test_length', 'bias',
-         'mse'.")
+         'mse', 'mean_qip', 'median_qip', 'min_qip', 'max_qip'.")
   cat_summary <- data.frame(matrix(vector(), nrows, ncols,
                                    dimnames = list(c(), cols)),
                             stringsAsFactors = FALSE)
   # Function returns the true ability
+  get_examinee_id <- function() {
+    if (nrows == 1) {
+      return(object$examinee_id)
+      } else
+      return(unlist(sapply(object, `[[`, "examinee_id")))
+  }
+  # Function returns the true ability
   get_true_ability <- function() {
     if (nrows == 1) {
-      return(object$true_ability)
+      return(unlist(object$true_ability))
       } else
       return(unlist(sapply(object, `[[`, "true_ability")))
   }
@@ -293,6 +350,9 @@ summary.cat_output <- function(
   for (col in cols) {
     switch(
       col,
+      "examinee_id" = {
+        cat_summary$examinee_id <- get_examinee_id()
+      },
       "true_ability" = {
         cat_summary$true_ability <- get_true_ability()
       },
@@ -323,12 +383,183 @@ summary.cat_output <- function(
       },
       "mse" = {
         cat_summary$mse <- (get_est_ability() - get_true_ability())^2
+        },
+      "mean_qip" = {
+        cat_summary$mean_qip <- qip_index(cat_sim_output = object,
+                                          summary_func = "mean")
+        },
+      "median_qip" = {
+        cat_summary$median_qip <- qip_index(cat_sim_output = object,
+                                          summary_func = "median")
+        },
+      "min_qip" = {
+        cat_summary$min_qip <- qip_index(cat_sim_output = object,
+                                          summary_func = "min")
+        },
+      "max_qip" = {
+        cat_summary$max_qip <- qip_index(cat_sim_output = object,
+                                          summary_func = "max")
         }
     )
   }
-  return(cat_summary)
+  if (requireNamespace("tibble")) {
+    return(tibble::as_tibble(cat_summary))
+  } else return(cat_summary)
 }
 
+
+###############################################################################@
+############################# $.cat_output #####################################
+###############################################################################@
+#' Prints the raw output of cat_sim
+#' @description This function prints a data frame that shows all of the steps of
+#'   a CAT for a single examinee.
+#'
+#' @param x This is a cat_output object which has \code{"cat_output"} class.
+#' @param name Name of the field.
+#'   Available options:
+#'   \describe{
+#'     \item{\strong{\code{"ip"}}}{Extract items administered to examinee}
+#'     \item{\strong{\code{"resp"}}}{Extract responses}
+#'     \item{\strong{\code{"testlet"}}}{Extract testlets administered}
+#'     \item{\strong{\code{"est_before"}}}{Extract ability estimate
+#'       before administration of an item.}
+#'     \item{\strong{\code{"item_id"}}}{Extract administered item IDs.}
+#'     \item{\strong{\code{"est_after"}}}{Extract ability estimate
+#'       after administration of an item.}
+#'     \item{\strong{\code{"se_before"}}}{Extract standard error
+#'       before administration of an item.}
+#'     \item{\strong{\code{"se_after"}}}{Extract standard error
+#'       after administration of an item.}
+#'     \item{\strong{\code{"true_theta"}}}{Extract true theta as a vector}
+#'     \item{\strong{\code{"test_length"}}}{Extract test length of the adaptive
+#'       test}
+#'     \item{\strong{\code{"final_est"}}}{Extract final ability estimate.}
+#'     \item{\strong{\code{"final_se"}}}{Extract final standard error.}
+#'     }
+#' @return See the 'name' argument above for possible return values.
+#'
+#' @export
+#'
+#' @author Emre Gonulates
+#'
+#' @seealso \code{\link{cat_sim}}
+#'
+#' @examples
+#' n <- 20 # number of items
+#' ip <- generate_ip(n = n)
+#' cd <- create_cat_design(ip = ip, next_item_rule = 'mfi',
+#'                         termination_rule = 'max_item',
+#'                         termination_par = list(max_item = 10))
+#' cat_data <- cat_sim(true_ability = rnorm(1), cd = cd)
+#' cat_data
+#' cat_data$resp # Extract responses to administered items
+#' cat_data$ip # Administered items
+#' cat_data$item_id # Extract administered item IDs
+#' cat_data$est_before # Ability estimates before the administration of an item
+#' cat_data$est_after # Ability estimates after the administration of an item
+#' cat_data$true_theta # True ability that generates examinee responses
+#'
+#' # Simulation with more than one simulees
+#' n <- 20 # number of items
+#' ip <- generate_ip(n = n)
+#' cd <- create_cat_design(ip = ip, next_item_rule = 'mfi',
+#'                         termination_rule = 'max_item',
+#'                         termination_par = list(max_item = 10))
+#' n_examinee <- 3
+#' cat_data_list <- cat_sim(true_ability = rnorm(n_examinee), cd = cd)
+#' cat_data_list[[3]]$item_id
+#' cat_data_list[[2]]$item_id
+#' cat_data_list[[3]]$resp
+#' cat_data_list[[2]]$resp
+#' cat_data_list[[2]]$test_length
+#' cat_data_list[[2]]$final_est
+#' cat_data_list[[2]]$final_se
+`$.cat_output` <- function(x, name) {
+  switch(
+    name,
+    "ip" = itempool(lapply(x$est_history, function(x) x$item)),
+    "resp" = sapply(x$est_history, function(x) x$resp),
+    "testlet" = sapply(x$est_history, function(x) x$testlet),
+    "item_id" = sapply(x$est_history, function(x) x$item@item_id),
+    "est_before" = sapply(x$est_history, function(x) x$est_before),
+    "est_after" = sapply(x$est_history, function(x) x$est_after),
+    "se_before" = sapply(x$est_history, function(x) x$se_before),
+    "se_after" = sapply(x$est_history, function(x) x$se_after),
+    "test_length" = length(x$est_history),
+    "final_est" = utils::tail(x$est_history, 1)[[1]]$est_after,
+    "final_se" = utils::tail(x$est_history, 1)[[1]]$se_after,
+    # "true_ability" = ,
+    "true_theta" = x$true_ability[[1]],
+    {
+      x[[name]]
+    }
+  )
+}
+
+
+###############################################################################@
+############################# as.data.frame.cat_output #########################
+###############################################################################@
+#' Convert a \code{cat_output} object into a \code{data.frame}.
+#'
+#' @description This function converts \code{cat_output} objects to a
+#'   \code{data.frame} object.
+#'
+#' @param x An \code{cat_output} object
+#' @param row.names \code{NULL} or a character vector giving the row names for
+#'   the data frame. Missing values are not allowed.
+#' @param optional logical. If \code{TRUE}, setting row names and converting
+#'   column names
+#' @param ... additional arguments
+#'
+#' @return A data frame with the following columns:
+#'   \describe{
+#'     \item{true_ability}{True ability of the simulee}
+#'     \item{est_before}{Ability estimate before administration of an item.}
+#'     \item{se_before}{Standard error before administration of an item.}
+#'     \item{testlet_id}{Administered testlet's ID.}
+#'     \item{item_id}{Administered item's ID.}
+#'     \item{resp}{Response to the item}
+#'     \item{est_after}{Ability estimate after the administration of an item.}
+#'     \item{se_after}{Standard error after administration of an item.}
+#'   }
+#'
+#' @export
+#'
+#' @author Emre Gonulates
+#'
+#' @examples
+#' ip <- generate_ip(n = 40)
+#' cd <- create_cat_design(ip = ip, next_item_rule = 'mfi',
+#'                         termination_rule = 'max_item',
+#'                         termination_par = list(max_item = 10))
+#' cat_data <- cat_sim(true_ability = rnorm(1), cd = cd)
+#' as.data.frame(cat_data)
+#'
+as.data.frame.cat_output <- function(x, row.names = NULL, optional = FALSE,
+                                     ...)  {
+  args <- list(...)
+
+  est_history <- x$est_history
+
+  data.frame(
+    # the following line was added for compatibility with older cat_output
+    # objects that does not have examinee_id field.
+    examinee_id = ifelse(is.null(x$examinee_id), NA, x$examinee_id),
+    true_ability = x$true_ability[[1]],
+    est_before = sapply(est_history, `[[`, "est_before"),
+    se_before = sapply(est_history, `[[`, "se_before"),
+    testlet_id = sapply(est_history, function(i)
+      ifelse(is.null(i$testlet), NA, i$testlet$testlet_id)),
+    item_id = sapply(est_history, function(i)
+      ifelse(is.null(i$item), NA, i$item$item_id)),
+    resp = sapply(est_history, `[[`, "resp"),
+    est_after = sapply(est_history, `[[`, "est_after"),
+    se_after = sapply(est_history, `[[`, "se_after"),
+    stringsAsFactors = FALSE
+  )
+}
 
 ###############################################################################@
 ############################# .print.cat_output ################################
@@ -350,30 +581,101 @@ summary.cat_output <- function(
 #'
 #' @seealso \code{\link{cat_sim}}
 #'
-.print.cat_output <- function(x, ..., silent = FALSE) {
+.print.cat_output <- function(x, ..., n = NULL, print_header = TRUE,
+                              base_print = FALSE, silent = FALSE) {
   # Check whether it is one or multiple CAT outputs
   if (!is(x, "cat_output"))
     stop("x should be 'cat_output' class.")
   est_history <- x$est_history
   n_items <- length(est_history)
 
-  output <- data.frame(
-    est_before = sapply(est_history, `[[`, "est_before"),
-    se_before = sapply(est_history, `[[`, "se_before"),
-    testlet_id = sapply(est_history, function(i)
-      ifelse(is.null(i$testlet), NA, i$testlet$testlet_id)),
-    item_id = sapply(est_history, function(i)
-      ifelse(is.null(i$item), NA, i$item$item_id)),
-    resp = sapply(est_history, `[[`, "resp"),
-    est_after = sapply(est_history, `[[`, "est_after"),
-    se_after = sapply(est_history, `[[`, "se_after"),
-    stringsAsFactors = FALSE
-  )
+  output <- as.data.frame(x)
+  output$examinee_id <- NULL
+  output$true_ability <- NULL
 
   if (!silent) {
-    cat("An object of class 'cat_output'.\n")
-    cat(paste0("True Ability: ", x$true_ability, "\n\n"))
-    print(output)
+    if (is.null(n)) n <- ifelse(nrow(output) <= 20, nrow(output), 10)
+    n <- max(1, n)
+    n <- min(n, nrow(output))
+    print_tibble <- !base_print &&
+      requireNamespace("pillar", quietly = TRUE) &&
+      requireNamespace("tibble", quietly = TRUE)
+
+    ### Print Header ###
+    header_text <- c()
+    if (print_header)
+      header_text <- c(header_text,
+                       "An object of class 'cat_output'.\n",
+                       paste0("Examinee ID: \"", x$examinee_id, "\"\n"),
+                       paste0("True Ability: ", round(x$true_ability[[1]], 4),
+                              "\n\n")
+                       )
+
+    if (all(is.na(output$testlet_id))) output$testlet_id <- NULL
+
+    if (n < 1) {
+      result <- ""
+    } else if (n < nrow(output)) {
+      result <- output[1:n, ]
+    } else result <- output
+
+    if (print_tibble) {
+      cat(pillar::style_subtle(header_text), sep = "")
+    } else {
+      cat(header_text, sep = "")
+    }
+
+    # First try tibble/pillar, if not use base R to print administered items
+    if (print_tibble) {
+      setup_tbl <- pillar::tbl_format_setup(tibble::tibble(result),
+                                            width = NULL,
+                                            n = n,
+                                            max_extra_cols = NULL,
+                                            max_footer_lines = NULL)
+      print(setup_tbl$body)
+      if (setup_tbl$extra_cols_total > 0) {
+        footer_extra_col_text <- paste0(
+          setup_tbl$extra_cols_total, " more variable",
+          ifelse(setup_tbl$extra_cols_total > 1, "s", ""), ": '",
+          paste0(names(setup_tbl$extra_cols), collapse = "', '"), "'")
+      } else footer_extra_col_text <- ""
+
+      # Base R print:
+    } else {
+      print(result)
+    }
+
+    ### Print Footer ###
+
+    if (n < 1) {
+      # This should never happen, n is at least 1.
+    } else if (n < nrow(output)) {
+      if (print_tibble && setup_tbl$extra_cols_total > 0) {
+        text_after_df <- paste0(
+          "# ... with ", nrow(output) - n, " more administered items, and ",
+          footer_extra_col_text, "\n")
+      } else
+        text_after_df <- paste0(
+          paste0("# ... with ", nrow(output) - n,
+                 " more administered items.\n"))
+    } else {
+      if (print_tibble && setup_tbl$extra_cols_total > 0) {
+        text_after_df <- paste0("# ... with ", footer_extra_col_text, "\n")
+      } else {
+        text_after_df <- paste0()
+      }
+    }
+
+    if (print_tibble) {
+      cat(pillar::style_subtle(text_after_df))
+    } else {
+      cat(text_after_df)
+    }
+
+    # cat("An object of class 'cat_output'.\n")
+    # cat(paste0("Examinee ID: \"", x$examinee_id, "\"\n"))
+    # cat(paste0("True Ability: ", x$true_ability, "\n\n"))
+    # print(output)
   }
   invisible(output)
 }
@@ -401,6 +703,14 @@ show.cat_output <- function(object) .print.cat_output(object)
 #'
 #' @param object An 'cat_output' class object that will be printed.
 #' @param ... Additional arguments
+#' @param n maximum number of administered items to print. Default is
+#'   \code{NULL}, where all items are printed if the number of items are
+#'   smaller than 20, otherwise only first 10 items are printed.
+#' @param print_header Whether to print the object class in the first line.
+#' @param base_print Whether to print the \code{cat_output} object
+#'   using the base printing capabilities. If FALSE, the function will look at
+#'   'tibble' package and tries to print the \code{cat_output} using
+#'   that function.
 #' @param silent If TRUE, no output will be printed on the console, only
 #'   a data frame will be returned.
 #'
@@ -412,8 +722,10 @@ show.cat_output <- function(object) .print.cat_output(object)
 #'
 #' @author Emre Gonulates
 #'
-print.cat_output <- function(x, ..., silent = FALSE)
-  .print.cat_output(x, ..., silent = silent)
+print.cat_output <- function(x, ..., n = NULL, print_header = TRUE,
+                             base_print = FALSE, silent = FALSE)
+  .print.cat_output(x, ..., n = n, print_header = print_header,
+                    base_print = base_print, silent = silent)
 
 
 ###############################################################################@
@@ -440,30 +752,84 @@ summary.list <- function(object, ...) {
 ###############################################################################@
 ############################# get_cat_response_data ############################
 ###############################################################################@
+#' Extract the response from one cat_output object
+#'
+#' @description This function extracts responses from one \code{cat_output}
+#'   object and returns a \code{Response} object.
+#'
+#' @param cat_sim_output This is a list object containing elements that are
+#'   \code{cat_output} class.
+#'
+#' @return A \code{Response} class object.
+#'
+#' @noRd
+#'
+#' @examples
+#' ip <- generate_ip(n = 40)
+#' cd <- create_cat_design(ip = ip, next_item_rule = 'mfi',
+#'                         termination_rule = 'max_item',
+#'                         termination_par = list(max_item = 10))
+#' cat_data <- cat_sim(true_ability = rnorm(1), cd = cd)
+#' get_cat_response_data_single(cat_sim_output = cat_data)
+#'
+get_cat_response_data_single <- function(cat_sim_output) {
+
+  # it is assumed that `cat_sim_output` is cat_outpu object
+  stopifnot(is(cat_sim_output, "cat_output"))
+
+  eh <- cat_sim_output$est_history
+  resp <- sapply(eh, "[[", "resp")
+  item_ids <- sapply(eh, function(x) x$item$id)
+  testlet_ids <- sapply(eh, function(x) ifelse(is.null(x$testlet), NA,
+                                               x$testlet$testlet_id))
+  if (all(is.na(testlet_ids))) {
+    testlet_ids <- NULL
+  }
+  cs <- summary(cat_sim_output)
+  misc <- list(true_ability = cs$true_ability,
+               est_ability = cs$est_ability,
+               se = cs$se,
+               test_length = cs$test_length
+  )
+
+  response(score = resp, item_id = item_ids, testlet_id = testlet_ids,
+           examinee_id = cat_sim_output$examinee_id, misc = misc)
+}
+
+
 #' Extracts the response data of CAT output.
 #'
 #' @description This function extracts the response data from a single
-#' \code{cat_output} object or a list of \code{cat_output} objects and gives
-#' either a vector (if there is a single \code{cat_output} object) or a matrix
-#' (if there is a lit of \code{cat_output} objects) of response data.
+#' \code{cat_output} object or a list of \code{cat_output} objects and returns
+#' a \code{Response_set} object that contains the administered items of each
+#' simulee or a matrix or responses.
 #'
 #' If \code{cd}, cat design, object is given, then the item pool in the
 #' \code{cd} will be used.
 #'
 #'
 #' @param cat_sim_output This is a list object containing elements that are
-#' "cat_output" class.
+#'   \code{cat_output} class.
 #' @param cd A \code{cat_design} object that is created by function
 #'          \code{create_cat_design}.
+#' @param output_type A string that specifies the output type. Available
+#'   options are \code{"Response_set"} which returns a \code{Response_set}
+#'   object and \code{"matrix"} which returns a matrix.
+#'   If \code{attach_summary = TRUE} and \code{output_type = "matrix"}, a
+#'   data frame will be returned instead of a matrix.
+#'   The default value is \code{"Response_set"}.
 #' @param remove_na If \code{TRUE}, the columns that are all \code{NA} will be
 #'          removed.
-#' @param attach_summary If \code{TRUE}, the summary of each CAT will be
+#' @param attach_summary If \code{TRUE} and \code{output_type = "matrix"}, the
+#'   summary of each CAT will be
 #'   attached to the beginning of the response string as columns. The default
-#'   value is \code{FALSE}.
-#' @return This function returns a response matrix of adaptive tests. If the
-#' input is a list of \code{cat_output}, then the rows will represent examinees
-#' and columns will represent items. For single \code{cat_output} object the
-#' vector names will be the element
+#'   value is \code{FALSE}. When \code{output_type = "Response_set"},
+#'   CAT summary will automatically added to each Response object of the
+#'   output within \code{misc} field.
+#' @return Depending on the \code{output_type}, the function returns the
+#'   response matrix of adaptive tests. If the input is a list of
+#'   \code{cat_output}, then the rows will represent examinees
+#'   and columns will represent items.
 #'
 #' @export
 #'
@@ -473,59 +839,113 @@ summary.list <- function(object, ...) {
 #'
 #' @examples
 #' n <- 40 # number of items
-#' ip <- generate_ip(n = n,
-#'                   content = sample(c("Algebra", "Arithmetic", "Geometry"),
-#'                                    n, replace = TRUE))
+#' ip <- generate_ip(n = n)
 #' cd <- create_cat_design(ip = ip, next_item_rule = 'mfi',
 #'                         termination_rule = 'max_item',
 #'                         termination_par = list(max_item = 10))
 #' cat_data <- cat_sim(true_ability = rnorm(10), cd = cd)
-#' get_cat_response_data(cat_sim_output = cat_data, cd)
+#' resp_set <- get_cat_response_data(cat_sim_output = cat_data, cd)
+#' resp_set
+#'
+#' # Get the examinee_id of third simulee:
+#' resp_set[[3]]$examinee_id
+#' # Extract the true theta of the third examinee:
+#' resp_set[[3]]$true_ability
+#' # Extract the final estimated theta of the third examinee:
+#' resp_set[[3]]$est_ability
+#' # Extract the final standard error of the third examinee:
+#' resp_set[[3]]$se
+#'
+#'
+#' # Alternatively, output can be a matrix:
+#'
+#' resp_matrix <- get_cat_response_data(cat_sim_output = cat_data,
+#'                                      output_type = "matrix")
+#' resp_matrix
+#'
+#' # If cat design provided, the matrix columns will be sorted as the
+#' # item pool used for the simulation:
+#' resp_matrix <- get_cat_response_data(cat_sim_output = cat_data, cd = cd,
+#'                                      output_type = "matrix")
+#' resp_matrix
+#'
+#' # Additionally, remove the colums which has all NA values:
+#' resp_matrix <- get_cat_response_data(cat_sim_output = cat_data, cd = cd,
+#'                                      remove_na = TRUE,
+#'                                      output_type = "matrix")
+#' resp_matrix
 #'
 get_cat_response_data <- function(cat_sim_output, cd = NULL,
-                                  remove_na = FALSE, attach_summary = FALSE) {
+                                  output_type = c("Response_set", "matrix"),
+                                  remove_na = FALSE,
+                                  attach_summary = FALSE) {
   # Check whether it is one or multiple CAT outputs
+  ip <- NULL
+  if (!is.null(cd)) ip <- cd$ip
   if (is(cat_sim_output, "cat_output")) { # There is a single cat_output element
-     nrows <- 1
+    resp_set <- response_set(lapply(list(cat_sim_output),
+                                    get_cat_response_data_single), ip = ip)
   } else if (all(sapply(cat_sim_output, is, "cat_output"))) {
-    nrows <- length(cat_sim_output)
-  } else
+    resp_set <- response_set(lapply(cat_sim_output,
+                                    get_cat_response_data_single), ip = ip)
+  } else {
     stop("All of the elements of 'cat_sim_output' should be 'cat_output' ",
          "class.")
+  }
 
-  if (!is.null(cd) && is.null(cd$ip))
-    stop("In order to extract a response data, the cat_design object (cd) should
-         have an item pool.")
-  if (nrows == 1) {
-    # Get estimate history
-    eh <- cat_sim_output$est_history
-    resp <- sapply(eh, "[[", "resp")
-    names(resp) <- sapply(eh, function(x) x$item$id)
+
+  output_type <- match.arg(output_type)
+  if (output_type == "Response_set") {
+    return(resp_set)
+  } else if (output_type == "matrix") {
+    output <- as.matrix(resp_set, ip = ip)
+
+    if (remove_na & length(cat_sim_output) > 1)
+      output <- output[, apply(output, 2, function(x) !all(is.na(x))),
+                       drop = FALSE]
+    if (attach_summary) {
+      cs <- summary(cat_sim_output)
+      output <- cbind(cs, output)
+    }
+    return(output)
   } else {
-    if (!is.null(cd)) {
-      col_names <- cd$ip$id
-    } else {
-      eh <- lapply(cat_sim_output, "[[", "est_history") # list of est_history
-      col_names <- sort(unique(sapply(do.call("c", eh), function(x) x$item$item_id)))
-    }
-    resp <- data.frame(matrix(NA, ncol = length(col_names),
-                              nrow = length(cat_sim_output)))
-    colnames(resp) <- col_names
-    # Create an empty data.frame.
-    for (i in 1:length(cat_sim_output)) {
-      temp_resp <- get_cat_response_data(cat_sim_output[[i]], cd = cd)
-      resp[i, names(temp_resp)] <- temp_resp
-    }
+    stop("Invalid 'output_type'.")
   }
-  if (remove_na)
-    resp <- Filter(f = function(x) !all(is.na(x)), resp)
-  if (attach_summary) {
-    cs <- summary(cat_sim_output)
-    # When there is only one cat output, resp is vector.
-    if (nrows == 1) resp <- data.frame(t(resp), check.names = FALSE)
-    resp <- cbind(cs, resp)
-  }
-  return(resp)
+  # if (!is.null(cd) && is.null(cd$ip))
+  #   stop("In order to extract a response data, the cat_design object (cd) ",
+  #        "should have an item pool.")
+  #
+  # if (nrows == 1) {
+  #   # Get estimate history
+  #   eh <- cat_sim_output$est_history
+  #   resp <- sapply(eh, "[[", "resp")
+  #   names(resp) <- sapply(eh, function(x) x$item$id)
+  # } else {
+  #   if (!is.null(cd)) {
+  #     col_names <- cd$ip$id
+  #   } else {
+  #     eh <- lapply(cat_sim_output, "[[", "est_history") # list of est_history
+  #     col_names <- sort(unique(sapply(do.call("c", eh), function(x)
+  #       x$item$item_id)))
+  #   }
+  #   resp <- data.frame(matrix(NA, ncol = length(col_names),
+  #                             nrow = length(cat_sim_output)))
+  #   colnames(resp) <- col_names
+  #   # Create an empty data.frame.
+  #   for (i in 1:length(cat_sim_output)) {
+  #     temp_resp <- get_cat_response_data(cat_sim_output[[i]], cd = cd)
+  #     resp[i, names(temp_resp)] <- temp_resp
+  #   }
+  # }
+  # if (remove_na)
+  #   resp <- Filter(f = function(x) !all(is.na(x)), resp)
+  # if (attach_summary) {
+  #   cs <- summary(cat_sim_output)
+  #   # When there is only one cat output, resp is vector.
+  #   if (nrows == 1) resp <- data.frame(t(resp), check.names = FALSE)
+  #   resp <- cbind(cs, resp)
+  # }
+  # return(resp)
 }
 
 
@@ -688,7 +1108,7 @@ calculate_overlap_rates <- function(cat_sim_output, cd = NULL,
 #' values (-3, -2, -1, 0, 1, 2, 3), the function will not calculate score
 #' information values at theta = -3 and theta = 3. Score information values
 #' at second values to the edges (i.e. theta = -2 and theta = 2) will be
-#' calculated using Equation 11-2 of Sands et.al (1997). The rest of the
+#' calculated using Equation 11-2 of Sands et.al. (1997). The rest of the
 #' score information values (at theta = -1, 0, 1) will be calculated using
 #' equation 11-3 (page 128).
 #'
@@ -802,6 +1222,143 @@ score_info <- function(true_theta, est_theta, bins = NULL) {
     }
   }
   return(s_info)
+}
+
+
+###############################################################################@
+############################# qip_index ########################################
+###############################################################################@
+#' Calculate Quality of Item Pool Index
+#'
+#' @description The QIP Index can take values between 0 and 1 and indicates an
+#'   item pool’s level of efficiency. A value of 1 signifies an optimum item
+#'   pool for that examinee group. If one adds redundant items to an item pool
+#'   that cannot be used by the CAT algorithm, the QIP Index will not increase
+#'   or will increase minimally. In this sense, the QIP Index is an indicator of
+#'   the item pools’ deficiency, instead of redundancy. However, if an exposure
+#'   control mechanism is within test specifications, the QIP index can measure
+#'   whether the redundancy in the item pool supports the exposure control
+#'   method. See Gonulates (2019) for details.
+#'
+#'   Note that this function will best work with Rasch or 1PL models. It
+#'   will not work with polytomous items.
+#'
+#' @param cat_sim_output This is a list object containing elements that are
+#'   \code{cat_output} class.
+#' @param summary_func A string representing the function that will be applied
+#'   to individual QIP values for a simulee. The default is \code{NULL}, where
+#'   all QIP values of each administered item of a simulee will be returned.
+#'   Other possible values are: \code{"mean"}, \code{"median"}, \code{"min"},
+#'   \code{"max"}. See examples for demonstrations.
+#' @param ... Additional arguments that will be passed to the
+#'   \code{summary_func}. For example, if \code{summary_func = "quantile"},
+#'   probability of the 25th quantile can be specified using the argument
+#'   \code{prob = .25}. See examples for demonstrations.
+#'
+#'   Since \code{...} will be passed to \code{sapply} function,
+#'   \code{simplify = FALSE} can be passed to function to get results as list
+#'   elements.
+#'
+#' @return A vector or matrix of QIP values or the summary statistics of QIP
+#'   values.
+#'
+#' @author Emre Gonulates
+#'
+#' @export
+#'
+#' @references
+#' Gönülateş, E. (2019). Quality of Item Pool (QIP) Index: A Novel Approach to
+#' Evaluating CAT Item Pool Adequacy. Educational and Psychological Measurement,
+#' 79(6), 1133–1155. <doi:10.1177/0013164419842215>
+#'
+#' @examples
+#'
+#' cd <- create_cat_design(ip = generate_ip(n = 30), next_item_rule = 'mfi',
+#'                         termination_rule = 'max_item',
+#'                         termination_par = list(max_item = 10))
+#' cat_output <- cat_sim(true_ability = rnorm(10), cd = cd)
+#'
+#' qip_index(cat_output)
+#'
+#' # Return result as list elements
+#' qip_index(cat_output, simplify = FALSE)
+#'
+#' # Summarize QIP values:
+#' qip_index(cat_output, summary_func = "mean")
+#' qip_index(cat_output, summary_func = "median")
+#' qip_index(cat_output, summary_func = "min")
+#' qip_index(cat_output, summary_func = "max")
+#' qip_index(cat_output, summary_func = "quantile", prob = .25)
+#' qip_index(cat_output, summary_func = "quantile", prob = c(.25, .5, .75))
+#'
+#' qip_index(cat_output, summary_func = "quantile", prob = c(.25, .5, .75),
+#'           simplify = FALSE)
+#'
+#'
+#'
+qip_index <- function(cat_sim_output, summary_func = NULL, ...) {
+  # Check whether it is one or multiple CAT outputs
+  if (is(cat_sim_output, "cat_output")) { # There is a single cat_output element
+    cat_sim_output <- list(cat_sim_output)
+  # if it is not a list of cat_output
+  } else if (!is.list(cat_sim_output) ||
+             !all(sapply(cat_sim_output, is, "cat_output")))
+    stop("All of the elements of 'cat_output' should be 'cat_output' class.")
+  result <- sapply(cat_sim_output, qip_index_single,
+                   summary_func = summary_func, ...)
+  if (inherits(result, "matrix")) result <- t(result)
+  return(result)
+}
+
+
+#' QIP index for one 'cat_output' object
+#'
+#'
+#' @noRd
+#'
+#' @examples
+#'
+#' cd <- create_cat_design(ip = generate_ip(n = 30), next_item_rule = 'mfi',
+#'                         termination_rule = 'max_item',
+#'                         termination_par = list(max_item = 10))
+#' cat_output <- cat_sim(true_ability = rnorm(1), cd = cd)
+#'
+#' qip_index_single(cat_output)
+#' qip_index_single(cat_output, summary_func = "mean")
+#' qip_index_single(cat_output, summary_func = "median")
+#' qip_index_single(cat_output, summary_func = "min")
+#' qip_index_single(cat_output, summary_func = "max")
+#' qip_index_single(cat_output, summary_func = "quantile", prob = .25)
+#'
+qip_index_single <- function(cat_sim_output, summary_func = NULL, ...) {
+  if (!inherits(cat_sim_output, "cat_output")) {
+    stop("Invalid 'cat_sim_output' argument. The class of 'cat_output' ",
+         "argument should be 'cat_output'.")
+  }
+  # In case there are any Testlets, only pull items. Then convert them to 1PL
+  # since the
+  ip_list <- lapply(cat_sim_output$est_history,
+                    function(x) convert_model(x$item, "1PL"))
+  # Maximum possible information for each item
+  max_info <- sapply(ip_list, function(x) info(ip = x, theta = x$b))
+  # Information before the administration of the item
+  est_before <- sapply(cat_sim_output$est_history, `[[`, "est_before")
+  info_before <- sapply(1:length(ip_list), function(i) info(ip = ip_list[[i]],
+                                                            theta = est_before[i]))
+  qip <- info_before/max_info
+
+  if (is.null(summary_func)) {
+    # return(setNames(qip, sapply(ip_list, "slot", name = "item_id")))
+    return(setNames(qip, paste0(1:length(qip))))
+  } else {
+    result <- do.call(summary_func, list(qip, ...))
+    # # Add examinee_id if exists
+    # if (length(result) == 1 && !is.null(cat_sim_output$examinee_id))
+    #   result <- setNames(result, cat_sim_output$examinee_id)
+    # Add examinee_id if exists
+    if (length(result) == 1) result <- unname(result)
+    return(result)
+  }
 }
 
 

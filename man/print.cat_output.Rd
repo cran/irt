@@ -4,10 +4,28 @@
 \alias{print.cat_output}
 \title{This method prints an "cat_output" class object}
 \usage{
-\method{print}{cat_output}(x, ..., silent = FALSE)
+\method{print}{cat_output}(
+  x,
+  ...,
+  n = NULL,
+  print_header = TRUE,
+  base_print = FALSE,
+  silent = FALSE
+)
 }
 \arguments{
 \item{...}{Additional arguments}
+
+\item{n}{maximum number of administered items to print. Default is
+\code{NULL}, where all items are printed if the number of items are
+smaller than 20, otherwise only first 10 items are printed.}
+
+\item{print_header}{Whether to print the object class in the first line.}
+
+\item{base_print}{Whether to print the \code{cat_output} object
+using the base printing capabilities. If FALSE, the function will look at
+'tibble' package and tries to print the \code{cat_output} using
+that function.}
 
 \item{silent}{If TRUE, no output will be printed on the console, only
 a data frame will be returned.}

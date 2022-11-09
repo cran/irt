@@ -26,7 +26,8 @@ plotted.}
 \item{title}{Title of the plot. By default if the item is 1-4PM IRT model
 then the title will be "Item Characteristic Curve" if the item
 follows Graded Response Model the title will be
-"Category Response Functions". Set it \code{NULL} to remove it.}
+"Category Response Functions". Set it to \code{NULL} to suppress the
+title.}
 
 \item{suppress_plot}{If \code{FALSE} the function will print the plot. If
 \code{TRUE}, function will return the plot object. Default value is

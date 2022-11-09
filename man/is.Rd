@@ -35,8 +35,4 @@ is.Item("abc")
 }
 \author{
 Emre Gonulates
-
-Emre Gonulates
-
-Emre Gonulates
 }

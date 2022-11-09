@@ -3,9 +3,9 @@
 \docType{class}
 \name{GPCM2-class}
 \alias{GPCM2-class}
-\title{Reparametrized Generalized Partial Credit Model}
+\title{Reparameterized Generalized Partial Credit Model}
 \description{
-Reparametrized Generalized Partial Credit Model
+Reparameterized Generalized Partial Credit Model
 }
 \section{Slots}{
 

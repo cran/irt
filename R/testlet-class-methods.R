@@ -76,7 +76,8 @@ setMethod(f = "length", signature = "Testlet",
         model <- args$model
       } else if (!is.null(args$model)) {
         stop(paste0("Invalid Model specification. Model name should be one of ",
-                    "following: ", paste0(names(tmodels), collapse = ", "), "."))
+                    "following: ", paste0(names(tmodels), collapse = ", "),
+                    "."))
       } else model <- "BTM"
     } else model <- "BTM"
     # Add parameters, if exists
@@ -143,6 +144,8 @@ setMethod(f = "length", signature = "Testlet",
 #'              items within the testlet.}
 #'            \item{\strong{\code{'item_id'}}}{Get the \code{item_id}s of the
 #'              items within the testlet.}
+#'            \item{\strong{\code{'misc'}}}{Get the \code{misc} field of the
+#'              testlet.}
 #'            \item{\strong{\code{'parameters'}}}{Get the \code{parameters} of
 #'              the testlet.}
 #'            \item{\strong{\code{'se_parameters'}}}{Get the
@@ -158,7 +161,9 @@ setMethod(f = "length", signature = "Testlet",
 #'
 #' @export
 #' @examples
-#' t1 <- testlet(generate_ip(n = 3), testlet_id = "my-testlet", content = "Algebra")
+#' t1 <- testlet(generate_ip(n = 3), testlet_id = "my-testlet",
+#'               content = "Reading",
+#'               misc = list(paragraph_text = "This is a paragraph."))
 #' t1$model
 #' t1$testlet_id
 #' t1$item_list
@@ -166,6 +171,9 @@ setMethod(f = "length", signature = "Testlet",
 #' t1$item_id
 #' t1$content
 #' t1$item_models
+#' t1$misc
+#' t1$paragraph_text
+#'
 setMethod("$", "Testlet",
           function(x, name)
           {
@@ -175,13 +183,20 @@ setMethod("$", "Testlet",
 			       'item_list' = return(x@item_list@item_list),
 			       'content' = return(x@content),
 			       'model' = return(x@model),
+			       'misc' = return(x@misc),
 			       'item_models' = return(x@item_list$model),
 			       'item_id' = return(x@item_list$id),
 			       'parameters' = return(x@parameters),
 			       'se_parameters' = return(x@se_parameters),
 			       'max_score' = return(x@item_list$max_score),
-			       x@parameters[[name]])
+             if (name %in% names(x@parameters)) {
+               return(x@parameters[[name]])
+               } else return(x@misc[[name]])
+			       )
           })
+
+
+
 
 ###############################################################################@
 ############################# Subsetting 'Testlet' objects with "[" ############
@@ -212,7 +227,8 @@ setMethod("[", c(x = "Testlet", i = "ANY", j = "missing", drop = "ANY"),
           function(x, i, j, ..., drop = TRUE)
           {
             return(new(Class = "Testlet", item_list = x@item_list[i],
-                       testlet_id = x@testlet_id, model = x@model, parameters = x@parameters,
+                       testlet_id = x@testlet_id, model = x@model,
+                       parameters = x@parameters,
                        se_parameters = x@se_parameters, content = x@content))
           })
 
@@ -269,10 +285,10 @@ setMethod("[[<-", signature = c("Testlet", "numeric", "missing"),
           function(x, i, j, value)
           {
             x@item_list[[i]] <- value
-            return(testlet(x@item_list, testlet_id = x@testlet_id, model = x@model,
-                              parameters = x@parameters,
-                              se_parameters = x@se_parameters,
-                              content = x@content))
+            return(testlet(x@item_list, testlet_id = x@testlet_id,
+                           model = x@model, parameters = x@parameters,
+                           se_parameters = x@se_parameters,
+                           content = x@content))
           })
 
 
@@ -292,7 +308,8 @@ setMethod("[[<-", signature = c("Testlet", "numeric", "missing"),
   cat("An object of class 'Testlet'.\n")
   if (!is.null(x@testlet_id))
     cat(paste0("Testlet ID:", "      ", x@testlet_id, "\n"))
-    # cat(paste0(format_text("ID:", italic = TRUE), "      ", x@testlet_id, "\n"))
+    # cat(paste0(format_text("ID:", italic = TRUE), "      ",
+    #            x@testlet_id, "\n"))
     # cat("\033[3;mID:      \033[0;m", x@testlet_id, "\n",sep = "")
 
   # Color print: https://stackoverflow.com/a/57031762/2275286
@@ -369,5 +386,22 @@ setMethod("[[<-", signature = c("Testlet", "numeric", "missing"),
 setMethod("show", "Testlet", function(object) {.print.Testlet(object)})
 
 
+###############################################################################@
+############################# $<- method (Testlet) #############################
+###############################################################################@
+# This method is implemented in "itempool-class-methods.R" file.
 
+###############################################################################@
+############################# as.data.frame (Testlet) ##########################
+###############################################################################@
+# This method is implemented in "itempool-class-methods.R" file.
 
+###############################################################################@
+############################# convert_model (Testlet) ##########################
+###############################################################################@
+# This method is implemented in "itempool-class-methods.R" file.
+
+###############################################################################@
+############################# add_misc (Testlet) ###############################
+###############################################################################@
+# This method is implemented in "itempool-class-methods.R" file.

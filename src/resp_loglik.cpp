@@ -309,7 +309,7 @@ Rcpp::NumericVector resp_loglik_testlet_cpp(Rcpp::NumericMatrix resp,
 //##############################################################################
 // [[Rcpp::export]]
 double resp_loglik_bare_itempool_cpp(Rcpp::NumericVector resp, double theta,
-                                      Rcpp::S4 ip, int derivative = 0)
+                                     Rcpp::S4 ip, int derivative = 0)
 {
   // Calculate response log-likelihood for an Itempool and single examinee
   Rcpp::List item_list = as<List>(ip.slot("item_list"));

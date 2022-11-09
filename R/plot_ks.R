@@ -40,7 +40,8 @@ get_data_plot_ks <- function(ks_output, item_no, ci = .95, ip = NULL) {
 #' @param item_no The order (i.e. column number) of the item to be plotted.
 #' @param ip An \code{\link{Itempool-class}} or \code{\link{Item-class}}
 #'  object if expected probabilities are plotted.
-#' @param title Title of the plot
+#' @param title Title of the plot. If the value is \code{NULL},
+#'   the plot title will be suppressed.
 #' @param ci It is either a number indicating the confidence interval that will
 #'   be plotted around the item fit line or \code{NULL} if no confidence
 #'   interval should be plotted. The default value is 0.95, i.e. 95% confidence
@@ -71,7 +72,7 @@ get_data_plot_ks <- function(ks_output, item_no, ci = .95, ip = NULL) {
 #'
 #' plot(ks_data, item = 2, ip = ip[[2]])
 plot.ks_output <- function(x, item_no, ip = NULL,
-                           title = NULL,
+                           title = "",
                            ci = 0.95,
                            base_r_graph = FALSE,
                            suppress_plot = FALSE, ...) {
@@ -84,7 +85,7 @@ plot.ks_output <- function(x, item_no, ip = NULL,
   y_label <- "Probability"
   y_lim <- c(0, 1)
 
-  if (is.null(title)) {
+  if (!is.null(title) && title == "") {
     title <- "Non-Parametric Fit"
   }
   ### ggplot2 ###

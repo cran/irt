@@ -37,7 +37,7 @@ expected ICC desired.}
 
 \item{theta}{A vector of examinee abilities.}
 
-\item{title}{Title of the plot}
+\item{title}{Title of the plot. The default value is \code{""}.}
 
 \item{suppress_plot}{If \code{FALSE} the function will print the plot. If
 \code{TRUE}, function will return the plot object. Default value is

@@ -35,7 +35,9 @@ should be grouped into. The default is \code{10}. The maximum value of
 \item{binwidth}{This determines  the width of each bin of the theta scale.
 Within each bin, there might be different number of examinees.}
 
-\item{title}{Title of the plot}
+\item{title}{Title of the plot. The default value is \code{""}, where title
+of the plot will be "Trace Plot of <Item ID>". If the value is \code{NULL},
+the plot title will be suppressed.}
 
 \item{suppress_plot}{If \code{FALSE} the function will print the plot. If
 \code{TRUE}, function will return the plot object. Default value is

@@ -27,9 +27,15 @@ itempool(a = c(1, 1.4), b = c(-2, 1), item_id = c("i1", "i2"))
 # Set content
 itempool(a = c(1, 1.4), b = c(-2, 1), content = c("Algebra", "Geometry"))
 
-# Create GRM (Graded Response Model) items
-# itempool(data.frame(a = rlnorm(10, 0, .3), b1 = rnorm(10), b2 = rnorm(10)),
-#          model = "GRM")
+# Create 3PL items from a data frame:
+ipdf <- data.frame(a = c(.9, .79, 1.26),
+                   b = c(-1, .43, -2.3),
+                   c = c(.2, .38, .25))
+itempool(ipdf)
+
+# Create GRM (Graded Response Model) items from a data frame
+ipdf <- data.frame(a = rlnorm(10, 0, .3), b1 = rnorm(10), b2 = rnorm(10))
+itempool(ipdf, model = "GRM")
 
 # Create a Rasch model item pool
 itempool(b = c(-1, 0.2, 1.1), model = "Rasch")

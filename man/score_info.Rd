@@ -33,7 +33,7 @@ For example if 1000 examinees simulated at each of the following theta
 values (-3, -2, -1, 0, 1, 2, 3), the function will not calculate score
 information values at theta = -3 and theta = 3. Score information values
 at second values to the edges (i.e. theta = -2 and theta = 2) will be
-calculated using Equation 11-2 of Sands et.al (1997). The rest of the
+calculated using Equation 11-2 of Sands et.al. (1997). The rest of the
 score information values (at theta = -1, 0, 1) will be calculated using
 equation 11-3 (page 128).
 }

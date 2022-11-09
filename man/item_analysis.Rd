@@ -4,7 +4,13 @@
 \alias{item_analysis}
 \title{Item Analysis Function}
 \usage{
-item_analysis(resp, criterion = NULL, ip = NULL, suppress_output = FALSE)
+item_analysis(
+  resp,
+  criterion = NULL,
+  ip = NULL,
+  stats = c("n", "pval", "pbis", "bis", "pbis_adj", "bis_adj"),
+  suppress_output = FALSE
+)
 }
 \arguments{
 \item{resp}{A \code{\link{Response_set-class}} object, \code{matrix} or
@@ -23,24 +29,37 @@ are polytomous items in the data, \code{ip} will help finding the maximum
 values of each item. Otherwise, the maximum values each item can take
 will be calculated using data, which may be fallible.}
 
+\item{stats}{A vector of string containing the columns/statistics to be
+calculated. \code{'item_id'} column will be added by default. Some or all
+of the following columns can be added to the output:
+\code{c("n", "pval", "pbis", "bis", "pbis_adj", "bis_adj")}.
+Please see the 'value' section below to see the details of these columns.
+By default, all of the columns above will be calculated.}
+
 \item{suppress_output}{If \code{TRUE}, the function will suppress
 console output. Default value is \code{FALSE}}
 }
 \value{
-A list of
+A data.frame with following columns:
   \describe{
     \item{'item_id'}{Item ID.}
     \item{'n'}{Number of examinees responded this item.}
     \item{'pval'}{p-value, proportion of examinees correctly answered items.
       If there are polytomous items in the data, p-value will be calculated
       by dividing the mean of the scores for the item by the maximum
-      possible score of the item. }
+      possible score of the item.}
+    \item{'pval_unadj'}{Unadjusted p-value, this is the mean of item scores
+      that is not adjusted for the maximum possible score as \code{'pval'}
+      column does. For dichotomous items, this will be the same as
+      \code{'pval'} column.}
     \item{'pbis'}{Point biserial correlation.}
     \item{'bis'}{Biserial correlation.}
     \item{'pbis_adj'}{Point biserial correlation between item and total score
-      without this item.}
+      without this item. Note that this stat is only available when
+      criterion is \code{NULL}.}
     \item{'bis_adj'}{Biserial correlation between item and total score
-      without this item.}
+      without this item. Note that this stat is only available when
+      criterion is \code{NULL}.}
   }
 }
 \description{

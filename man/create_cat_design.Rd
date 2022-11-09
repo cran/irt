@@ -18,6 +18,7 @@ create_cat_design(
   final_ability_est_par = NULL,
   termination_rule = c("min_item", "min_se", "max_item"),
   termination_par = list(min_item = 10, min_se = 0.33, max_item = 20),
+  testlet_rules = NULL,
   exposure_control_rule = NULL,
   exposure_control_par = NULL,
   content_bal_rule = NULL,
@@ -185,7 +186,8 @@ create_cat_design(
                  A vector of prior parameters.
 
                  * For normal distribution \code{c(0, 1)}, see \code{?dnorm}
-                 * For uniform distribution \code{c(-3, 3)}, see \code{?dunif}
+                 * For uniform distribution \code{c(-3, 3)}, see
+                   \code{?dunif}
 
                  The default value is \code{c(0, 1)}.
                }
@@ -205,6 +207,44 @@ create_cat_design(
                  more precise (and slower) the estimates will be.
 
                  The default value is \code{50}.
+               }
+             }
+           }
+           \item{\strong{"map"}}{
+           Maximum-a-posteriori (Bayes Modal).
+             Required parameters:
+             \describe{
+               \item{prior_dist}{
+                 Distribution of the prior distribution. Currently only
+                 available value is:
+
+                 * \code{norm} for normal distribution,
+
+                 The default value is \code{norm}.
+               }
+               \item{prior_par}{
+                 A vector of prior parameters.
+
+                 * For normal distribution \code{c(0, 1)}, see \code{?dnorm}
+                 * For uniform distribution \code{c(-3, 3)}, see
+                   \code{?dunif}
+
+                 The default value is \code{c(0, 1)}.
+               }
+               \item{min_theta}{
+                 Minimum possible value of theta. It is a lower bound.
+
+                 The default value is \code{-4}.
+               }
+               \item{max_theta}{
+                 Maximum possible value of theta. It is an upper bound.
+
+                 The default value is \code{4}.
+               }
+               \item{tol}{
+                 The tolerance (precision) level of the estimate.
+
+                 The default value is \code{0.00001}.
                }
              }
            }
@@ -268,6 +308,35 @@ create_cat_design(
                  The number of quadrature, more specifically the number of
                  bins the theta range should be divided. The more bins, the
                  more precise (and slower) the estimates will be.
+               }
+             }
+           }
+           \item{\strong{"map_ml"}}{
+             Maximum-a-posteriori until an imperfect item response string,
+             then switch to Maximum Likelihood estimation.
+             Required parameters:
+             \describe{
+               \item{prior_dist}{
+                 Distribution of the prior distribution.
+
+                 Available values:
+
+                 \code{norm} for normal distribution,
+               }
+               \item{prior_par}{
+                 A vector of prior parameters.
+                 For normal distribution \code{c(0, 1)}, see \code{?dnorm}
+               }
+               \item{min_theta}{
+                 Minimum possible value of theta. It is a lower bound.
+               }
+               \item{max_theta}{
+                 Maximum possible value of theta. It is an upper bound.
+               }
+               \item{tol}{
+                 The tolerance (precision) level of the estimate.
+
+                 The default value is \code{0.00001}.
                }
              }
            }
@@ -413,6 +482,47 @@ create_cat_design(
 
          \strong{Default}: \code{list(min_item = 10, min_se = 0.33,
                                       max_item = 20)}}
+
+\item{testlet_rules}{A \code{list} containing arguments that specify the
+         rules that will be used within a testlet.
+
+         The default value is \code{NULL} where the following rules will
+         be applied if there is a testlet:
+         \code{list(next_item_rule = "none", termination_rule = "max_item",
+                    termination_par = list(max_item = 999))} where if a
+         testlet is selected all items of this testlet is selected (unless
+         the a testlet has more than 999 items.). Each item is selected
+         with the order it appears in the testlet.
+
+         It is assumed that items within testlet are administered together.
+         In other words, an item that does not belong to a selected testlet
+         cannot be administered between two items that belong to the same
+         testlet.
+
+         The following list elements are available:
+
+         \describe{
+           \item{\code{next_item_rule}}{The way item selection is performed
+             within a testlet. Following options are available:
+             \describe{
+               \item{\code{"none"}}{Items are selected with the order of
+                 observed in the testlet.}
+               \item{\code{"mfi"}}{Maximum Fisher Information. The most
+                 informative unadministered item within the testlet at
+                 the current ability estimate is selected.}
+             }
+           }
+           \item{\code{"termination_rule"}}{The rule that should be
+             satisfied to stop administering items from a testlet.
+             Currently, only \code{"max_item"} is available. The test will
+             terminate when maximum number of items is reached or there
+             are no items left in the testlet.
+           }
+           \item{\code{"termination_par"}}{The test termination parameters.
+             See the \code{"termination_par"} above in the main function for
+             available options.
+           }
+         }}
 
 \item{exposure_control_rule}{A vector of length one or length maximum test
          length which is designating the next item selection rules. It can

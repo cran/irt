@@ -4,59 +4,105 @@
 \alias{ipd}
 \title{Item Parameter Drift}
 \usage{
-ipd(ip1, ip2, method = "robust-z", anchor_item_ids = NULL, alpha = 0.01)
+ipd(
+  ip1,
+  ip2,
+  method = "robust-z",
+  anchor_item_ids = NULL,
+  alpha = 0.01,
+  iqr_type = 7,
+  theta = seq(-4, 4, 0.1),
+  weights = stats::dnorm(seq(-4, 4, 0.1))
+)
 }
 \arguments{
-\item{ip1}{Itempool object for the first calibration.}
+\item{ip1}{An Itempool object for the first calibration.}
 
-\item{ip2}{Itempool object for the second calibration.}
+\item{ip2}{An Itempool object for the second calibration.}
 
-\item{method}{The method of item parameter drift analysis.}
-
-\item{anchor_item_ids}{Anchor item ids. If \code{NULL}, all items are
-assumed to be anchor items.}
-
-\item{alpha}{Two tailed critical value to detect the unstable items. For
-  example if \deqn{alpha = 0.05}, the critical value is calculated using
-  \code{qnorm(1-alpha/2)} (= 1.96). Items whose absolute robust z values
-  are larger than this number will be flagged as unstable.
-
+\item{method}{The method for analyzing item parameter drift.
   \describe{
-    \item{"robust-z"}{Robust-Z method based on the Huynh and Meyer (2010). }
+    \item{"robust-z"}{Robust-Z method based on the Huynh and Meyer (2010).}
+    \item{"d2"}{D2 method assesses item parameter drift using the method
+      outlined in Wells et al. (2014). It involves comparing the Item
+      Characteristic Curves (ICCs) of item parameters from two different
+      item pools. This is also referred to as WRMSD (Weighted Root Mean
+      Squared Difference).
+
+      There are no strict thresholds for determining the significance of D2
+      in identifying item drift. A comprehensive approach considering other
+      measures is recommended. Nevertheless, as a general guideline, for
+      dichotomous items, a D2 value greater than 0.1 may warrant further
+      scrutiny. For polytomous items with two thresholds (or three score
+      categories), a D2 value exceeding 0.15, for those with three thresholds
+      (or four score categories), a D2 value greater than 0.225, for those
+      with four thresholds (or five score categories), a D2 value larger than
+      0.3, and for items with five thresholds (or six score categories), a D2
+      value larger than 0.375 may be indicative of item drift and should be
+      investigated further.
+    }
   }}
+
+\item{anchor_item_ids}{A character vector containing the IDs of anchor
+items. If set to \code{NULL}, it is assumed that all items are
+considered anchor items.}
+
+\item{alpha}{A numeric value ranging from 0 to 1. Only needed when
+\code{method = "robust-z"}. The two-tailed critical value is employed to
+identify unstable items. For instance, if we calculate the critical value
+using \code{qnorm(1-alpha/2)} (which equals 1.96 when \eqn{alpha = 0.05}),
+items with absolute robust-z values exceeding this threshold will be marked
+as unstable.}
+
+\item{iqr_type}{An integer indicating the choice of quantile algorithm. Refer
+to the \code{?quantile} function's \code{type} argument for more details.
+For instance, SAS's default quantile algorithm, \code{QNTLDEF=5},
+corresponds to \code{iqr_type = 2} in R. The default value is
+\code{iqr_type = 7}.}
+
+\item{theta}{A numeric vector containing the quadrature points. Only needed
+when \code{method = "d2"}.}
+
+\item{weights}{A numeric vector containing the weights assigned to the
+quadrature points. The length of this vector should match the length of the
+\code{theta} argument. Only needed when \code{method = "d2"}}
 }
 \value{
 Return a list depending on the method:
   \describe{
     \item{robust-z}{
       \describe{
-        \item{\code{output$a$cor}}{Correlation between two $a$ parameter
-          sets.}
+        \item{\code{output$a$cor}}{Correlation between two sets of \eqn{a}
+          parameters.}
         \item{\code{output$a$sd_ratio}}{The ratio of the standard deviation
           of \code{ip2} to the standard deviation of \code{ip1}.}
         \item{\code{output$a$robust_z}}{Robust-z statistic values for each
-          item discrimination parameter.}
-        \item{\code{output$a$unstable}}{Item ID's which were flagged if
-          robust z statistic value for a parameters is larger than the
-          absolute value of  the critical value
-          (i.e. \code{qnorm(1-alphe/2)}).}
+          item's discrimination parameter.}
+        \item{\code{output$a$unstable}}{Item IDs that were flagged when the
+          robust-z statistic value for \eqn{a} parameters exceeded the
+          absolute value of the critical value
+          (i.e., \code{qnorm(1-alpha/2)}).}
         \item{\code{output$b$robust_z}}{Robust-z statistic values for each
-          item difficulty or threshold parameter. If an item has threshold
-          parameters, robust z statistic will be calculated for each
-          threshold.}
-        \item{\code{output$b$unstable}}{Item ID's which were flagged if
-          robust z statistic for difficulty/threshold parameters are larger
-          than the absolute value of the critical value (i.e.
-          \code{qnorm(1-alphe/2)}).}
+          item's difficulty or threshold parameter. If an item has multiple
+          threshold parameters, robust z statistics will be calculated for
+          each one.}
+        \item{\code{output$b$unstable}}{Item IDs that were flagged if the
+          robust-z statistic for difficulty/threshold parameters exceeded
+          the absolute value of the critical value
+          (i.e., \code{qnorm(1-alpha/2)}).}
       }
+    }
+    \item{d2}{A numeric vector containing the differences between the ICCs
+      of each item.
     }
   }
 }
 \description{
-This function detects the unstable (i.e. items whose item
-  parameter values drifted) for a given two sets of items.
+This function identifies items that have become unstable, meaning their
+item parameter values have shifted, within two specified sets of items.
 }
 \examples{
+##### Robust-z #####
 # The example from Huynh and Meyer (2010)
 ip1 <- c(itempool(
   a = c(0.729, 0.846, 0.909, 0.818, 0.742, 0.890, 1.741, 0.907, 1.487, 1.228,
@@ -97,6 +143,34 @@ ip2 <- c(itempool(
   item(a = 0.486, b = c(-0.539, -1.489, -0.052), model = "GPCM"),
   item(a = 0.737, b = c(2.599, 1.250, -1.209), model = "GPCM"))
 ipd(ip1, ip2)
+
+##### D2 #####
+ip1 <- generate_ip(n = 20)
+ip2 <- ip1
+# add a small nuisance to item difficulty parameters
+ip2$b <- ip1$b + runif(20, -.5, .5)
+
+theta <- seq(-4, 4, 0.2)
+weights <- dnorm(theta)
+ipd(ip1, ip2, theta = theta, weights = weights)
+
+# Calculate for only certain items
+ipd(ip1, ip2, theta = theta, weights = weights,
+  anchor_item_ids = c("Item_2", "Item_6", "Item_9", "Item_13"))
+
+### Polytomous items items
+n_item <- 30
+models <- sample(c("3PL", "GPCM2"), n_item, TRUE)
+new_ip <- generate_ip(model = models, D = 1.702)
+old_ip <- data.frame(new_ip)
+old_ip$a <- old_ip$a + round(runif(n_item, min = -.5, max = .5), 2)
+old_ip$b <- old_ip$b + round(runif(n_item, min = -.75, max = .75), 2)
+old_ip$d1 <- old_ip$d1 + round(runif(n_item, min = -.75, max = .75), 2)
+old_ip$d2 <- old_ip$d2 + round(runif(n_item, min = -.75, max = .75), 2)
+old_ip$d3 <- old_ip$d3 + round(runif(n_item, min = -.75, max = .75), 2)
+old_ip <- itempool(old_ip)
+
+ipd(ip1 = old_ip, ip2 = new_ip, theta = theta, weights = weights)
 
 }
 \references{

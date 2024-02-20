@@ -32,7 +32,7 @@ at that stage. The default value is \code{TRUE}.}
 
 \item{horizontal_line}{An option to add a horizontal line. Provide either one
 of these or a list of a combination of these (except \code{NULL}).
-\itemize{
+\describe{
   \item{"true_theta"}{Add a horizontal line for true theta.
     Default option.}
   \item{"final_theta"}{Add a horizontal line at final theta

@@ -14,8 +14,6 @@
 \item{j}{This will not be used in \code{\link{Response_set-class}} objects.}
 
 \item{value}{An \code{\link{Response-class}} object.}
-
-\item{...}{Additional parameters to be passed to the function.}
 }
 \value{
 An updated \code{\link{Response_set-class}} object.

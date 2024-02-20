@@ -23,13 +23,13 @@ prob(ip, theta, derivative = 0)
 
 \S4method{prob}{Rasch}(ip, theta, derivative = 0)
 
-\S4method{prob}{`1PL`}(ip, theta, derivative = 0)
+\S4method{prob}{1PL}(ip, theta, derivative = 0)
 
-\S4method{prob}{`2PL`}(ip, theta, derivative = 0)
+\S4method{prob}{2PL}(ip, theta, derivative = 0)
 
-\S4method{prob}{`3PL`}(ip, theta, derivative = 0)
+\S4method{prob}{3PL}(ip, theta, derivative = 0)
 
-\S4method{prob}{`4PL`}(ip, theta, derivative = 0)
+\S4method{prob}{4PL}(ip, theta, derivative = 0)
 
 \S4method{prob}{GRM}(ip, theta, derivative = 0)
 

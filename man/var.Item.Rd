@@ -17,13 +17,13 @@
 
 \S4method{var}{Rasch}(x, y = NULL, na.rm = FALSE, use)
 
-\S4method{var}{`1PL`}(x, y = NULL, na.rm = FALSE, use)
+\S4method{var}{1PL}(x, y = NULL, na.rm = FALSE, use)
 
-\S4method{var}{`2PL`}(x, y = NULL, na.rm = FALSE, use)
+\S4method{var}{2PL}(x, y = NULL, na.rm = FALSE, use)
 
-\S4method{var}{`3PL`}(x, y = NULL, na.rm = FALSE, use)
+\S4method{var}{3PL}(x, y = NULL, na.rm = FALSE, use)
 
-\S4method{var}{`4PL`}(x, y = NULL, na.rm = FALSE, use)
+\S4method{var}{4PL}(x, y = NULL, na.rm = FALSE, use)
 
 \S4method{var}{GRM}(x, y = NULL, na.rm = FALSE, use)
 

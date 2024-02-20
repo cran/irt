@@ -15,8 +15,6 @@
 
 \item{value}{An \code{\link{Item-class}} or \code{\link{Testlet-class}}
 object.}
-
-\item{...}{Additional parameters to be passed to the function.}
 }
 \value{
 An updated \code{\link{Itempool-class}} object.

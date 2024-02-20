@@ -7,7 +7,7 @@
 dif(resp, group, focal_name, ip = NULL, type = "mh")
 }
 \arguments{
-\item{resp}{A vector of item responses.}
+\item{resp}{A matrix of item responses.}
 
 \item{group}{Group membership}
 

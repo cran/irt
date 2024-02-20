@@ -34,7 +34,7 @@ ks(
 
 \item{kernel_func}{Choice of kernel function. Possible choices are:
 
-  \itemize{
+  \describe{
     \item{\code{"gauss"}}{Gaussian kernel. \eqn{f(x) = e^{-u^2/2}}.}
     \item{\code{"unif"}}{Uniform kernel. \eqn{f(x) = 0.5, |u| < 0.5}, else 0.}
     \item{\code{"quadratic"}}{Quadratic kernel.
@@ -58,7 +58,7 @@ calculated. The default value is \code{points = seq(-3, 3, 0.05)}.}
 }
 \value{
 A \code{list} with following elements will be returned:
-  \itemize{
+  \describe{
     \item{\code{points}}{The quadrature points at which ICC is calculated.}
     \item{\code{icc}}{A matrix where each cell represents probability of
       selecting a response (for dichotomous models, probability of correct

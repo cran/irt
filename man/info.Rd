@@ -23,13 +23,13 @@ info(ip, theta, tif = FALSE, observed = FALSE, resp = NULL)
 
 \S4method{info}{Rasch}(ip, theta, tif = FALSE, observed = FALSE, resp = NULL)
 
-\S4method{info}{`1PL`}(ip, theta, tif = FALSE, observed = FALSE, resp = NULL)
+\S4method{info}{1PL}(ip, theta, tif = FALSE, observed = FALSE, resp = NULL)
 
-\S4method{info}{`2PL`}(ip, theta, tif = FALSE, observed = FALSE, resp = NULL)
+\S4method{info}{2PL}(ip, theta, tif = FALSE, observed = FALSE, resp = NULL)
 
-\S4method{info}{`3PL`}(ip, theta, tif = FALSE, observed = FALSE, resp = NULL)
+\S4method{info}{3PL}(ip, theta, tif = FALSE, observed = FALSE, resp = NULL)
 
-\S4method{info}{`4PL`}(ip, theta, tif = FALSE, observed = FALSE, resp = NULL)
+\S4method{info}{4PL}(ip, theta, tif = FALSE, observed = FALSE, resp = NULL)
 
 \S4method{info}{PCM}(ip, theta, tif = FALSE, observed = FALSE, resp = NULL)
 

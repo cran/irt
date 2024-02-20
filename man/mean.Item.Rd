@@ -17,13 +17,13 @@
 
 \S4method{mean}{Rasch}(x, ...)
 
-\S4method{mean}{`1PL`}(x, ...)
+\S4method{mean}{1PL}(x, ...)
 
-\S4method{mean}{`2PL`}(x, ...)
+\S4method{mean}{2PL}(x, ...)
 
-\S4method{mean}{`3PL`}(x, ...)
+\S4method{mean}{3PL}(x, ...)
 
-\S4method{mean}{`4PL`}(x, ...)
+\S4method{mean}{4PL}(x, ...)
 
 \S4method{mean}{GPCM}(x, ...)
 

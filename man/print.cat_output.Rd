@@ -14,6 +14,8 @@
 )
 }
 \arguments{
+\item{x}{An 'cat_output' class object that will be printed.}
+
 \item{...}{Additional arguments}
 
 \item{n}{maximum number of administered items to print. Default is
@@ -29,8 +31,6 @@ that function.}
 
 \item{silent}{If TRUE, no output will be printed on the console, only
 a data frame will be returned.}
-
-\item{object}{An 'cat_output' class object that will be printed.}
 }
 \description{
 This method prints an "cat_output" class object

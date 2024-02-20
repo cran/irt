@@ -513,10 +513,28 @@ create_cat_design(
              }
            }
            \item{\code{"termination_rule"}}{The rule that should be
-             satisfied to stop administering items from a testlet.
-             Currently, only \code{"max_item"} is available. The test will
-             terminate when maximum number of items is reached or there
-             are no items left in the testlet.
+             satisfied to stop administering items from a testlet. If
+             there are more than one rule, the termination rules will
+             be applied as the order they appear in the
+             \code{termination_rule} vector. For example, if
+             \code{termination_rule = c("max_item", "min_se")}, then if
+             \code{max_item} criteria is met testlet will be terminated
+             without checking for \code{min_se} value.
+
+             Following options are available:
+             \describe{
+               \item{\code{"max_item"}}{An integer representing the maximum
+                 number of items administered for each testlet. The test will
+                 terminate when maximum number of items is reached or there
+                 are no items left in the testlet.}
+
+               \item{\code{"min_se"}}{A numeric value representing the
+                 standard error of ability estimate value to terminate the
+                 test. If the standard error exceeds \code{min_se}
+                 value, then the testlet will terminate. This testlet
+                 termination criteria will only be checked if at least one
+                 item from the testlet has already been selected.}
+             }
            }
            \item{\code{"termination_par"}}{The test termination parameters.
              See the \code{"termination_par"} above in the main function for

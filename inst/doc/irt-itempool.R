@@ -1,4 +1,4 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
@@ -180,7 +180,7 @@ ip_new[[2]] <- item(a = 1, b = c(-1, 0, 1), model = "GRM", item_id = "NewItm4",
                     D = 1.7, content = "Quadratic Functions")
 ip_new
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 #  ?`$,Itempool-method`
 
 ## -----------------------------------------------------------------------------
@@ -237,7 +237,7 @@ ip_new
 ip_new$b <- rnorm(length(ip_new))
 ip_new
 
-## ---- eval=FALSE, include=FALSE-----------------------------------------------
+## ----eval=FALSE, include=FALSE------------------------------------------------
 #  
 #  ip <- generate_ip(model = c("3PL", "3PL", "3PL", "3PL", "GPCM", "GPCM", "GPCM"))
 #  dput(ip)

@@ -36,7 +36,7 @@ item.}
 default, numbers are assumed to represent seconds.}
 
 \item{misc}{A list that will hold miscellaneous information about the
-responses. For example, code{misc = list(item_role = c("O", "O", "O","F"))}
+responses. For example, \code{misc = list(item_role = c("O", "O", "O","F"))}
 will hold whether administered item is a field test or an operational test
 item.}
 }

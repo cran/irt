@@ -15,8 +15,6 @@ in which to replace element(s).}
 \item{j}{This will not be used in \code{\link{Testlet-class}} objects.}
 
 \item{value}{An \code{Item} object.}
-
-\item{...}{Additional parameters to be passed to the function.}
 }
 \value{
 An \code{teslet} object with elements from 'Item' class.
